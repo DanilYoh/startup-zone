@@ -12,99 +12,99 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project
 
-Startup Zone — безопасный MVP-маркетплейс для трех ролей:
+Startup Zone is a secure marketplace MVP for three roles:
 
-- основатели публикуют стартапы и управляют откликами;
-- специалисты находят проекты и подают заявки в команды;
-- инвесторы находят подходящие стартапы и связываются с ними.
+- founders publish startups and manage applications;
+- specialists discover projects and apply to join teams;
+- investors find relevant startups and contact them.
 
-Реализовывать функции вертикальными срезами: реальная БД, доступный пользователю интерфейс, серверная валидация, авторизация, состояния ошибок и тесты. Не выдавать статические карточки, отдельные backend-функции или запланированные сценарии за готовый продукт.
+Build features as vertical slices that include real data access, a reachable user interface, server-side validation, authorization, failure states, and tests. Do not present static cards, isolated backend functions, or planned flows as completed product functionality.
 
-Текущая основа включает публичный лендинг и каталог стартапов, Supabase Auth, защищенную часть приложения, публикацию стартапов, PostgreSQL-схему с RLS и тесты критических сценариев. Профили, заявки, модерация откликов и observability считать незавершенными, пока обратное не подтверждено актуальным кодом.
+The current foundation includes a public landing page and startup directory, Supabase authentication, a protected application area, persisted startup publishing, a PostgreSQL schema with RLS, and tests for critical flows. Treat profile editing, application workflows, application moderation, and production observability as incomplete unless the current code proves otherwise.
 
 ## Stack
 
 - Frontend: Next.js 16 App Router, React 19, TypeScript, Mantine UI, Tailwind CSS.
 - Server: React Server Components, Server Actions, Route Handlers.
-- Auth и data access: Supabase SSR и Supabase JS.
+- Authentication and data access: Supabase SSR and Supabase JS.
 - Database: Supabase PostgreSQL, migrations, constraints, triggers, indexes, RLS.
 - Validation: Zod.
 - Tests: Vitest, pgTAP / Supabase CLI, Playwright.
 - CI: GitHub Actions.
-- Runtime: Node.js 20.9+ и npm с `package-lock.json`.
+- Runtime: Node.js 20.9+ and npm with `package-lock.json`.
 
 ## Commands
 
-- Установка: `npm ci`
-- Запуск: `npm run dev`
-- Линтер: `npm run lint`
-- Проверка типов: `npm run typecheck`
-- Unit-тесты: `npm run test`
-- Покрытие: `npm run test:coverage`
-- RLS-тесты: `npm run test:rls`
-- E2E-тесты: `npm run test:e2e`
-- Основные проверки: `npm run check`
-- Production-сборка: `npm run build`
+- Install: `npm ci`
+- Development server: `npm run dev`
+- Lint: `npm run lint`
+- Type-check: `npm run typecheck`
+- Unit tests: `npm run test`
+- Coverage: `npm run test:coverage`
+- RLS tests: `npm run test:rls`
+- End-to-end tests: `npm run test:e2e`
+- Main checks: `npm run check`
+- Production build: `npm run build`
 
-`npm run check` запускает линтер, проверку типов и unit-тесты. RLS-тесты требуют локальный Supabase. E2E требуют локальное или явно тестовое окружение Supabase и `SUPABASE_SERVICE_ROLE_KEY`; production-ключи использовать нельзя.
+`npm run check` runs linting, type-checking, and unit tests. RLS tests require a local Supabase instance. End-to-end tests require a local or explicitly designated test Supabase environment and `SUPABASE_SERVICE_ROLE_KEY`; never use production credentials.
 
 ## Rules
 
 ### Workflow
 
-- Не работать напрямую в `main`. Использовать ветку `<short-task-name>`, если пользователь не указал другую.
-- Перед изменениями проверять `git status`, текущую ветку и релевантную историю. Сохранять несвязанные пользовательские изменения.
-- Делать небольшие логические коммиты с понятными сообщениями, предпочтительно Conventional Commits.
-- Не удалять и не переименовывать файлы без явного разрешения. Не использовать `git clean`, `git reset --hard`, force-push и переписывание общей истории.
-- Не выполнять несвязанные рефакторинги и не добавлять speculative infrastructure.
+- Never work directly on `main`. Use a `<short-task-name>` branch unless the user specifies another branch.
+- Before editing, inspect `git status`, the current branch, and relevant history. Preserve unrelated user changes.
+- Create small, focused commits with clear messages, preferably using Conventional Commit prefixes.
+- Do not delete or rename files without explicit approval. Do not use `git clean`, `git reset --hard`, force-push, or shared-history rewrites.
+- Do not perform unrelated refactors or add speculative infrastructure.
 
-### Next.js и TypeScript
+### Next.js and TypeScript
 
-- Установленная версия Next.js — источник истины. Перед изменением routing, caching, Proxy, Server Actions или конфигурации читать релевантную документацию в `node_modules/next/dist/docs/`.
-- По умолчанию использовать Server Components. Добавлять `"use client"` только для browser API, состояния, эффектов и обработчиков событий.
-- Выполнять чтение в Server Components или server-only helpers, мутации — в Server Actions или Route Handlers.
-- Не импортировать server-only код, включая `lib/supabase/server.ts`, в Client Components.
-- Сохранять strict TypeScript без `any`, необоснованных cast, non-null assertions и подавления ошибок типов.
-- Использовать алиас `@/` для импортов от корня. Код и документацию писать на английском, если задача явно не требует другого языка.
+- Treat the installed Next.js version as authoritative. Before changing routing, caching, Proxy, Server Actions, or framework configuration, read the relevant documentation in `node_modules/next/dist/docs/`.
+- Prefer Server Components. Add `"use client"` only for browser APIs, state, effects, or event handlers.
+- Perform reads in Server Components or server-only helpers and mutations in Server Actions or Route Handlers.
+- Never import server-only code, including `lib/supabase/server.ts`, into Client Components.
+- Keep strict TypeScript passing without `any`, unjustified casts, non-null assertions, or type-error suppression.
+- Use the `@/` alias for root imports. Keep code and documentation in English unless the task explicitly requires another language.
 
-### Supabase, данные и безопасность
+### Supabase, Data, and Security
 
-- PostgreSQL constraints и RLS — финальная граница авторизации; защита маршрута и скрытый UI являются дополнительными мерами.
-- Для чувствительных операций проверять пользователя на сервере. Поля владельца получать из подтвержденной сессии, а не из пользовательского ввода.
-- Любой недоверенный ввод валидировать Zod на серверной границе. Возвращать стабильные пользовательские ошибки без сырых сообщений БД или Auth.
-- Использовать browser Supabase client только в Client Components, server client — только на сервере; создавать server client на каждый запрос.
-- Ограничивать RLS по ролям, владельцам, разрешенным колонкам и переходам состояния. Покрывать положительные и отрицательные сценарии авторизации.
-- Не изменять уже примененные миграции. Для изменений схемы добавлять новую миграцию и синхронизировать SQL, database types, Zod, domain constants, server logic, UI, тесты и документацию.
-- Не обращаться к production Supabase и не изменять его без отдельного явного разрешения пользователя. Неопознанное окружение считать production.
-- Не помещать в репозиторий `.env.local`, токены, service-role keys, credentials или приватные данные.
-- Использовать только имена переменных из `.env.example`. Публичная демоверсия должна безопасно рендериться без Supabase env.
-- Не добавлять production-зависимости без необходимости. При изменении зависимостей обновлять `package.json` и `package-lock.json` вместе.
+- PostgreSQL constraints and RLS are the final authorization boundary. Route protection and hidden UI controls are defense-in-depth only.
+- Verify the authenticated user on the server for sensitive operations. Derive ownership fields from the verified session, never from submitted input.
+- Validate all untrusted input with Zod at the server boundary. Return stable user-facing errors without exposing raw database or Auth messages.
+- Use the browser Supabase client only in Client Components and the server client only on the server. Create a new server client per request.
+- Restrict RLS by role, ownership, writable columns, and allowed state transitions. Cover positive and negative authorization cases.
+- Do not rewrite migrations that may have been applied. Add a new migration and keep SQL, database types, Zod schemas, domain constants, server logic, UI, tests, and documentation synchronized.
+- Never access or mutate production Supabase without explicit, task-specific user approval. Treat an unverified environment as production.
+- Never commit `.env.local`, tokens, service-role keys, credentials, or private data.
+- Use only environment variable names documented in `.env.example`. The public demo must render safely without Supabase environment variables.
+- Do not add production dependencies unless necessary. Update `package.json` and `package-lock.json` together when dependencies change.
 
-### Product и UI
+### Product and UI
 
-- Реализовывать минимальный завершенный пользовательский сценарий вместо нескольких частичных экранов.
-- Обрабатывать loading, empty, success, validation, authorization, conflict и unexpected-error states.
-- Не использовать hard-coded demo data там, где интерфейс заявляет пользовательские или сохраненные данные.
-- Переиспользовать Mantine, тему и существующие паттерны. Проверять мобильный и desktop layout, light/dark themes, клавиатуру, focus и semantic HTML.
-- Поддерживать README, UI-тексты, скриншоты и release notes в соответствии с реально реализованным поведением.
+- Prefer the smallest complete user flow over several partially implemented screens.
+- Handle loading, empty, success, validation, authorization, conflict, and unexpected-error states.
+- Do not use hard-coded demo data where the UI claims to show persisted or user-created data.
+- Reuse Mantine, the configured theme, and established patterns. Verify mobile and desktop layouts, light and dark themes, keyboard use, visible focus, and semantic HTML.
+- Keep README content, UI copy, screenshots, and release notes aligned with verified product behavior.
 
 ### Verification
 
-- Documentation-only: проверить diff, Markdown, пути и ссылки.
-- TypeScript, Server Components, Server Actions и общая логика: запустить `npm run check`.
-- Routing, Proxy, зависимости, environment или Next.js config: запустить `npm run check` и `npm run build`.
-- Auth, RLS или migrations: добавить целевые positive/negative tests, проверить на local/test Supabase, запустить `npm run check` и `npm run build`.
-- Критический MVP-flow: добавить или обновить Playwright-тест, если тестовое окружение это позволяет.
-- UI-изменения: дополнить автоматические проверки browser-проверкой затронутого flow.
-- Если environment-dependent проверка недоступна, точно указать, что и почему осталось непроверенным.
+- Documentation-only changes: inspect the diff, Markdown structure, paths, and links.
+- TypeScript, Server Components, Server Actions, or shared logic: run `npm run check`.
+- Routing, Proxy, dependencies, environment handling, or Next.js configuration: run `npm run check` and `npm run build`.
+- Authentication, RLS, or migrations: add targeted positive and negative tests, verify against local/test Supabase, and run `npm run check` and `npm run build`.
+- Critical MVP flows: add or update Playwright coverage when the test environment supports it.
+- UI changes: supplement automated checks with browser verification of the affected flow.
+- If an environment-dependent check cannot run, state exactly what remains unverified and why.
 
 ## Done means
 
-- Требование реализовано в отдельной ветке и пользовательский flow доступен от начала до конца.
-- Данные читаются или сохраняются реально; validation, auth, authorization, integrity и failure states обработаны.
-- SQL, RLS, database types, Zod, server logic и UI согласованы, если задача затрагивает данные.
-- Добавлены или обновлены meaningful success и failure tests.
-- Подходящие `check`, `build`, RLS, E2E и browser-проверки проходят без новых предупреждений либо ограничения явно задокументированы.
-- Diff проверен: нет секретов, приватных данных, build/coverage output, случайных удалений и несвязанных изменений.
-- Изменения записаны в один или несколько сфокусированных коммитов.
-- Документация описывает фактическое состояние продукта и оставшиеся ограничения.
+- The requirement is implemented on a dedicated branch and the user flow is reachable end to end.
+- Data is read or persisted as intended; validation, authentication, authorization, integrity, and failure states are handled.
+- SQL, RLS, database types, Zod schemas, server logic, and UI remain synchronized when data behavior changes.
+- Meaningful success and failure tests are added or updated.
+- The appropriate check, build, RLS, end-to-end, and browser verification passes without new warnings, or limitations are documented precisely.
+- The diff contains no secrets, private data, build or coverage output, accidental deletions, or unrelated changes.
+- The work is recorded in one or more focused commits.
+- Documentation describes the verified current behavior and remaining limitations.
