@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(17);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -125,9 +125,83 @@ select throws_like(
   'pitch-deck links are restricted to HTTP and HTTPS at the database boundary'
 );
 
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Oversized slug startup',
+      'startup-with-a-slug-that-is-deliberately-longer-than-sixty-characters-total',
+      'A startup summary with an oversized slug.',
+      'A detailed startup description that attempts to persist a slug longer than allowed.',
+      'idea',
+      array['Marketplace']
+    )
+  $$,
+  '%startups_slug_length_check%',
+  'startup slugs are limited to the same length as startupSchema'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Too many niches startup',
+      'too-many-niches-startup',
+      'A startup summary with too many niches.',
+      'A detailed startup description that attempts to persist more niches than allowed.',
+      'idea',
+      array['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']
+    )
+  $$,
+  '%startups_niche_count_check%',
+  'startup niches are limited to the same count as startupSchema'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, funding_ask
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Oversized funding startup',
+      'oversized-funding-startup',
+      'A startup summary with an oversized funding ask.',
+      'A detailed startup description that attempts to persist an oversized funding ask.',
+      'idea',
+      array['Marketplace'],
+      1000000001
+    )
+  $$,
+  '%startups_funding_ask_max_check%',
+  'startup funding asks are limited to the same maximum as startupSchema'
+);
+
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select lives_ok(
+  $$
+    update public.profiles
+    set full_name = 'Updated specialist'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  'a specialist can update an allowed field on their own profile'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set role = 'founder'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%permission denied%',
+  'a specialist cannot promote their own profile to founder'
+);
 
 select throws_like(
   $$
