@@ -505,7 +505,11 @@ select throws_like(
 reset role;
 
 select results_eq(
-  $$ select count(*) from public.application_status_audit $$,
+  $$
+    select count(*)
+    from public.application_status_audit
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+  $$,
   $$ values (2::bigint) $$,
   'accepted and rejected decisions are recorded in the private audit log'
 );
