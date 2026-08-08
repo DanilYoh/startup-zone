@@ -1,6 +1,12 @@
 "use server";
 
-import { parseSignUpForm, type SignUpInput } from "@/features/auth/schemas";
+import {
+  parseSignInForm,
+  parseSignUpForm,
+  type SignInInput,
+  type SignUpInput,
+} from "@/features/auth/schemas";
+import { logServerError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { headers } from "next/headers";
@@ -10,6 +16,12 @@ export type SignUpActionState = {
   status: "idle" | "error";
   message?: string;
   errors?: Partial<Record<keyof SignUpInput, string[]>>;
+};
+
+export type SignInActionState = {
+  status: "idle" | "error";
+  message?: string;
+  errors?: Partial<Record<keyof SignInInput, string[]>>;
 };
 
 function normalizeOrigin(value: string | null) {
@@ -61,7 +73,7 @@ export async function signUp(
   });
 
   if (error) {
-    console.error("Unable to create account", {
+    logServerError("auth.signup_failed", {
       code: error.code,
       status: error.status,
     });
@@ -79,3 +91,36 @@ export async function signUp(
   redirect("/auth/sign-up-success");
 }
 
+export async function signIn(
+  _previousState: SignInActionState,
+  formData: FormData,
+): Promise<SignInActionState> {
+  if (!hasEnvVars) {
+    return { status: "error", message: "Sign in is unavailable in the unconfigured public demo." };
+  }
+
+  const validated = parseSignInForm(formData);
+  if (!validated.success) {
+    return {
+      status: "error",
+      message: "Review the highlighted fields and try again.",
+      errors: validated.error.flatten().fieldErrors,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(validated.data);
+
+  if (error) {
+    logServerError("auth.signin_failed", { code: error.code, status: error.status });
+    return {
+      status: "error",
+      message:
+        error.status === 429
+          ? "Too many sign-in attempts. Wait a moment and try again."
+          : "Email or password is incorrect.",
+    };
+  }
+
+  redirect("/protected");
+}

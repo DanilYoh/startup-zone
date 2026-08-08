@@ -16,10 +16,11 @@ Implemented:
 - founder moderation with database-enforced terminal decisions;
 - filterable public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
+- structured server logs, unexpected request capture, application rate limiting, and decision auditing;
 - responsive light and dark UI;
 - Vitest, Playwright, and GitHub Actions coverage for core flows.
 
-Planned: production observability and operational hardening.
+Deployment gates, environment isolation, monitoring expectations, and backup/restore drills are documented in [operations](docs/operations.md). Connecting a production log destination and enabling managed backups remain deployment-environment responsibilities.
 
 ## Stack
 
@@ -54,6 +55,8 @@ npm run test:e2e
 ```
 
 `npm run check` runs linting, type-checking, and unit tests. RLS and E2E tests require a local or explicitly designated test Supabase environment; E2E also requires `SUPABASE_SERVICE_ROLE_KEY`.
+
+For clean migration verification, release checks, environment separation, logging, rate limits, and recovery procedures, see [docs/operations.md](docs/operations.md).
 
 ## Author
 

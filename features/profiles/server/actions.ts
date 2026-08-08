@@ -1,6 +1,7 @@
 "use server";
 
 import { parseProfileForm, type ProfileInput } from "@/features/profiles/schemas";
+import { logServerError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
@@ -49,7 +50,7 @@ export async function updateProfile(
     .maybeSingle();
 
   if (error) {
-    console.error("Unable to update profile", { code: error.code });
+    logServerError("profile.update_failed", { code: error.code });
     return {
       status: "error",
       message: "Could not save your profile. Please try again.",
@@ -71,4 +72,3 @@ export async function updateProfile(
     message: "Profile saved.",
   };
 }
-

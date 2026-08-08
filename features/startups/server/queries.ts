@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/logger";
 import { redirect } from "next/navigation";
 
 export async function getOwnedStartupForEdit(id: number) {
@@ -25,7 +26,7 @@ export async function getOwnedStartupForEdit(id: number) {
     ]);
 
   if (profileError || startupError) {
-    console.error("Unable to load owned startup", {
+    logServerError("startup.owned_read_failed", {
       profileCode: profileError?.code,
       startupCode: startupError?.code,
     });
@@ -36,4 +37,3 @@ export async function getOwnedStartupForEdit(id: number) {
   if (!startup) return { status: "not_found" as const };
   return { status: "ready" as const, startup };
 }
-
