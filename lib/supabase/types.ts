@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "founder" | "team_seeker" | "investor";
+export type UserRole = "founder" | "specialist" | "investor";
 export type StartupStage = "idea" | "mvp" | "pre_seed" | "seed" | "series_a" | "later";
 export type ApplicationType = "team" | "investor";
 export type ApplicationStatus = "pending" | "accepted" | "rejected";

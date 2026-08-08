@@ -8,14 +8,16 @@ Startup Zone is a marketplace MVP where founders publish projects, specialists f
 
 Implemented:
 
-- Supabase authentication and protected founder dashboard;
+- Supabase authentication with explicit founder, specialist, or investor onboarding;
+- protected profile editing with immutable marketplace roles;
+- protected founder dashboard;
 - persisted startup creation with server-side Zod validation;
 - filterable public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - responsive light and dark UI;
 - Vitest, Playwright, and GitHub Actions coverage for core flows.
 
-Planned: profile editing, specialist and investor applications, application moderation, broader end-to-end coverage, and production observability.
+Planned: specialist and investor applications, application moderation, broader startup management, and production observability.
 
 ## Stack
 
@@ -35,7 +37,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`, then apply the migrations from `supabase/migrations/`. Open [http://localhost:3000](http://localhost:3000).
+Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL` in `.env.local`, then apply the migrations from `supabase/migrations/`. Open [http://localhost:3000](http://localhost:3000).
 
 Never use production Supabase credentials for local development or tests.
 

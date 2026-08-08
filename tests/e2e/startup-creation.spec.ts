@@ -29,7 +29,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Playwright Founder" },
+      user_metadata: { full_name: "Playwright Founder", role: "founder" },
     });
 
     expect(error).toBeNull();
