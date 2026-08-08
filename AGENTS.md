@@ -22,6 +22,14 @@ Build features as vertical slices that include real data access, a reachable use
 
 The current foundation includes a public landing page and startup directory, Supabase authentication, a protected application area, persisted startup publishing, a PostgreSQL schema with RLS, and tests for critical flows. Treat profile editing, application workflows, application moderation, and production observability as incomplete unless the current code proves otherwise.
 
+## Architecture
+
+The architectural baseline and dependency rules are documented in
+[`docs/architecture.md`](docs/architecture.md). Read and follow that document
+before changing application structure, module boundaries, data flow, or
+security behavior. Update it in the same commit when an intentional
+architectural decision changes.
+
 ## Stack
 
 - Frontend: Next.js 16 App Router, React 19, TypeScript, Mantine UI, Tailwind CSS.
