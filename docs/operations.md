@@ -21,6 +21,9 @@ GitHub `Preview` environment and never receives production credentials.
 The environment stores the project URL, reference, site URL, and session-pooler
 host as variables; the publishable key, service-role key, and database password
 remain encrypted secrets.
+Before the first staging run, push `supabase/config.toml` to the test project so
+synthetic registrations use the same confirmation and redirect behavior as the
+local test stack. Never push the test Auth configuration to production.
 
 The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
