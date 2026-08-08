@@ -1,5 +1,5 @@
 import { LinkButton } from "@/components/link-button";
-import { StartupForm } from "@/components/startup-form";
+import { StartupForm } from "@/features/startups/components/startup-form";
 import { createClient } from "@/lib/supabase/server";
 import { Paper, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { redirect } from "next/navigation";
