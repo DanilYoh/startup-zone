@@ -16,7 +16,7 @@ const admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-test("a founder signs in and publishes a persisted startup", async ({ page }) => {
+test("a founder publishes a startup that appears in public discovery", async ({ page }) => {
   const suffix = randomUUID();
   const email = `founder-${suffix}@example.test`;
   const password = `Test-${suffix}-password`;
@@ -38,7 +38,7 @@ test("a founder signs in and publishes a persisted startup", async ({ page }) =>
 
     await page.goto("/auth/login");
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(password);
+    await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Login" }).click();
 
     await expect(page).toHaveURL(/\/protected$/);
@@ -47,7 +47,7 @@ test("a founder signs in and publishes a persisted startup", async ({ page }) =>
 
     await page.getByLabel("Startup name").fill(startupTitle);
     await page.getByLabel("Slug").fill(slug);
-    await page.getByLabel("Stage").selectOption("mvp");
+    await page.locator("#stage").selectOption("mvp");
     await page
       .getByLabel("One-line summary")
       .fill("Actionable climate analytics for logistics teams.");
@@ -65,6 +65,27 @@ test("a founder signs in and publishes a persisted startup", async ({ page }) =>
     await expect(page).toHaveURL(/\/protected$/);
     await expect(page.getByText(startupTitle, { exact: true })).toBeVisible();
     await expect(page.getByText("Actionable climate analytics for logistics teams.")).toBeVisible();
+
+    await page.getByRole("link", { name: "View public page" }).click();
+    await expect(page).toHaveURL(new RegExp(`/startups/${slug}$`));
+    await expect(page.getByRole("heading", { level: 1, name: startupTitle })).toBeVisible();
+    await expect(
+      page.getByText(
+        "A decision-support platform that helps logistics teams model emissions, compare routes, and reduce operating costs.",
+      ),
+    ).toBeVisible();
+    await expect(page.getByText("$250,000", { exact: true })).toBeVisible();
+
+    await page.getByRole("link", { name: "All startups" }).click();
+    await expect(page).toHaveURL(/\/startups$/);
+    await expect(page.getByRole("link", { name: startupTitle })).toBeVisible();
+
+    await page.locator("#directory-stage").selectOption("mvp");
+    await page.locator("#directory-niche").fill("ClimateTech");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await expect(page).toHaveURL(/stage=mvp/);
+    await expect(page).toHaveURL(/niche=ClimateTech/);
+    await expect(page.getByRole("link", { name: startupTitle })).toBeVisible();
 
     const { data: persistedStartup, error: persistedStartupError } = await admin
       .from("startups")

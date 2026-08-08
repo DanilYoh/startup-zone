@@ -33,7 +33,7 @@ const capabilities = [
     icon: Rocket,
     title: "A reviewable product slice",
     description:
-      "The public repository implements the product shell and startup-creation slice with typed actions and automated checks.",
+      "The public repository implements startup publishing and discovery with typed reads, actions, and automated checks.",
   },
 ] as const;
 
@@ -203,8 +203,9 @@ export default function Home() {
               A marketplace foundation, not a finished product.
             </h2>
             <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Today the repository covers the secure domain foundation and startup-creation slice.
-              Directory, discovery, applications, and investor workflows remain planned product work.
+              Today the repository covers the secure domain foundation, startup publishing, and
+              public discovery. Profile editing, applications, and investor contact remain planned
+              product work.
             </p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
