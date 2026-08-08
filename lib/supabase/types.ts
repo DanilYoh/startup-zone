@@ -46,9 +46,9 @@ export type Database = {
           founder_id: string;
           title: string;
           slug: string;
-          one_pager: string | null;
-          description: string | null;
-          stage: StartupStage | null;
+          one_pager: string;
+          description: string;
+          stage: StartupStage;
           niche: string[];
           funding_ask: number | null;
           equity_offered: number | null;
@@ -63,9 +63,9 @@ export type Database = {
           founder_id: string;
           title: string;
           slug: string;
-          one_pager?: string | null;
-          description?: string | null;
-          stage?: StartupStage | null;
+          one_pager: string;
+          description: string;
+          stage: StartupStage;
           niche?: string[];
           funding_ask?: number | null;
           equity_offered?: number | null;
@@ -76,7 +76,15 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["startups"]["Insert"]>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "startups_founder_id_fkey";
+            columns: ["founder_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       applications: {
         Row: {
@@ -98,7 +106,22 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["applications"]["Insert"]>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey";
+            columns: ["applicant_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "applications_startup_id_fkey";
+            columns: ["startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

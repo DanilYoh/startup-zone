@@ -1,0 +1,1 @@
+-- Intentionally empty. Tests create isolated fixtures and roll them back or clean them up.
