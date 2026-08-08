@@ -122,5 +122,5 @@ export async function signIn(
     };
   }
 
-  redirect("/protected");
+  redirect("/dashboard");
 }

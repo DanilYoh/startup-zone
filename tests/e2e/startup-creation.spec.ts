@@ -42,9 +42,11 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
     await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Login" }).click();
 
-    await expect(page).toHaveURL(/\/protected$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.goto("/protected");
+    await expect(page).toHaveURL(/\/dashboard$/);
     await page.getByRole("link", { name: "Publish startup" }).first().click();
-    await expect(page).toHaveURL(/\/protected\/startups\/new$/);
+    await expect(page).toHaveURL(/\/dashboard\/startups\/new$/);
 
     await page.getByLabel("Startup name").fill(startupTitle);
     await page.getByLabel("Slug").fill(slug);
@@ -63,17 +65,17 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
     await page.getByLabel("Website URL").fill("https://example.com");
     await page.getByRole("button", { name: "Publish startup" }).click();
 
-    await expect(page).toHaveURL(/\/protected$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByText(startupTitle, { exact: true })).toBeVisible();
     await expect(page.getByText("Actionable climate analytics for logistics teams.")).toBeVisible();
 
     const startupCard = page.getByRole("article", { name: startupTitle });
     await startupCard.getByRole("link", { name: "Edit" }).click();
-    await expect(page).toHaveURL(/\/protected\/startups\/\d+\/edit$/);
+    await expect(page).toHaveURL(/\/dashboard\/startups\/\d+\/edit$/);
     await page.locator("#edit-one_pager").fill(updatedSummary);
     await page.getByRole("button", { name: "Save changes" }).click();
 
-    await expect(page).toHaveURL(/\/protected$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
     await expect(startupCard.getByText(updatedSummary, { exact: true })).toBeVisible();
 
     await startupCard.getByRole("button", { name: "Deactivate" }).click();
