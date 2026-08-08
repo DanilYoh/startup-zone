@@ -1,32 +1,25 @@
+import { getAuthErrorMessage } from "@/features/auth/errors";
 import { Paper, Stack, Text, Title } from "@mantine/core";
 import { Suspense } from "react";
 
 async function ErrorContent({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ code?: string | string[] }>;
 }) {
   const params = await searchParams;
 
   return (
-    <>
-      {params?.error ? (
-        <Text size="sm" c="dimmed">
-          Code error: {params.error}
-        </Text>
-      ) : (
-        <Text size="sm" c="dimmed">
-          An unspecified error occurred.
-        </Text>
-      )}
-    </>
+    <Text size="sm" c="dimmed">
+      {getAuthErrorMessage(params.code)}
+    </Text>
   );
 }
 
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ code?: string | string[] }>;
 }) {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">

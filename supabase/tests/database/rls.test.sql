@@ -1,6 +1,12 @@
 begin;
 
-select plan(35);
+select plan(38);
+
+select ok(
+  pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
+    like '%pg_advisory_xact_lock%',
+  'application rate limiting takes a transaction-scoped applicant lock'
+);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -345,6 +351,35 @@ select lives_ok(
     where slug = 'existing-startup'
   $$,
   'a specialist can apply to an active startup owned by another user'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team'
+    from public.startups
+    where slug = 'rate-startup-20'
+  $$,
+  '%null value in column "message"%',
+  'the database rejects an application without a message'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'Too short'
+    from public.startups
+    where slug = 'rate-startup-20'
+  $$,
+  '%applications_message_length_check%',
+  'the database rejects an application message shorter than applicationSchema'
 );
 
 select throws_like(

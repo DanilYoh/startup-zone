@@ -92,7 +92,7 @@ export type Database = {
           startup_id: number;
           applicant_id: string;
           type: ApplicationType;
-          message: string | null;
+          message: string;
           status: ApplicationStatus;
           created_at: string;
         };
@@ -101,7 +101,7 @@ export type Database = {
           startup_id: number;
           applicant_id: string;
           type: ApplicationType;
-          message?: string | null;
+          message: string;
           status?: ApplicationStatus;
           created_at?: string;
         };
