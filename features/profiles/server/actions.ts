@@ -65,7 +65,7 @@ export async function updateProfile(
   }
 
   revalidatePath("/dashboard/profile");
-  revalidatePath("/protected");
+  revalidatePath("/dashboard");
 
   return {
     status: "success",

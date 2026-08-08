@@ -84,8 +84,8 @@ export async function createStartup(
 
   if (error) return startupWriteError(error.code);
 
-  revalidatePath("/protected");
-  redirect("/protected");
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
 }
 
 export async function updateStartup(
@@ -143,10 +143,10 @@ export async function updateStartup(
   if (error) return startupWriteError(error.code);
   if (!updated) return { status: "error", message: "Startup not found or you cannot edit it." };
 
-  revalidatePath("/protected");
+  revalidatePath("/dashboard");
   revalidatePath(`/startups/${current.slug}`);
   revalidatePath(`/startups/${validated.data.slug}`);
-  redirect("/protected");
+  redirect("/dashboard");
 }
 
 export async function updateStartupStatus(
@@ -182,7 +182,7 @@ export async function updateStartupStatus(
     return { status: "error", message: "Startup not found or you cannot manage it." };
   }
 
-  revalidatePath("/protected");
+  revalidatePath("/dashboard");
   revalidatePath(`/startups/${updated.slug}`);
   revalidatePath("/startups");
 

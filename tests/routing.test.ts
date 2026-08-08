@@ -20,7 +20,8 @@ describe("isProtectedPathname", () => {
 
 describe("getSafeAuthRedirectPath", () => {
   it("allows only the local destinations used by auth flows", () => {
-    expect(getSafeAuthRedirectPath("/protected")).toBe("/protected");
+    expect(getSafeAuthRedirectPath("/protected")).toBe("/dashboard");
+    expect(getSafeAuthRedirectPath("/dashboard")).toBe("/dashboard");
     expect(getSafeAuthRedirectPath("/dashboard/profile")).toBe(
       "/dashboard/profile",
     );

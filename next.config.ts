@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/protected/:path*",
+        destination: "/dashboard/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
