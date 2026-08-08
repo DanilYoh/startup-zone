@@ -204,8 +204,8 @@ export default function Home() {
             </h2>
             <p className="mt-4 text-lg leading-8 text-muted-foreground">
               Today the repository covers the secure domain foundation, role-aware onboarding,
-              profile editing, startup management, public discovery, and role-aware applications.
-              Founder moderation and production observability remain planned product work.
+              profile editing, startup management, public discovery, role-aware applications, and
+              founder decisions. Production observability remains planned product work.
             </p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">

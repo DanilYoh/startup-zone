@@ -1,6 +1,6 @@
 begin;
 
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -416,8 +416,41 @@ select lives_ok(
     update public.applications
     set status = 'accepted'
     where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000003'
   $$,
-  'a founder can update only the status of an application to their startup'
+  'a founder can accept a pending application to their startup'
+);
+
+select lives_ok(
+  $$
+    update public.applications
+    set status = 'rejected'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  'a founder can reject a pending application to their startup'
+);
+
+select throws_like(
+  $$
+    update public.applications
+    set status = 'rejected'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  '%Invalid application status transition%',
+  'an accepted application cannot be reversed to rejected'
+);
+
+select throws_like(
+  $$
+    update public.applications
+    set status = 'pending'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%Invalid application status transition%',
+  'a rejected application cannot be reopened'
 );
 
 select throws_like(

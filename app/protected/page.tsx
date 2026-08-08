@@ -58,13 +58,18 @@ async function ProtectedContent() {
             </div>
           </div>
           {isFounder && (
-            <LinkButton
-              href="/protected/startups/new"
-              size="md"
-              leftSection={<Plus size={18} aria-hidden="true" />}
-            >
-              Publish startup
-            </LinkButton>
+            <Group gap="sm">
+              <LinkButton href="/dashboard/applications/inbox" variant="outline" size="md">
+                Incoming applications
+              </LinkButton>
+              <LinkButton
+                href="/protected/startups/new"
+                size="md"
+                leftSection={<Plus size={18} aria-hidden="true" />}
+              >
+                Publish startup
+              </LinkButton>
+            </Group>
           )}
         </div>
 

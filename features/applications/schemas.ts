@@ -11,9 +11,21 @@ export const applicationSchema = z.object({
 
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 
+export const moderationSchema = z.object({
+  application_id: z.coerce.number().int().positive(),
+  decision: z.enum(["accepted", "rejected"]),
+});
+
 function singleValue(formData: FormData, name: string) {
   const values = formData.getAll(name);
   return values.length === 1 ? values[0] : null;
+}
+
+export function parseModerationForm(formData: FormData) {
+  return moderationSchema.safeParse({
+    application_id: singleValue(formData, "application_id"),
+    decision: singleValue(formData, "decision"),
+  });
 }
 
 export function parseApplicationForm(formData: FormData) {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { applicationSchema, parseApplicationForm } from "../features/applications/schemas";
+import {
+  applicationSchema,
+  moderationSchema,
+  parseApplicationForm,
+} from "../features/applications/schemas";
 
 describe("applicationSchema", () => {
   it("normalizes a valid application", () => {
@@ -30,3 +34,12 @@ describe("applicationSchema", () => {
   });
 });
 
+describe("moderationSchema", () => {
+  it.each(["accepted", "rejected"] as const)("accepts the %s terminal decision", (decision) => {
+    expect(moderationSchema.safeParse({ application_id: "12", decision }).success).toBe(true);
+  });
+
+  it.each(["pending", "withdrawn", "accepted-again"])("rejects the %s transition", (decision) => {
+    expect(moderationSchema.safeParse({ application_id: "12", decision }).success).toBe(false);
+  });
+});
