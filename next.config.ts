@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

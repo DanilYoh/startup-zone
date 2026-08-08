@@ -1,17 +1,17 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Alert,
+  Anchor,
+  Button,
+  Paper,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -48,63 +48,52 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className={className} {...props}>
+      <Paper withBorder shadow="sm" radius="lg" p="xl">
+        <Stack gap="lg">
+          <div>
+            <Title order={1} size="h2">Login</Title>
+            <Text c="dimmed" size="sm" mt={4}>
+              Enter your email below to login to your account
+            </Text>
+          </div>
           <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input
+            <Stack gap="md">
+              <TextInput
+                id="email"
+                type="email"
+                label="Email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.currentTarget.value)}
+              />
+              <Stack gap={6}>
+                <PasswordInput
                   id="password"
-                  type="password"
+                  label="Password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(event) => setPassword(event.currentTarget.value)}
                 />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                <Anchor component={Link} href="/auth/forgot-password" size="sm" ta="right">
+                  Forgot your password?
+                </Anchor>
+              </Stack>
+              {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
+              <Button type="submit" fullWidth loading={isLoading}>
+                Login
               </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
+            </Stack>
+            <Text mt="md" ta="center" size="sm">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
+              <Anchor component={Link} href="/auth/sign-up">
                 Sign up
-              </Link>
-            </div>
+              </Anchor>
+            </Text>
           </form>
-        </CardContent>
-      </Card>
+        </Stack>
+      </Paper>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
+import { LinkButton } from "@/components/link-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Button } from "@/components/ui/button";
 import { hasEnvVars } from "@/lib/utils";
+import { Button, Skeleton } from "@mantine/core";
 import {
   ArrowRight,
   CheckCircle2,
@@ -43,6 +44,7 @@ const stack = [
   "Supabase",
   "PostgreSQL",
   "Zod",
+  "Mantine UI",
   "Tailwind CSS",
 ] as const;
 
@@ -71,7 +73,12 @@ export default function Home() {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+      <header
+        className="sticky top-0 z-40 border-b backdrop-blur"
+        style={{
+          background: "color-mix(in srgb, var(--mantine-color-body) 90%, transparent)",
+        }}
+      >
         <nav
           className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5"
           aria-label="Primary navigation"
@@ -95,7 +102,7 @@ export default function Home() {
                 <EnvVarWarning />
               </div>
             ) : (
-              <Suspense fallback={<div className="h-9 w-28 animate-pulse rounded-md bg-muted" />}>
+              <Suspense fallback={<Skeleton height={36} width={112} radius="md" />}>
                 <AuthButton />
               </Suspense>
             )}
@@ -105,7 +112,13 @@ export default function Home() {
 
       <main id="main-content">
         <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.10),transparent_38%)]" />
+          <div
+            className="absolute inset-0 -z-10"
+            style={{
+              background:
+                "radial-gradient(circle at top left, color-mix(in srgb, var(--mantine-primary-color-filled) 10%, transparent), transparent 38%)",
+            }}
+          />
           <div className="mx-auto grid max-w-6xl gap-14 px-5 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-28">
             <div>
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground shadow-sm">
@@ -121,28 +134,34 @@ export default function Home() {
                 shell and architecture, not a finished marketplace.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg">
-                  <Link href={hasEnvVars ? "/auth/sign-up" : "#architecture"}>
-                    {hasEnvVars ? "Create an account" : "Explore the architecture"}
-                    <ArrowRight className="size-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <a href="https://github.com/DanilYoh/startup-zone" target="_blank" rel="noreferrer">
-                    View source on GitHub
-                  </a>
+                <LinkButton
+                  href={hasEnvVars ? "/auth/sign-up" : "#architecture"}
+                  size="lg"
+                  rightSection={<ArrowRight size={16} aria-hidden="true" />}
+                >
+                  {hasEnvVars ? "Create an account" : "Explore the architecture"}
+                </LinkButton>
+                <Button
+                  component="a"
+                  href="https://github.com/DanilYoh/startup-zone"
+                  target="_blank"
+                  rel="noreferrer"
+                  size="lg"
+                  variant="outline"
+                >
+                  View source on GitHub
                 </Button>
               </div>
             </div>
 
-            <div className="rounded-3xl border bg-card p-3 shadow-2xl shadow-foreground/5">
+            <div className="rounded-3xl border bg-card p-3 shadow-2xl">
               <div className="rounded-2xl border bg-background p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Featured opportunity</p>
                     <h2 className="mt-1 text-xl font-semibold">Climate analytics for logistics</h2>
                   </div>
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-[var(--mantine-color-teal-text)]">
                     MVP
                   </span>
                 </div>
@@ -198,7 +217,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="architecture" className="border-y bg-muted/40">
+        <section id="architecture" className="border-y bg-muted">
           <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 lg:grid-cols-2 lg:items-center">
             <div>
               <div className="flex items-center gap-3">
@@ -221,17 +240,17 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-3 rounded-2xl border bg-background p-5 font-mono text-sm shadow-sm">
-              <div className="flex items-center gap-3 rounded-xl bg-muted/70 p-4">
+              <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
                 <Code2 className="size-5 shrink-0" aria-hidden="true" />
                 <span>Next.js App Router + React Server Components</span>
               </div>
               <div className="ml-5 h-5 border-l" aria-hidden="true" />
-              <div className="flex items-center gap-3 rounded-xl bg-muted/70 p-4">
+              <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
                 <ShieldCheck className="size-5 shrink-0" aria-hidden="true" />
                 <span>Server Actions + Zod validation + Supabase Auth</span>
               </div>
               <div className="ml-5 h-5 border-l" aria-hidden="true" />
-              <div className="flex items-center gap-3 rounded-xl bg-muted/70 p-4">
+              <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
                 <Database className="size-5 shrink-0" aria-hidden="true" />
                 <span>PostgreSQL + migrations + row-level security</span>
               </div>
@@ -252,11 +271,16 @@ export default function Home() {
                   architecture overview for an honest technical review.
                 </p>
               </div>
-              <Button asChild size="lg" variant="secondary">
-                <a href="https://github.com/DanilYoh/startup-zone" target="_blank" rel="noreferrer">
-                  Open repository
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </a>
+              <Button
+                component="a"
+                href="https://github.com/DanilYoh/startup-zone"
+                target="_blank"
+                rel="noreferrer"
+                size="lg"
+                variant="white"
+                rightSection={<ArrowRight size={16} aria-hidden="true" />}
+              >
+                Open repository
               </Button>
             </div>
           </div>

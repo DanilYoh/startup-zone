@@ -1,8 +1,7 @@
 import type { Config } from "tailwindcss";
-import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["selector", '[data-mantine-color-scheme="dark"]'],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,53 +11,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: "var(--mantine-color-body)",
+        foreground: "var(--mantine-color-text)",
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--mantine-color-default)",
+          foreground: "var(--mantine-color-text)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--mantine-color-default)",
+          foreground: "var(--mantine-color-text)",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--mantine-primary-color-filled)",
+          foreground: "var(--mantine-primary-color-contrast)",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "var(--mantine-color-default-hover)",
+          foreground: "var(--mantine-color-text)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--mantine-color-default-hover)",
+          foreground: "var(--mantine-color-dimmed)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--mantine-color-default-hover)",
+          foreground: "var(--mantine-color-text)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--mantine-color-error)",
+          foreground: "var(--mantine-color-white)",
         },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
-        },
+        border: "var(--mantine-color-default-border)",
+        input: "var(--mantine-color-default-border)",
+        ring: "var(--mantine-primary-color-filled)",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--mantine-radius-lg)",
+        md: "var(--mantine-radius-md)",
+        sm: "var(--mantine-radius-sm)",
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [],
 } satisfies Config;

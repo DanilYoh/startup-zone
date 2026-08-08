@@ -90,7 +90,7 @@ For a larger feature, prefer a small sequence such as schema/security, applicati
 
 - `app/` — Next.js App Router pages, layouts, Route Handlers, and Server Actions.
 - `components/` — product components and reusable UI primitives.
-- `components/ui/` — the existing Radix-based design primitives.
+- Mantine UI — the shared component system, theme, and color-scheme provider.
 - `lib/validations.ts` — Zod schemas and domain input validation.
 - `lib/supabase/` — browser, server, and Proxy clients plus database types.
 - `proxy.ts` — Supabase session refresh and route protection.
@@ -186,7 +186,7 @@ Prefer the smallest complete workflow over several partially implemented screens
 
 ## UI and accessibility
 
-- Reuse `components/ui/`, current Tailwind tokens, and established interaction patterns before adding another UI system.
+- Reuse Mantine components, the configured Mantine theme, and established interaction patterns before adding another UI system.
 - Verify narrow mobile and desktop layouts in both light and dark themes for meaningful visual changes.
 - Use semantic HTML, associated labels, visible keyboard focus, descriptive controls, and native browser behavior where possible.
 - Keep server-rendered content as the default and avoid unnecessary Client Components or heavy client dependencies.

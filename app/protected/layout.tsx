@@ -1,5 +1,6 @@
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Skeleton } from "@mantine/core";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -13,7 +14,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           </Link>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
-            <Suspense fallback={<div className="h-9 w-28 animate-pulse rounded-md bg-muted" />}>
+            <Suspense fallback={<Skeleton height={36} width={112} radius="md" />}>
               <AuthButton />
             </Suspense>
           </div>
