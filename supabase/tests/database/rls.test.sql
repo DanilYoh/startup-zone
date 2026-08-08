@@ -1,6 +1,6 @@
 begin;
 
-select plan(24);
+select plan(27);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -135,6 +135,24 @@ select lives_ok(
     )
   $$,
   'a founder can create a startup owned by their profile'
+);
+
+select lives_ok(
+  $$
+    update public.startups
+    set is_active = false
+    where slug = 'founder-startup'
+  $$,
+  'a founder can deactivate their own startup'
+);
+
+select throws_like(
+  $$
+    delete from public.startups
+    where slug = 'founder-startup'
+  $$,
+  '%permission denied%',
+  'hard deletion is unavailable even for the startup owner'
 );
 
 select throws_like(
@@ -403,6 +421,20 @@ select throws_like(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+
+select results_eq(
+  $$
+    with updated as (
+      update public.startups
+      set is_active = false
+      where slug = 'existing-startup'
+      returning id
+    )
+    select count(*) from updated
+  $$,
+  $$ values (0::bigint) $$,
+  'another founder cannot update a startup they do not own'
+);
 
 select results_eq(
   $$

@@ -11,13 +11,13 @@ Implemented:
 - Supabase authentication with explicit founder, specialist, or investor onboarding;
 - protected profile editing with immutable marketplace roles;
 - protected founder dashboard;
-- persisted startup creation with server-side Zod validation;
+- persisted startup creation and management with server-side Zod validation;
 - filterable public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - responsive light and dark UI;
 - Vitest, Playwright, and GitHub Actions coverage for core flows.
 
-Planned: specialist and investor applications, application moderation, broader startup management, and production observability.
+Planned: specialist and investor applications, application moderation, and production observability.
 
 ## Stack
 
