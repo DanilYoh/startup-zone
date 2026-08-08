@@ -1,0 +1,67 @@
+name: Staging database
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-database
+  cancel-in-progress: false
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: Preview
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
+      SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate staging configuration
+        shell: bash
+        run: |
+          required=(
+            NEXT_PUBLIC_SUPABASE_URL
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+            NEXT_PUBLIC_SITE_URL
+            SUPABASE_SERVICE_ROLE_KEY
+            SUPABASE_TEST_DB_PASSWORD
+            SUPABASE_TEST_PROJECT_REF
+          )
+          for name in "${required[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required staging configuration: $name" >&2
+              exit 1
+            fi
+          done
+      - name: Build test database URL
+        shell: bash
+        run: |
+          echo "SUPABASE_TEST_DB_URL=postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${SUPABASE_TEST_DB_PASSWORD}@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
+      - name: Apply pending migrations
+        run: npx supabase db push --db-url "$SUPABASE_TEST_DB_URL" --include-all --yes
+      - name: Test remote database authorization
+        run: npx supabase test db --db-url "$SUPABASE_TEST_DB_URL"
+      - name: Lint, type-check, and unit test
+        run: npm run check
+      - name: Build production bundle
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test marketplace flows against staging
+        run: npm run test:e2e

@@ -14,6 +14,11 @@ bundle, and runs Playwright. A managed test project may be used for manual
 release validation, but its URL, publishable key, and service-role key must be
 stored in the CI secret manager. Never reuse production credentials or data.
 
+The manual `Staging database` GitHub Actions workflow deploys migrations to the
+dedicated test project and then runs remote pgTAP, the production build, and
+Playwright against that environment. It reads configuration only from the
+GitHub `Preview` environment and never receives production credentials.
+
 The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
 the public demo.
