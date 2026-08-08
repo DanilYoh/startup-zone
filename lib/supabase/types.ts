@@ -123,6 +123,36 @@ export type Database = {
           },
         ];
       };
+      application_status_audit: {
+        Row: {
+          id: number;
+          application_id: number | null;
+          startup_id: number;
+          actor_id: string | null;
+          previous_status: "pending";
+          new_status: "accepted" | "rejected";
+          changed_at: string;
+        };
+        Insert: {
+          id?: number;
+          application_id?: number | null;
+          startup_id: number;
+          actor_id?: string | null;
+          previous_status: "pending";
+          new_status: "accepted" | "rejected";
+          changed_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["application_status_audit"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "application_status_audit_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

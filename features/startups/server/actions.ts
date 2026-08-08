@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/logger";
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/types";
 import { parseStartupForm } from "@/lib/startup-form";
 import type { StartupInput } from "@/lib/validations";
@@ -35,7 +36,7 @@ async function authorizeFounder() {
     .maybeSingle();
 
   if (error) {
-    console.error("Unable to authorize startup mutation", { code: error.code });
+    logServerError("startup.authorization_failed", { code: error.code });
     return { status: "error" as const, supabase, user };
   }
 
@@ -117,7 +118,7 @@ export async function updateStartup(
     .maybeSingle();
 
   if (readError) {
-    console.error("Unable to load startup for update", { code: readError.code });
+    logServerError("startup.update_read_failed", { code: readError.code });
     return { status: "error", message: "Could not load the startup. Please try again." };
   }
 
@@ -173,7 +174,7 @@ export async function updateStartupStatus(
     .maybeSingle();
 
   if (error) {
-    console.error("Unable to update startup status", { code: error.code });
+    logServerError("startup.status_write_failed", { code: error.code });
     return { status: "error", message: "Could not update the startup status. Try again." };
   }
 
@@ -200,7 +201,6 @@ function startupWriteError(code: string): StartupActionState {
     };
   }
 
-  console.error("Unable to save startup", { code });
+  logServerError("startup.write_failed", { code });
   return { status: "error", message: "Could not save the startup. Please try again." };
 }
-

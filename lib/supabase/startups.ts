@@ -3,6 +3,7 @@ import "server-only";
 import type { StartupDirectoryFilters } from "@/lib/startup-directory";
 import { toIlikePattern } from "@/lib/startup-directory";
 import { hasEnvVars } from "@/lib/utils";
+import { logServerError } from "@/lib/logger";
 import { createClient } from "./server";
 
 export type PublicStartupRead<T> =
@@ -19,7 +20,7 @@ export async function listActiveStartups(
     const data = await queryActiveStartups(filters);
     return { status: "ready", data };
   } catch (error) {
-    console.error("Unable to load the public startup directory", {
+    logServerError("startup.directory_read_failed", {
       code: error instanceof StartupReadError ? error.code : "unexpected",
     });
     return { status: "error" };
@@ -43,7 +44,7 @@ export async function getActiveStartupBySlug(slug: string) {
     if (error) throw new StartupReadError(error.code);
     return { status: "ready", data } as const;
   } catch (error) {
-    console.error("Unable to load a public startup", {
+    logServerError("startup.public_read_failed", {
       code: error instanceof StartupReadError ? error.code : "unexpected",
     });
     return { status: "error" } as const;

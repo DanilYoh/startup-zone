@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(35);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -101,6 +101,25 @@ values (
 update public.startups
 set is_active = false
 where slug = 'inactive-startup';
+
+insert into public.startups (
+  founder_id,
+  title,
+  slug,
+  one_pager,
+  description,
+  stage,
+  niche
+)
+select
+  '10000000-0000-0000-0000-000000000001',
+  'Rate limit startup ' || series,
+  'rate-startup-' || series,
+  'A startup used to verify application rate limiting.',
+  'A detailed startup description used to verify the database-backed application submission rate limit.',
+  'idea',
+  array['Marketplace']
+from generate_series(1, 20) as series;
 
 select set_config(
   'test.inactive_startup_id',
@@ -358,6 +377,36 @@ select throws_like(
   'duplicate applications cannot be created'
 );
 
+select lives_ok(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'A valid rate-limit fixture application for this active startup.'
+    from public.startups
+    where slug like 'rate-startup-%'
+      and slug <> 'rate-startup-20'
+  $$,
+  'an applicant can submit up to twenty applications in one hour'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'This application exceeds the hourly database submission limit.'
+    from public.startups
+    where slug = 'rate-startup-20'
+  $$,
+  '%Application submission rate limit exceeded%',
+  'the database rejects the twenty-first application within one hour'
+);
+
 select throws_like(
   $$
     insert into public.applications (startup_id, applicant_id, type, message, status)
@@ -452,6 +501,17 @@ select throws_like(
   '%Invalid application status transition%',
   'a rejected application cannot be reopened'
 );
+
+reset role;
+
+select results_eq(
+  $$ select count(*) from public.application_status_audit $$,
+  $$ values (2::bigint) $$,
+  'accepted and rejected decisions are recorded in the private audit log'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select throws_like(
   $$

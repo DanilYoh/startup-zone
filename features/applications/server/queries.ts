@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/logger";
 import { redirect } from "next/navigation";
 
 export async function getApplicationContext(startupId: number, founderId: string) {
@@ -24,7 +25,7 @@ export async function getApplicationContext(startupId: number, founderId: string
     ]);
 
   if (profileError || existingError) {
-    console.error("Unable to load application context", {
+    logServerError("application.context_read_failed", {
       profileCode: profileError?.code,
       applicationCode: existingError?.code,
     });
@@ -59,7 +60,7 @@ export async function listMyApplications() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Unable to list applications", { code: error.code });
+    logServerError("application.list_mine_failed", { code: error.code });
     return { status: "error" as const };
   }
 
@@ -81,7 +82,7 @@ export async function listFounderApplications() {
     .maybeSingle();
 
   if (profileError) {
-    console.error("Unable to authorize founder inbox", { code: profileError.code });
+    logServerError("application.inbox_authorization_failed", { code: profileError.code });
     return { status: "error" as const };
   }
 
@@ -95,7 +96,7 @@ export async function listFounderApplications() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Unable to list founder applications", { code: error.code });
+    logServerError("application.inbox_read_failed", { code: error.code });
     return { status: "error" as const };
   }
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/logger";
 import { redirect } from "next/navigation";
 
 export async function getCurrentProfile() {
@@ -18,7 +19,7 @@ export async function getCurrentProfile() {
     .maybeSingle();
 
   if (error) {
-    console.error("Unable to load profile", { code: error.code });
+    logServerError("profile.read_failed", { code: error.code });
     return { status: "error" as const, email: user.email ?? null };
   }
 
@@ -30,4 +31,3 @@ export async function getCurrentProfile() {
     profile,
   };
 }
-

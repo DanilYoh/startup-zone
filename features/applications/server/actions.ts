@@ -6,6 +6,7 @@ import {
   type ApplicationInput,
 } from "@/features/applications/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/logger";
 import type { ApplicationType, TablesInsert } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -52,7 +53,7 @@ export async function createApplication(
     ]);
 
   if (profileError || startupError) {
-    console.error("Unable to authorize application submission", {
+    logServerError("application.authorization_failed", {
       profileCode: profileError?.code,
       startupCode: startupError?.code,
     });
@@ -91,7 +92,14 @@ export async function createApplication(
       return { status: "error", message: "You already sent this application." };
     }
 
-    console.error("Unable to create application", { code: error.code });
+    if (error.code === "P0001") {
+      return {
+        status: "error",
+        message: "You reached the application limit. Wait before contacting another startup.",
+      };
+    }
+
+    logServerError("application.create_failed", { code: error.code });
     return { status: "error", message: "Could not send the application. Please try again." };
   }
 
@@ -126,7 +134,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (profileError) {
-    console.error("Unable to authorize application moderation", { code: profileError.code });
+    logServerError("application.moderation_authorization_failed", { code: profileError.code });
     return { status: "error", message: "Could not verify your founder profile. Try again." };
   }
 
@@ -141,7 +149,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (applicationError) {
-    console.error("Unable to load application for moderation", { code: applicationError.code });
+    logServerError("application.moderation_read_failed", { code: applicationError.code });
     return { status: "error", message: "Could not load the application. Try again." };
   }
 
@@ -162,7 +170,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (error) {
-    console.error("Unable to moderate application", { code: error.code });
+    logServerError("application.moderation_write_failed", { code: error.code });
     return { status: "error", message: "Could not save the decision. Please try again." };
   }
 

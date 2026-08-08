@@ -23,6 +23,13 @@ export const signUpSchema = z
 
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
+export const signInSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address").max(254),
+  password: z.string().min(1, "Enter your password").max(72),
+});
+
+export type SignInInput = z.infer<typeof signInSchema>;
+
 export function parseSignUpForm(formData: FormData) {
   return signUpSchema.safeParse({
     full_name: formData.get("full_name"),
@@ -33,3 +40,9 @@ export function parseSignUpForm(formData: FormData) {
   });
 }
 
+export function parseSignInForm(formData: FormData) {
+  return signInSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+}

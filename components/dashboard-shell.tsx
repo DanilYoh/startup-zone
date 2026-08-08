@@ -34,6 +34,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <AuthButton />
             </Suspense>
           </div>
+          <div
+            aria-label="Dashboard sections"
+            className="flex w-full gap-4 overflow-x-auto border-t pt-3 sm:hidden"
+          >
+            <Link href="/protected" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
+              Dashboard
+            </Link>
+            <Link href="/dashboard/profile" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
+              Profile
+            </Link>
+            <Link href="/dashboard/applications" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
+              Applications
+            </Link>
+            <Link href="/dashboard/applications/inbox" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
+              Incoming
+            </Link>
+          </div>
         </nav>
       </header>
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-8 sm:py-12">
