@@ -2,7 +2,7 @@
 
 Startup Zone is a marketplace MVP where founders publish projects, specialists find teams, and investors discover early-stage startups.
 
-**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — the hosted version is read-only. Authentication and startup creation require a configured Supabase environment.
+**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — create a founder, specialist, or investor account to try the complete marketplace flow against isolated synthetic data.
 
 ## Current scope
 
@@ -21,6 +21,8 @@ Implemented:
 - Vitest, Playwright, and GitHub Actions coverage for core flows.
 
 Deployment gates, environment isolation, monitoring expectations, and backup/restore drills are documented in [operations](docs/operations.md). Connecting a production log destination and enabling managed backups remain deployment-environment responsibilities.
+
+The public demo never uses production data or a service-role key at runtime. Operators can populate an isolated demo or test project with `npm run demo:seed`; the command requires the same test-only environment variables used by Playwright fixtures.
 
 ## Stack
 
