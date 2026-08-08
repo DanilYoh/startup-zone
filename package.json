@@ -26,6 +26,7 @@
     "test:coverage": "vitest run --coverage",
     "test:rls": "supabase test db",
     "test:e2e": "playwright test",
+    "demo:seed": "node scripts/seed-demo.mjs",
     "check": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {
