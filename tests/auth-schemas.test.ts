@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   parseSignInForm,
   parseSignUpForm,
+  passwordSchema,
+  updatePasswordSchema,
   signInSchema,
   signUpSchema,
 } from "../features/auth/schemas";
@@ -77,5 +79,13 @@ describe("signInSchema", () => {
     formData.set("password", "");
 
     expect(parseSignInForm(formData).success).toBe(false);
+  });
+});
+
+describe("passwordSchema", () => {
+  it("keeps sign-up and recovery on the same password length policy", () => {
+    expect(passwordSchema.safeParse("Abc123").success).toBe(false);
+    expect(updatePasswordSchema.safeParse({ password: "Abc123" }).success).toBe(false);
+    expect(updatePasswordSchema.safeParse({ password: "Abcd1234" }).success).toBe(true);
   });
 });

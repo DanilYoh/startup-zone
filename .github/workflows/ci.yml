@@ -27,6 +27,8 @@ jobs:
         run: npm ci
       - name: Lint, type-check, and test
         run: npm run check
+      - name: Enforce test coverage thresholds
+        run: npm run test:coverage
       - name: Build production bundle
         run: npm run build
 
