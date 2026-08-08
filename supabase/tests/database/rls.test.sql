@@ -1,25 +1,75 @@
 begin;
 
-select plan(17);
+select plan(24);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
-  ('10000000-0000-0000-0000-000000000001', 'founder@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000002', 'specialist@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000003', 'applicant@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000004', 'other-founder@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000005', 'investor@example.test', '{}');
+  (
+    '10000000-0000-0000-0000-000000000001',
+    'founder@example.test',
+    '{"role":"founder","full_name":"Test Founder"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000002',
+    'specialist@example.test',
+    '{"role":"specialist","full_name":"Test Specialist"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000003',
+    'applicant@example.test',
+    '{"role":"specialist","full_name":"Test Applicant"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000004',
+    'other-founder@example.test',
+    '{"role":"founder","full_name":"Other Founder"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000005',
+    'investor@example.test',
+    '{"role":"investor","full_name":"Test Investor"}'
+  );
 
-update public.profiles
-set role = 'team_seeker'
-where id in (
-  '10000000-0000-0000-0000-000000000002',
-  '10000000-0000-0000-0000-000000000003'
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000001' $$,
+  $$ values ('founder') $$,
+  'founder onboarding assigns the requested founder role'
 );
 
-update public.profiles
-set role = 'investor'
-where id = '10000000-0000-0000-0000-000000000005';
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000002' $$,
+  $$ values ('specialist') $$,
+  'specialist onboarding assigns the requested specialist role'
+);
+
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000005' $$,
+  $$ values ('investor') $$,
+  'investor onboarding assigns the requested investor role'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000006',
+      'invalid-role@example.test',
+      '{"role":"admin","full_name":"Invalid Role"}'
+    )
+  $$,
+  '%A valid marketplace role is required%',
+  'onboarding rejects roles outside the marketplace enum'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set role = 'investor'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%Profile role cannot be changed after onboarding%',
+  'the database prevents privileged role changes after onboarding'
+);
 
 insert into public.startups (
   founder_id,
@@ -187,10 +237,35 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002
 select lives_ok(
   $$
     update public.profiles
-    set full_name = 'Updated specialist'
+    set
+      full_name = 'Updated Specialist',
+      bio = 'Product and growth specialist.',
+      location = 'Yekaterinburg',
+      avatar_url = 'https://images.example.test/specialist.png',
+      linkedin_url = 'https://www.linkedin.com/in/updated-specialist'
     where id = '10000000-0000-0000-0000-000000000002'
   $$,
-  'a specialist can update an allowed field on their own profile'
+  'a specialist can update every allowed field on their own profile'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set avatar_url = 'javascript:alert(1)'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%profiles_avatar_url_http_check%',
+  'profile avatar URLs are restricted to HTTP and HTTPS'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set linkedin_url = 'https://linkedin.example.com/in/spoofed'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%profiles_linkedin_url_check%',
+  'profile LinkedIn URLs are restricted to the LinkedIn HTTPS origin'
 );
 
 select throws_like(
