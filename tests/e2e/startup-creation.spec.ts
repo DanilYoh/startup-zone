@@ -1,0 +1,84 @@
+import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
+import type { Database } from "../../lib/supabase/types";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  throw new Error(
+    "The startup creation E2E test requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from a local or test Supabase instance.",
+  );
+}
+
+const admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+test("a founder signs in and publishes a persisted startup", async ({ page }) => {
+  const suffix = randomUUID();
+  const email = `founder-${suffix}@example.test`;
+  const password = `Test-${suffix}-password`;
+  const startupTitle = `Climate Lens ${suffix.slice(0, 8)}`;
+  const slug = `climate-lens-${suffix.slice(0, 8)}`;
+  let userId: string | undefined;
+
+  try {
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: "Playwright Founder" },
+    });
+
+    expect(error).toBeNull();
+    expect(data.user).not.toBeNull();
+    userId = data.user?.id;
+
+    await page.goto("/auth/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Login" }).click();
+
+    await expect(page).toHaveURL(/\/protected$/);
+    await page.getByRole("link", { name: "Publish startup" }).first().click();
+    await expect(page).toHaveURL(/\/protected\/startups\/new$/);
+
+    await page.getByLabel("Startup name").fill(startupTitle);
+    await page.getByLabel("Slug").fill(slug);
+    await page.getByLabel("Stage").selectOption("mvp");
+    await page
+      .getByLabel("One-line summary")
+      .fill("Actionable climate analytics for logistics teams.");
+    await page
+      .getByLabel("Description")
+      .fill(
+        "A decision-support platform that helps logistics teams model emissions, compare routes, and reduce operating costs.",
+      );
+    await page.getByLabel("Niches").fill("ClimateTech, B2B SaaS");
+    await page.getByLabel("Funding ask (USD)").fill("250000");
+    await page.getByLabel("Equity offered (%)").fill("8");
+    await page.getByLabel("Website URL").fill("https://example.com");
+    await page.getByRole("button", { name: "Publish startup" }).click();
+
+    await expect(page).toHaveURL(/\/protected$/);
+    await expect(page.getByText(startupTitle, { exact: true })).toBeVisible();
+    await expect(page.getByText("Actionable climate analytics for logistics teams.")).toBeVisible();
+
+    const { data: persistedStartup, error: persistedStartupError } = await admin
+      .from("startups")
+      .select("founder_id, slug, niche")
+      .eq("slug", slug)
+      .single();
+
+    expect(persistedStartupError).toBeNull();
+    expect(persistedStartup).toEqual({
+      founder_id: userId,
+      slug,
+      niche: ["ClimateTech", "B2B SaaS"],
+    });
+  } finally {
+    if (userId) await admin.auth.admin.deleteUser(userId);
+  }
+});
