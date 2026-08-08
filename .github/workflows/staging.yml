@@ -21,6 +21,7 @@ jobs:
       NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
+      SUPABASE_TEST_DB_HOST: ${{ vars.SUPABASE_TEST_DB_HOST }}
       SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
     steps:
       - name: Checkout
@@ -41,6 +42,7 @@ jobs:
             NEXT_PUBLIC_SITE_URL
             SUPABASE_SERVICE_ROLE_KEY
             SUPABASE_TEST_DB_PASSWORD
+            SUPABASE_TEST_DB_HOST
             SUPABASE_TEST_PROJECT_REF
           )
           for name in "${required[@]}"; do
@@ -52,7 +54,7 @@ jobs:
       - name: Build test database URL
         shell: bash
         run: |
-          echo "SUPABASE_TEST_DB_URL=postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${SUPABASE_TEST_DB_PASSWORD}@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
+          echo "SUPABASE_TEST_DB_URL=postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${SUPABASE_TEST_DB_PASSWORD}@${SUPABASE_TEST_DB_HOST}:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
       - name: Apply pending migrations
         run: npx supabase db push --db-url "$SUPABASE_TEST_DB_URL" --include-all --yes
       - name: Test remote database authorization
