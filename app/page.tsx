@@ -85,6 +85,9 @@ export default function Home() {
         >
           <Brand />
           <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link className="transition-colors hover:text-foreground" href="/startups">
+              Startups
+            </Link>
             <a className="transition-colors hover:text-foreground" href="#product">
               Product
             </a>
@@ -135,11 +138,11 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <LinkButton
-                  href={hasEnvVars ? "/auth/sign-up" : "#architecture"}
+                  href="/startups"
                   size="lg"
                   rightSection={<ArrowRight size={16} aria-hidden="true" />}
                 >
-                  {hasEnvVars ? "Create an account" : "Explore the architecture"}
+                  Discover startups
                 </LinkButton>
                 <Button
                   component="a"
@@ -158,7 +161,7 @@ export default function Home() {
               <div className="rounded-2xl border bg-background p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Featured opportunity</p>
+                    <p className="text-sm text-muted-foreground">Example opportunity</p>
                     <h2 className="mt-1 text-xl font-semibold">Climate analytics for logistics</h2>
                   </div>
                   <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-[var(--mantine-color-teal-text)]">
