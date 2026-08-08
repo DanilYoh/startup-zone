@@ -1,15 +1,17 @@
 # Startup Zone
 
-Startup Zone is a full-stack marketplace where founders can present early-stage products, find specialists, and connect with investors. The repository is built as a production-minded portfolio project: it includes a real domain model, authentication, database authorization, automated quality checks, and a reproducible local setup.
+Startup Zone is a production-minded foundation for a future marketplace where founders can present early-stage products, find specialists, and connect with investors. The current repository establishes the secure product shell - domain model, authentication, database authorization, startup creation, automated checks and reproducible setup - rather than claiming a finished end-to-end marketplace.
 
 ## Why this project exists
 
-Early-stage teams usually spread their pitch, hiring, and investor conversations across unrelated tools. Startup Zone brings the first collaboration step into one focused flow:
+Early-stage teams usually spread their pitch, hiring, and investor conversations across unrelated tools. The product vision brings the first collaboration step into one focused flow:
 
 - founders publish a structured startup profile;
 - specialists apply to join a team;
 - investors discover relevant opportunities;
 - PostgreSQL row-level security keeps access rules close to the data.
+
+Only the foundation and startup-creation slice are implemented today; the directory, discovery and application workflows are listed in [Current scope](#current-scope).
 
 ## Tech stack
 
