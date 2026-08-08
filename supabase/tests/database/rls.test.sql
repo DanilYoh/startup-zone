@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(12);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -85,6 +85,44 @@ select lives_ok(
     )
   $$,
   'a founder can create a startup owned by their profile'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, website_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Unsafe link startup',
+      'unsafe-link-startup',
+      'A startup summary with an unsafe link.',
+      'A detailed startup description that attempts to persist an unsafe external link.',
+      'idea',
+      array['Marketplace'],
+      'javascript:alert(1)'
+    )
+  $$,
+  '%startups_website_url_http_check%',
+  'startup links are restricted to HTTP and HTTPS at the database boundary'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, deck_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Unsafe deck startup',
+      'unsafe-deck-startup',
+      'A startup summary with an unsafe deck.',
+      'A detailed startup description that attempts to persist an unsafe pitch-deck link.',
+      'idea',
+      array['Marketplace'],
+      'ftp://example.com/deck'
+    )
+  $$,
+  '%startups_deck_url_http_check%',
+  'pitch-deck links are restricted to HTTP and HTTPS at the database boundary'
 );
 
 reset role;

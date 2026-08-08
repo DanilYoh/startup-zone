@@ -18,8 +18,18 @@ export const startupStageLabels: Record<(typeof startupStages)[number], string> 
   later: "Later stage",
 };
 
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const optionalUrl = z
   .union([z.literal(""), z.string().trim().url("Enter a valid URL")])
+  .refine((value) => value === "" || isHttpUrl(value), "Use an HTTP(S) URL")
   .transform((value) => value || undefined);
 
 export const startupSchema = z.object({
