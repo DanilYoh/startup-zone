@@ -4,8 +4,6 @@ Startup Zone is a marketplace MVP where founders publish projects, specialists f
 
 **[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — the hosted version is read-only. Authentication and startup creation require a configured Supabase environment.
 
-![Startup Zone product preview](docs/startup-zone.png)
-
 ## Current scope
 
 Implemented:
