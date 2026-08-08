@@ -1,36 +1,22 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { startupSchema } from "@/lib/validations";
+import type { TablesInsert } from "@/lib/supabase/types";
+import { parseStartupForm } from "@/lib/startup-form";
+import type { StartupInput } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-type StartupActionError = {
-  error: Record<string, string[] | undefined> | { message: string };
+export type StartupActionState = {
+  status: "idle" | "error";
+  message?: string;
+  errors?: Partial<Record<keyof StartupInput, string[]>>;
 };
 
-function optionalNumber(value: FormDataEntryValue | null) {
-  if (typeof value !== "string" || value.trim() === "") return undefined;
-  return Number(value);
-}
-
-function parseNiches(formData: FormData) {
-  const values = formData
-    .getAll("niche")
-    .filter((value): value is string => typeof value === "string")
-    .flatMap((value) => {
-      try {
-        const parsed: unknown = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : value.split(",");
-      } catch {
-        return value.split(",");
-      }
-    });
-
-  return values.map(String).map((value) => value.trim()).filter(Boolean);
-}
-
-export async function createStartup(formData: FormData): Promise<StartupActionError | never> {
+export async function createStartup(
+  _previousState: StartupActionState,
+  formData: FormData,
+): Promise<StartupActionState> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,30 +24,59 @@ export async function createStartup(formData: FormData): Promise<StartupActionEr
 
   if (!user) redirect("/auth/login");
 
-  const validated = startupSchema.safeParse({
-    title: formData.get("title"),
-    slug: formData.get("slug"),
-    one_pager: formData.get("one_pager"),
-    description: formData.get("description"),
-    stage: formData.get("stage"),
-    niche: parseNiches(formData),
-    funding_ask: optionalNumber(formData.get("funding_ask")),
-    equity_offered: optionalNumber(formData.get("equity_offered")),
-    deck_url: formData.get("deck_url"),
-    website_url: formData.get("website_url"),
-  });
+  const validated = parseStartupForm(formData);
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (!validated.success) {
-    return { error: validated.error.flatten().fieldErrors };
+  if (profileError) {
+    console.error("Unable to authorize startup creation", { code: profileError.code });
+    return {
+      status: "error",
+      message: "Could not verify your founder profile. Please try again.",
+    };
   }
 
-  const { error } = await supabase.from("startups").insert({
+  if (profile?.role !== "founder") {
+    return {
+      status: "error",
+      message: "Only founder profiles can publish startups.",
+    };
+  }
+
+  if (!validated.success) {
+    return {
+      status: "error",
+      message: "Review the highlighted fields and try again.",
+      errors: validated.error.flatten().fieldErrors,
+    };
+  }
+
+  const startup: TablesInsert<"startups"> = {
     founder_id: user.id,
     ...validated.data,
-  });
+    deck_url: validated.data.deck_url ?? null,
+    website_url: validated.data.website_url ?? null,
+  };
+
+  const { error } = await supabase.from("startups").insert(startup);
 
   if (error) {
-    return { error: { message: "Could not create the startup. Please try again." } };
+    if (error.code === "23505") {
+      return {
+        status: "error",
+        message: "Choose a different slug and try again.",
+        errors: { slug: ["This slug is already in use"] },
+      };
+    }
+
+    console.error("Unable to create startup", { code: error.code });
+    return {
+      status: "error",
+      message: "Could not create the startup. Please try again.",
+    };
   }
 
   revalidatePath("/protected");
