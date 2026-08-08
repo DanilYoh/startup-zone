@@ -25,7 +25,7 @@ const roles: ReadonlyArray<{ role: UserRole; label: string }> = [
 for (const { role, label } of roles) {
   test(`a new ${role} chooses a locked role and edits their profile`, async ({ page }) => {
     const suffix = randomUUID();
-    const email = `${role}-${suffix}@example.test`;
+    const email = `${role}-${suffix}@example.com`;
     const password = `Test-${suffix}-password`;
     const initialName = `${label} Onboarding`;
     const updatedName = `${label} Profile`;
