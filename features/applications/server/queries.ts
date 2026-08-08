@@ -66,3 +66,38 @@ export async function listMyApplications() {
   return { status: "ready" as const, data };
 }
 
+export async function listFounderApplications() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth/login");
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Unable to authorize founder inbox", { code: profileError.code });
+    return { status: "error" as const };
+  }
+
+  if (profile?.role !== "founder") return { status: "forbidden" as const };
+
+  const { data, error } = await supabase
+    .from("applications")
+    .select(
+      "id, type, message, status, created_at, applicant:profiles!applications_applicant_id_fkey(full_name, bio, location, linkedin_url), startup:startups!applications_startup_id_fkey(id, title, slug)",
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Unable to list founder applications", { code: error.code });
+    return { status: "error" as const };
+  }
+
+  return { status: "ready" as const, data };
+}
