@@ -128,6 +128,11 @@ async function ProtectedContent() {
                       </Badge>
                     ))}
                   </Group>
+                  {startup.is_active && (
+                    <LinkButton href={`/startups/${startup.slug}`} variant="subtle" px={0}>
+                      View public page
+                    </LinkButton>
+                  )}
                 </Stack>
               </Paper>
             ))}
