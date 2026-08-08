@@ -44,7 +44,7 @@ export default async function FounderApplicationsPage() {
           <Stack gap="md" align="flex-start">
             <Title order={2} size="h4">No incoming applications</Title>
             <Text c="dimmed">Applications to your active startups will appear here.</Text>
-            <LinkButton href="/protected">Back to dashboard</LinkButton>
+            <LinkButton href="/dashboard">Back to dashboard</LinkButton>
           </Stack>
         </Paper>
       ) : (
@@ -94,4 +94,3 @@ export default async function FounderApplicationsPage() {
     </Stack>
   );
 }
-

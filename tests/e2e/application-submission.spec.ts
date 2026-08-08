@@ -85,7 +85,7 @@ for (const scenario of applicantRoles) {
       await page.getByLabel("Email").fill(applicantEmail);
       await page.locator("#password").fill(password);
       await page.getByRole("button", { name: "Login" }).click();
-      await expect(page).toHaveURL(/\/protected$/);
+      await expect(page).toHaveURL(/\/dashboard$/);
 
       await page.goto(`/startups/${slug}`);
       await page.getByLabel(scenario.fieldLabel).fill(message);
