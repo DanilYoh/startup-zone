@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               Startup Zone
             </Link>
             <Group gap="md" className="hidden sm:flex">
-              <Link href="/protected" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+              <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
                 Dashboard
               </Link>
               <Link href="/dashboard/profile" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
@@ -38,7 +38,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             aria-label="Dashboard sections"
             className="flex w-full gap-4 overflow-x-auto border-t pt-3 sm:hidden"
           >
-            <Link href="/protected" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
+            <Link href="/dashboard" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">
               Dashboard
             </Link>
             <Link href="/dashboard/profile" className="shrink-0 text-sm text-indigo-600 dark:text-indigo-400">

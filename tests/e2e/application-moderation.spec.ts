@@ -94,7 +94,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
     await page.getByLabel("Email").fill(founderEmail);
     await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Login" }).click();
-    await expect(page).toHaveURL(/\/protected$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
 
     await page.goto("/dashboard/applications/inbox");
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
@@ -119,4 +119,3 @@ test("a founder accepts a pending application to their startup", async ({ page }
     if (founderId) await admin.auth.admin.deleteUser(founderId);
   }
 });
-
