@@ -9,23 +9,30 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: {
+    default: "Startup Zone — Build the right founding team",
+    template: "%s · Startup Zone",
+  },
+  description:
+    "A full-stack marketplace connecting startup founders, specialists, and early-stage investors.",
+  keywords: ["startups", "founders", "investors", "Next.js", "Supabase"],
+  authors: [{ name: "DanilYoh", url: "https://github.com/DanilYoh" }],
+  openGraph: {
+    title: "Startup Zone",
+    description: "Find the right people to move a startup forward.",
+    type: "website",
+  },
 };
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   display: "swap",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
