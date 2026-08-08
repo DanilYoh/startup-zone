@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { Button } from "./ui/button";
+import { Group, Text } from "@mantine/core";
 import { createClient } from "@/lib/supabase/server";
+import { LinkButton } from "./link-button";
 import { LogoutButton } from "./logout-button";
 
 export async function AuthButton() {
@@ -12,20 +12,20 @@ export async function AuthButton() {
   const user = data?.claims;
 
   return user ? (
-    <div className="flex items-center gap-2">
-      <span className="hidden max-w-48 truncate text-sm text-muted-foreground lg:inline">
+    <Group gap="xs" wrap="nowrap">
+      <Text size="sm" c="dimmed" className="hidden max-w-48 truncate lg:block">
         {typeof user.email === "string" ? user.email : "Signed in"}
-      </span>
+      </Text>
       <LogoutButton />
-    </div>
+    </Group>
   ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/auth/login">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/auth/sign-up">Sign up</Link>
-      </Button>
-    </div>
+    <Group gap="xs" wrap="nowrap">
+      <LinkButton href="/auth/login" size="compact-sm" variant="outline">
+        Sign in
+      </LinkButton>
+      <LinkButton href="/auth/sign-up" size="compact-sm">
+        Sign up
+      </LinkButton>
+    </Group>
   );
 }

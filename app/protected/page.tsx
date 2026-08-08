@@ -1,10 +1,18 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LinkButton } from "@/components/link-button";
 import { createClient } from "@/lib/supabase/server";
 import { startupStageLabels } from "@/lib/validations";
+import {
+  Badge,
+  Group,
+  Paper,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from "@mantine/core";
 import { CheckCircle2, Plus, Rocket, ShieldCheck } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -32,34 +40,35 @@ async function ProtectedContent() {
 
   return (
     <div className="grid w-full gap-8">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+      <Paper component="section" withBorder shadow="xs" radius="lg" p={{ base: "md", sm: "xl" }}>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+            <ThemeIcon size={44} radius="md" color="teal" variant="light">
               <ShieldCheck className="size-5" aria-hidden="true" />
-            </span>
+            </ThemeIcon>
             <div>
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              <Text size="sm" fw={500} c="teal">
                 Verified server session
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+              </Text>
+              <Title order={1} size="h2" mt={4}>
                 {isFounder ? "Founder dashboard" : "Startup Zone dashboard"}
-              </h1>
-              <p className="mt-2 text-muted-foreground">Signed in as {user.email ?? "a verified user"}.</p>
+              </Title>
+              <Text mt="xs" c="dimmed">Signed in as {user.email ?? "a verified user"}.</Text>
             </div>
           </div>
           {isFounder && (
-            <Button asChild size="lg">
-              <Link href="/protected/startups/new">
-                <Plus aria-hidden="true" />
-                Publish startup
-              </Link>
-            </Button>
+            <LinkButton
+              href="/protected/startups/new"
+              size="md"
+              leftSection={<Plus size={18} aria-hidden="true" />}
+            >
+              Publish startup
+            </LinkButton>
           )}
         </div>
 
         <div className="mt-8 border-t pt-6">
-          <h2 className="font-semibold">Security boundary</h2>
+          <Title order={2} size="h4">Security boundary</Title>
           <ul className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
             {[
               "Server-side user verification",
@@ -74,80 +83,74 @@ async function ProtectedContent() {
             ))}
           </ul>
         </div>
-      </section>
+      </Paper>
 
       <section aria-labelledby="your-startups-heading" className="grid gap-4">
         <div>
-          <h2 id="your-startups-heading" className="text-xl font-semibold tracking-tight">
+          <Title order={2} id="your-startups-heading" size="h3">
             Your startups
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </Title>
+          <Text mt={4} size="sm" c="dimmed">
             Projects published through your founder profile.
-          </p>
+          </Text>
         </div>
 
         {profileError || startupsError ? (
-          <Card>
-            <CardContent className="py-8 text-sm text-muted-foreground">
-              Your startups could not be loaded. Please refresh and try again.
-            </CardContent>
-          </Card>
+          <Paper withBorder radius="lg" p="xl">
+            <Text size="sm" c="dimmed">Your startups could not be loaded. Please refresh and try again.</Text>
+          </Paper>
         ) : !isFounder ? (
-          <Card>
-            <CardContent className="py-8 text-sm text-muted-foreground">
-              A founder profile is required to publish and manage startups.
-            </CardContent>
-          </Card>
+          <Paper withBorder radius="lg" p="xl">
+            <Text size="sm" c="dimmed">A founder profile is required to publish and manage startups.</Text>
+          </Paper>
         ) : startups?.length ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             {startups.map((startup) => (
-              <Card key={startup.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
+              <Paper key={startup.id} withBorder shadow="xs" radius="lg" p="lg">
+                <Stack gap="md">
+                  <Group justify="space-between" align="flex-start" wrap="nowrap">
                     <div>
-                      <CardTitle>{startup.title}</CardTitle>
-                      <CardDescription className="mt-1">/{startup.slug}</CardDescription>
+                      <Title order={3} size="h4">{startup.title}</Title>
+                      <Text mt={4} size="sm" c="dimmed">/{startup.slug}</Text>
                     </div>
-                    <Badge variant={startup.is_active ? "default" : "secondary"}>
+                    <Badge color={startup.is_active ? "indigo" : "gray"} variant="light">
                       {startup.is_active ? "Active" : "Inactive"}
                     </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <p className="text-sm text-muted-foreground">{startup.one_pager}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">
+                  </Group>
+                  <Text size="sm" c="dimmed">{startup.one_pager}</Text>
+                  <Group gap="xs">
+                    <Badge variant="outline" color="gray">
                       {startupStageLabels[startup.stage]}
                     </Badge>
                     {startup.niche.map((item) => (
-                      <Badge key={item} variant="secondary">
+                      <Badge key={item} variant="light" color="gray">
                         {item}
                       </Badge>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
+                  </Group>
+                </Stack>
+              </Paper>
             ))}
-          </div>
+          </SimpleGrid>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-start gap-4 py-10">
-              <span className="grid size-10 place-items-center rounded-lg bg-muted">
+          <Paper withBorder radius="lg" p="xl">
+            <Stack gap="md" align="flex-start">
+              <ThemeIcon color="gray" variant="light" size={40} radius="md">
                 <Rocket className="size-5" aria-hidden="true" />
-              </span>
+              </ThemeIcon>
               <div>
-                <h3 className="font-semibold">No startups yet</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <Title order={3} size="h4">No startups yet</Title>
+                <Text mt={4} size="sm" c="dimmed">
                   Publish the first project to make it available through the persisted marketplace data.
-                </p>
+                </Text>
               </div>
               {isFounder && (
-                <Button asChild>
-                  <Link href="/protected/startups/new">Publish your first startup</Link>
-                </Button>
+                <LinkButton href="/protected/startups/new">
+                  Publish your first startup
+                </LinkButton>
               )}
-            </CardContent>
-          </Card>
+            </Stack>
+          </Paper>
         )}
       </section>
     </div>
@@ -156,7 +159,7 @@ async function ProtectedContent() {
 
 export default function ProtectedPage() {
   return (
-    <Suspense fallback={<div className="h-72 w-full animate-pulse rounded-2xl bg-muted" />}>
+    <Suspense fallback={<Skeleton height={288} radius="lg" />}>
       <ProtectedContent />
     </Suspense>
   );

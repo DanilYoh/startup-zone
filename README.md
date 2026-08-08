@@ -23,7 +23,7 @@ Only the foundation and startup-publishing slice are implemented today; the dire
 - React 19 and strict TypeScript
 - Supabase Auth, PostgreSQL, and row-level security
 - Zod validation for server-side input boundaries
-- Tailwind CSS and accessible Radix UI primitives
+- Mantine UI components with Tailwind CSS for layout utilities
 - Vitest for unit tests
 - pgTAP integration tests for database authorization
 - Playwright for the startup-publishing critical path

@@ -1,17 +1,16 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Alert,
+  Anchor,
+  Button,
+  Paper,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -45,60 +44,52 @@ export function ForgotPasswordForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={className} {...props}>
       {success ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
+        <Paper withBorder shadow="sm" radius="lg" p="xl">
+          <Stack gap="md">
+            <div>
+              <Title order={1} size="h2">Check Your Email</Title>
+              <Text c="dimmed" size="sm" mt={4}>Password reset instructions sent</Text>
+            </div>
+            <Text size="sm" c="dimmed">
               If you registered using your email and password, you will receive
               a password reset email.
-            </p>
-          </CardContent>
-        </Card>
+            </Text>
+          </Stack>
+        </Paper>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-            <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Paper withBorder shadow="sm" radius="lg" p="xl">
+          <Stack gap="lg">
+            <div>
+              <Title order={1} size="h2">Reset Your Password</Title>
+              <Text c="dimmed" size="sm" mt={4}>
+                Type in your email and we&apos;ll send you a link to reset your password
+              </Text>
+            </div>
             <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
+              <Stack gap="md">
+                <TextInput
+                  id="email"
+                  type="email"
+                  label="Email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.currentTarget.value)}
+                />
+                {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
+                <Button type="submit" fullWidth loading={isLoading}>
+                  Send reset email
                 </Button>
-              </div>
-              <div className="mt-4 text-center text-sm">
+              </Stack>
+              <Text mt="md" ta="center" size="sm">
                 Already have an account?{" "}
-                <Link
-                  href="/auth/login"
-                  className="underline underline-offset-4"
-                >
-                  Login
-                </Link>
-              </div>
+                <Anchor component={Link} href="/auth/login">Login</Anchor>
+              </Text>
             </form>
-          </CardContent>
-        </Card>
+          </Stack>
+        </Paper>
       )}
     </div>
   );
