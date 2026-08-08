@@ -20,6 +20,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Link href="/dashboard/profile" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
                 Profile
               </Link>
+              <Link href="/dashboard/applications" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+                Applications
+              </Link>
             </Group>
           </Group>
           <div className="flex items-center gap-2">

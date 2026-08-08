@@ -34,7 +34,7 @@ export async function getActiveStartupBySlug(slug: string) {
     const { data, error } = await supabase
       .from("startups")
       .select(
-        "id, title, slug, one_pager, description, stage, niche, funding_ask, equity_offered, website_url, deck_url, created_at, founder:profiles!startups_founder_id_fkey(full_name, location)",
+        "id, founder_id, title, slug, one_pager, description, stage, niche, funding_ask, equity_offered, website_url, deck_url, created_at, founder:profiles!startups_founder_id_fkey(full_name, location)",
       )
       .eq("is_active", true)
       .eq("slug", slug)

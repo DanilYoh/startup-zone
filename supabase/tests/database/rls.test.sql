@@ -1,6 +1,6 @@
 begin;
 
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -326,6 +326,36 @@ select lives_ok(
     where slug = 'existing-startup'
   $$,
   'a specialist can apply to an active startup owned by another user'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000003',
+      'team',
+      'I should not be able to submit an application for another user.'
+    from public.startups
+    where slug = 'existing-startup'
+  $$,
+  '%row-level security%',
+  'an applicant cannot spoof applicant_id'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'This duplicate should be rejected by the database constraint.'
+    from public.startups
+    where slug = 'existing-startup'
+  $$,
+  '%applications_startup_id_applicant_id_type_key%',
+  'duplicate applications cannot be created'
 );
 
 select throws_like(

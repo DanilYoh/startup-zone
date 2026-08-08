@@ -12,12 +12,13 @@ Implemented:
 - protected profile editing with immutable marketplace roles;
 - protected founder dashboard;
 - persisted startup creation and management with server-side Zod validation;
+- specialist applications and investor interest requests with status tracking;
 - filterable public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - responsive light and dark UI;
 - Vitest, Playwright, and GitHub Actions coverage for core flows.
 
-Planned: specialist and investor applications, application moderation, and production observability.
+Planned: founder application moderation and production observability.
 
 ## Stack
 
