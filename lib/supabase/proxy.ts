@@ -9,9 +9,16 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // If the env vars are not set, skip proxy check. You can remove this
-  // once you setup the project.
+  // Keep the hosted read-only demo away from routes that require a Supabase
+  // client. Public pages render their existing unconfigured state instead.
   if (!hasEnvVars) {
+    if (isProtectedPathname(request.nextUrl.pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
     return supabaseResponse;
   }
 
