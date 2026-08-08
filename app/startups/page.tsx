@@ -96,6 +96,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
             leftSection={<Search size={16} aria-hidden="true" />}
           />
           <NativeSelect
+            id="directory-stage"
             name="stage"
             label="Stage"
             defaultValue={filters.stage ?? ""}
@@ -108,6 +109,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
             ]}
           />
           <TextInput
+            id="directory-niche"
             name="niche"
             label="Exact niche"
             placeholder="ClimateTech"

@@ -1,6 +1,6 @@
 # Startup Zone
 
-Startup Zone is a production-minded foundation for a future marketplace where founders can present early-stage products, find specialists, and connect with investors. The current repository establishes the secure product shell and a complete startup-publishing slice: authenticated founders can submit persisted projects and see them on their dashboard.
+Startup Zone is a production-minded foundation for a marketplace where founders can present early-stage products, find specialists, and connect with investors. The current repository includes complete startup-publishing and public-discovery slices: authenticated founders can submit persisted projects, see them on their dashboard, and expose active projects through a filterable public directory and detail pages.
 
 **[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — it runs in read-only demo mode; authentication and startup creation require your own Supabase environment.
 
@@ -15,7 +15,7 @@ Early-stage teams usually spread their pitch, hiring, and investor conversations
 - investors discover relevant opportunities;
 - PostgreSQL row-level security keeps access rules close to the data.
 
-Only the foundation and startup-publishing slice are implemented today; the directory, discovery and application workflows are listed in [Current scope](#current-scope).
+The foundation, startup-publishing flow, and public discovery are implemented today; profile editing and application workflows are listed in [Current scope](#current-scope).
 
 ## Tech stack
 
@@ -26,7 +26,7 @@ Only the foundation and startup-publishing slice are implemented today; the dire
 - Mantine UI components with Tailwind CSS for layout utilities
 - Vitest for unit tests
 - pgTAP integration tests for database authorization
-- Playwright for the startup-publishing critical path
+- Playwright for the startup-publishing and public-discovery critical path
 - GitHub Actions for linting, type-checking, tests, and production builds
 
 ## Architecture
@@ -82,9 +82,9 @@ npm run build
 
 ## Current scope
 
-Implemented: authentication foundation, role-aware database schema, founder dashboard, persisted startup form, hardened RLS with integration tests, one startup-publishing Playwright scenario, responsive product landing page, dark mode, and CI.
+Implemented: authentication foundation, role-aware database schema, founder dashboard, persisted startup form, active-startup directory with validated filters, public startup detail pages, hardened RLS with integration tests, a publishing-to-discovery Playwright scenario, responsive product UI, dark mode, and CI.
 
-Next: startup directory and filters, profile editing, application status UI, broader end-to-end coverage, and deployment observability.
+Next: profile editing, specialist and investor applications, application status moderation, broader end-to-end coverage, and deployment observability.
 
 ## Author
 
