@@ -74,6 +74,8 @@ export function SignUpForm({
                 label="Password"
                 autoComplete="new-password"
                 required
+                minLength={8}
+                maxLength={72}
                 error={fieldError("password")}
               />
               <PasswordInput
@@ -82,6 +84,8 @@ export function SignUpForm({
                 label="Repeat password"
                 autoComplete="new-password"
                 required
+                minLength={8}
+                maxLength={72}
                 error={fieldError("repeat_password")}
               />
               {state.message && (
@@ -103,4 +107,3 @@ export function SignUpForm({
     </div>
   );
 }
-

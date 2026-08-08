@@ -5,8 +5,13 @@
 Use three isolated Supabase environments:
 
 - local development, created by `npx supabase start`;
-- test, containing synthetic data only and disposable credentials;
+- demo/test, containing synthetic data only and disposable credentials;
 - production, available only to the deployment runtime and approved operators.
+
+The public portfolio deployment may use the demo/test project so visitors can
+complete the marketplace flows. Its runtime receives only the project URL and
+publishable key. Never configure the service-role key in Vercel or another
+public application runtime.
 
 CI starts a fresh local Supabase stack, resets it from every migration with
 `npx supabase db reset --local --no-seed`, runs pgTAP, builds the production
@@ -28,6 +33,18 @@ local test stack. Never push the test Auth configuration to production.
 The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
 the public demo.
+
+Populate the isolated demo/test project with repeatable synthetic marketplace
+data from a trusted operator machine:
+
+```bash
+npm run demo:seed
+```
+
+The command reads `NEXT_PUBLIC_SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`, creates a non-interactive synthetic founder, and
+upserts the documented demo startups. Run it only against a verified
+non-production project.
 
 ## Release gate
 
