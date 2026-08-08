@@ -1,48 +1,53 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Laptop, Moon, Sun, SunMoon } from "lucide-react";
-import { useTheme } from "next-themes";
+  ActionIcon,
+  type MantineColorScheme,
+  Menu,
+  MenuDropdown,
+  MenuItem,
+  MenuTarget,
+  useMantineColorScheme,
+} from "@mantine/core";
+import { Check, Laptop, Moon, Sun, SunMoon } from "lucide-react";
+
+const themes: ReadonlyArray<{
+  value: MantineColorScheme;
+  label: string;
+  icon: typeof Sun;
+}> = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "auto", label: "System", icon: Laptop },
+];
 
 const ThemeSwitcher = () => {
-  const { theme, setTheme } = useTheme();
-
-  const ICON_SIZE = 16;
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"} aria-label="Choose color theme">
-          <SunMoon size={ICON_SIZE} className="text-muted-foreground" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
-          value={theme ?? "system"}
-          onValueChange={(value: string) => setTheme(value)}
-        >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Light</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Dark</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Menu position="bottom-end" shadow="md" width={160}>
+      <MenuTarget>
+        <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Choose color theme">
+          <SunMoon size={18} aria-hidden="true" />
+        </ActionIcon>
+      </MenuTarget>
+      <MenuDropdown>
+        {themes.map(({ value, label, icon: Icon }) => (
+          <MenuItem
+            key={value}
+            leftSection={<Icon size={16} aria-hidden="true" />}
+            rightSection={
+              colorScheme === value ? <Check size={14} aria-hidden="true" /> : undefined
+            }
+            role="menuitemradio"
+            aria-checked={colorScheme === value}
+            onClick={() => setColorScheme(value)}
+          >
+            {label}
+          </MenuItem>
+        ))}
+      </MenuDropdown>
+    </Menu>
   );
 };
 

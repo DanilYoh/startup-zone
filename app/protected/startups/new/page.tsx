@@ -1,8 +1,7 @@
+import { LinkButton } from "@/components/link-button";
 import { StartupForm } from "@/components/startup-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import { Paper, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -22,41 +21,39 @@ async function NewStartupContent() {
 
   if (error || !profile) {
     return (
-      <Card className="mx-auto w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle>Founder profile unavailable</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 text-sm text-muted-foreground">
-          <p>We could not verify your profile. Try again before publishing a startup.</p>
-          <Button asChild variant="outline" className="w-fit">
-            <Link href="/protected">Back to dashboard</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <Paper withBorder shadow="xs" radius="lg" p="xl" className="mx-auto w-full max-w-2xl">
+        <Stack gap="md" align="flex-start">
+          <Title order={1} size="h3">Founder profile unavailable</Title>
+          <Text size="sm" c="dimmed">
+            We could not verify your profile. Try again before publishing a startup.
+          </Text>
+          <LinkButton href="/protected" variant="outline">
+            Back to dashboard
+          </LinkButton>
+        </Stack>
+      </Paper>
     );
   }
 
   if (profile.role !== "founder") {
     return (
-      <Card className="mx-auto w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle>Founder profile required</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 text-sm text-muted-foreground">
-          <p>Only founder profiles can publish startups.</p>
-          <Button asChild variant="outline" className="w-fit">
-            <Link href="/protected">Back to dashboard</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <Paper withBorder shadow="xs" radius="lg" p="xl" className="mx-auto w-full max-w-2xl">
+        <Stack gap="md" align="flex-start">
+          <Title order={1} size="h3">Founder profile required</Title>
+          <Text size="sm" c="dimmed">Only founder profiles can publish startups.</Text>
+          <LinkButton href="/protected" variant="outline">
+            Back to dashboard
+          </LinkButton>
+        </Stack>
+      </Paper>
     );
   }
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-5">
-      <Button asChild variant="ghost" className="w-fit">
-        <Link href="/protected">← Back to dashboard</Link>
-      </Button>
+      <LinkButton href="/protected" variant="subtle" className="w-fit">
+        ← Back to dashboard
+      </LinkButton>
       <StartupForm />
     </div>
   );
@@ -64,7 +61,7 @@ async function NewStartupContent() {
 
 export default function NewStartupPage() {
   return (
-    <Suspense fallback={<div className="mx-auto h-[44rem] w-full max-w-3xl animate-pulse rounded-2xl bg-muted" />}>
+    <Suspense fallback={<Skeleton height="44rem" radius="lg" className="mx-auto w-full max-w-3xl" />}>
       <NewStartupContent />
     </Suspense>
   );

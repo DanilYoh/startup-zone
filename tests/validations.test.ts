@@ -34,4 +34,14 @@ describe("startupSchema", () => {
     const result = startupSchema.safeParse({ ...validStartup, deck_url: "", website_url: "" });
     expect(result.success).toBe(true);
   });
+
+  it("rejects non-HTTP startup links", () => {
+    for (const links of [
+      { website_url: "javascript:alert(1)" },
+      { deck_url: "ftp://example.com/file" },
+    ]) {
+      const result = startupSchema.safeParse({ ...validStartup, ...links });
+      expect(result.success).toBe(false);
+    }
+  });
 });
