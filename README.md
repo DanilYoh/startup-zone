@@ -18,7 +18,7 @@ Implemented:
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - structured server logs, unexpected request capture, application rate limiting, and decision auditing;
 - responsive light and dark UI;
-- Vitest, Playwright, and GitHub Actions coverage for core flows.
+- Vitest, React Testing Library, Playwright, and GitHub Actions coverage for core flows.
 
 Deployment gates, environment isolation, monitoring expectations, and backup/restore drills are documented in [operations](docs/operations.md). Connecting a production log destination and enabling managed backups remain deployment-environment responsibilities.
 
@@ -26,7 +26,7 @@ The public demo never uses production data or a service-role key at runtime. Ope
 
 ## Stack
 
-Next.js 16, React 19, strict TypeScript, Mantine UI, Tailwind CSS, Supabase Auth and PostgreSQL, Zod, Vitest, pgTAP, and Playwright.
+Next.js 16, React 19, strict TypeScript, Mantine UI, Tailwind CSS, Supabase Auth and PostgreSQL, Zod, Vitest with React Testing Library, pgTAP, and Playwright.
 
 Server Components handle reads, Server Actions handle validated mutations, and PostgreSQL RLS enforces ownership independently of the UI.
 
@@ -56,7 +56,7 @@ npm run test:rls
 npm run test:e2e
 ```
 
-`npm run check` runs linting, type-checking, and unit tests. RLS and E2E tests require a local or explicitly designated test Supabase environment; E2E also requires `SUPABASE_SERVICE_ROLE_KEY`.
+`npm run check` runs linting, type-checking, unit tests, and component tests. RLS and E2E tests require a local or explicitly designated test Supabase environment; E2E also requires `SUPABASE_SERVICE_ROLE_KEY`.
 
 For clean migration verification, release checks, environment separation, logging, rate limits, and recovery procedures, see [docs/operations.md](docs/operations.md).
 
