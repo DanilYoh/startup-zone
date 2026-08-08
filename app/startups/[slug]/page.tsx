@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/link-button";
+import { ApplicationPanel } from "@/features/applications/components/application-panel";
 import { getActiveStartupBySlug } from "@/lib/supabase/startups";
 import { startupStageLabels } from "@/lib/validations";
 import {
@@ -217,13 +218,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
       </SimpleGrid>
 
       <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
-        <Title order={2} size="h3">
-          Interested in this project?
-        </Title>
-        <Text mt="xs" c="dimmed" maw={720}>
-          Specialist and investor applications are the next marketplace workflow. This page
-          currently provides verified discovery data without claiming an unavailable contact flow.
-        </Text>
+        <ApplicationPanel startupId={startup.id} founderId={startup.founder_id} />
       </Paper>
     </Stack>
   );

@@ -22,6 +22,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
   const password = `Test-${suffix}-password`;
   const startupTitle = `Climate Lens ${suffix.slice(0, 8)}`;
   const slug = `climate-lens-${suffix.slice(0, 8)}`;
+  const updatedSummary = "Updated climate analytics for logistics operators.";
   let userId: string | undefined;
 
   try {
@@ -29,7 +30,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Playwright Founder" },
+      user_metadata: { full_name: "Playwright Founder", role: "founder" },
     });
 
     expect(error).toBeNull();
@@ -66,14 +67,27 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
     await expect(page.getByText(startupTitle, { exact: true })).toBeVisible();
     await expect(page.getByText("Actionable climate analytics for logistics teams.")).toBeVisible();
 
-    await page.getByRole("link", { name: "View public page" }).click();
+    const startupCard = page.getByRole("article", { name: startupTitle });
+    await startupCard.getByRole("link", { name: "Edit" }).click();
+    await expect(page).toHaveURL(/\/protected\/startups\/\d+\/edit$/);
+    await page.locator("#edit-one_pager").fill(updatedSummary);
+    await page.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(page).toHaveURL(/\/protected$/);
+    await expect(startupCard.getByText(updatedSummary, { exact: true })).toBeVisible();
+
+    await startupCard.getByRole("button", { name: "Deactivate" }).click();
+    await expect(startupCard.getByText("Inactive", { exact: true })).toBeVisible();
+    await expect(startupCard.getByRole("link", { name: "View public page" })).toHaveCount(0);
+
+    await startupCard.getByRole("button", { name: "Republish" }).click();
+    await expect(startupCard.getByText("Active", { exact: true })).toBeVisible();
+
+    await startupCard.getByRole("link", { name: "View public page" }).click();
     await expect(page).toHaveURL(new RegExp(`/startups/${slug}$`));
-    await expect(page.getByRole("heading", { level: 1, name: startupTitle })).toBeVisible();
-    await expect(
-      page.getByText(
-        "A decision-support platform that helps logistics teams model emissions, compare routes, and reduce operating costs.",
-      ),
-    ).toBeVisible();
+    const publicHeading = page.getByRole("heading", { level: 1, name: startupTitle });
+    await expect(publicHeading).toBeVisible();
+    await expect(publicHeading.locator("..").getByText(updatedSummary, { exact: true })).toBeVisible();
     await expect(page.getByText("$250,000", { exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: "All startups" }).click();

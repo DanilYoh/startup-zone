@@ -248,5 +248,6 @@ Prefer a small complete workflow over several partial screens.
 - Introduce background jobs only for work that cannot safely complete within a
   request, such as durable retries or long-running processing.
 - Add observability through Next.js instrumentation and structured server logs
-  when production monitoring is implemented; keep product modules independent
-  of a specific monitoring vendor.
+  and keep product modules independent of a specific monitoring vendor. The
+  release, monitoring, and recovery procedures are defined in
+  [`docs/operations.md`](operations.md).

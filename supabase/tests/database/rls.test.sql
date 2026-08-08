@@ -1,25 +1,75 @@
 begin;
 
-select plan(17);
+select plan(35);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
-  ('10000000-0000-0000-0000-000000000001', 'founder@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000002', 'specialist@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000003', 'applicant@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000004', 'other-founder@example.test', '{}'),
-  ('10000000-0000-0000-0000-000000000005', 'investor@example.test', '{}');
+  (
+    '10000000-0000-0000-0000-000000000001',
+    'founder@example.test',
+    '{"role":"founder","full_name":"Test Founder"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000002',
+    'specialist@example.test',
+    '{"role":"specialist","full_name":"Test Specialist"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000003',
+    'applicant@example.test',
+    '{"role":"specialist","full_name":"Test Applicant"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000004',
+    'other-founder@example.test',
+    '{"role":"founder","full_name":"Other Founder"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000005',
+    'investor@example.test',
+    '{"role":"investor","full_name":"Test Investor"}'
+  );
 
-update public.profiles
-set role = 'team_seeker'
-where id in (
-  '10000000-0000-0000-0000-000000000002',
-  '10000000-0000-0000-0000-000000000003'
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000001' $$,
+  $$ values ('founder') $$,
+  'founder onboarding assigns the requested founder role'
 );
 
-update public.profiles
-set role = 'investor'
-where id = '10000000-0000-0000-0000-000000000005';
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000002' $$,
+  $$ values ('specialist') $$,
+  'specialist onboarding assigns the requested specialist role'
+);
+
+select results_eq(
+  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000005' $$,
+  $$ values ('investor') $$,
+  'investor onboarding assigns the requested investor role'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000006',
+      'invalid-role@example.test',
+      '{"role":"admin","full_name":"Invalid Role"}'
+    )
+  $$,
+  '%A valid marketplace role is required%',
+  'onboarding rejects roles outside the marketplace enum'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set role = 'investor'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%Profile role cannot be changed after onboarding%',
+  'the database prevents privileged role changes after onboarding'
+);
 
 insert into public.startups (
   founder_id,
@@ -51,6 +101,25 @@ values (
 update public.startups
 set is_active = false
 where slug = 'inactive-startup';
+
+insert into public.startups (
+  founder_id,
+  title,
+  slug,
+  one_pager,
+  description,
+  stage,
+  niche
+)
+select
+  '10000000-0000-0000-0000-000000000001',
+  'Rate limit startup ' || series,
+  'rate-startup-' || series,
+  'A startup used to verify application rate limiting.',
+  'A detailed startup description used to verify the database-backed application submission rate limit.',
+  'idea',
+  array['Marketplace']
+from generate_series(1, 20) as series;
 
 select set_config(
   'test.inactive_startup_id',
@@ -85,6 +154,24 @@ select lives_ok(
     )
   $$,
   'a founder can create a startup owned by their profile'
+);
+
+select lives_ok(
+  $$
+    update public.startups
+    set is_active = false
+    where slug = 'founder-startup'
+  $$,
+  'a founder can deactivate their own startup'
+);
+
+select throws_like(
+  $$
+    delete from public.startups
+    where slug = 'founder-startup'
+  $$,
+  '%permission denied%',
+  'hard deletion is unavailable even for the startup owner'
 );
 
 select throws_like(
@@ -187,10 +274,35 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002
 select lives_ok(
   $$
     update public.profiles
-    set full_name = 'Updated specialist'
+    set
+      full_name = 'Updated Specialist',
+      bio = 'Product and growth specialist.',
+      location = 'Yekaterinburg',
+      avatar_url = 'https://images.example.test/specialist.png',
+      linkedin_url = 'https://www.linkedin.com/in/updated-specialist'
     where id = '10000000-0000-0000-0000-000000000002'
   $$,
-  'a specialist can update an allowed field on their own profile'
+  'a specialist can update every allowed field on their own profile'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set avatar_url = 'javascript:alert(1)'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%profiles_avatar_url_http_check%',
+  'profile avatar URLs are restricted to HTTP and HTTPS'
+);
+
+select throws_like(
+  $$
+    update public.profiles
+    set linkedin_url = 'https://linkedin.example.com/in/spoofed'
+    where id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%profiles_linkedin_url_check%',
+  'profile LinkedIn URLs are restricted to the LinkedIn HTTPS origin'
 );
 
 select throws_like(
@@ -233,6 +345,66 @@ select lives_ok(
     where slug = 'existing-startup'
   $$,
   'a specialist can apply to an active startup owned by another user'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000003',
+      'team',
+      'I should not be able to submit an application for another user.'
+    from public.startups
+    where slug = 'existing-startup'
+  $$,
+  '%row-level security%',
+  'an applicant cannot spoof applicant_id'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'This duplicate should be rejected by the database constraint.'
+    from public.startups
+    where slug = 'existing-startup'
+  $$,
+  '%applications_startup_id_applicant_id_type_key%',
+  'duplicate applications cannot be created'
+);
+
+select lives_ok(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'A valid rate-limit fixture application for this active startup.'
+    from public.startups
+    where slug like 'rate-startup-%'
+      and slug <> 'rate-startup-20'
+  $$,
+  'an applicant can submit up to twenty applications in one hour'
+);
+
+select throws_like(
+  $$
+    insert into public.applications (startup_id, applicant_id, type, message)
+    select
+      id,
+      '10000000-0000-0000-0000-000000000002',
+      'team',
+      'This application exceeds the hourly database submission limit.'
+    from public.startups
+    where slug = 'rate-startup-20'
+  $$,
+  '%Application submission rate limit exceeded%',
+  'the database rejects the twenty-first application within one hour'
 );
 
 select throws_like(
@@ -293,9 +465,53 @@ select lives_ok(
     update public.applications
     set status = 'accepted'
     where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000003'
   $$,
-  'a founder can update only the status of an application to their startup'
+  'a founder can accept a pending application to their startup'
 );
+
+select lives_ok(
+  $$
+    update public.applications
+    set status = 'rejected'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  'a founder can reject a pending application to their startup'
+);
+
+select throws_like(
+  $$
+    update public.applications
+    set status = 'rejected'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  '%Invalid application status transition%',
+  'an accepted application cannot be reversed to rejected'
+);
+
+select throws_like(
+  $$
+    update public.applications
+    set status = 'pending'
+    where startup_id = (select id from public.startups where slug = 'existing-startup')
+      and applicant_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  '%Invalid application status transition%',
+  'a rejected application cannot be reopened'
+);
+
+reset role;
+
+select results_eq(
+  $$ select count(*) from public.application_status_audit $$,
+  $$ values (2::bigint) $$,
+  'accepted and rejected decisions are recorded in the private audit log'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select throws_like(
   $$
@@ -328,6 +544,20 @@ select throws_like(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+
+select results_eq(
+  $$
+    with updated as (
+      update public.startups
+      set is_active = false
+      where slug = 'existing-startup'
+      returning id
+    )
+    select count(*) from updated
+  $$,
+  $$ values (0::bigint) $$,
+  'another founder cannot update a startup they do not own'
+);
 
 select results_eq(
   $$

@@ -53,12 +53,15 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000"
           } >> "$GITHUB_ENV"
+      - name: Verify migrations on a clean database
+        run: npx supabase db reset --local --no-seed
       - name: Test database authorization
         run: npm run test:rls
       - name: Build production bundle
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Test startup creation flow
+      - name: Test marketplace flows
         run: npm run test:e2e
