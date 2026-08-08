@@ -1,15 +1,14 @@
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Badge, Button, Group } from "@mantine/core";
 
 export function EnvVarWarning() {
   return (
-    <div className="flex items-center gap-2" title="Add the variables from .env.example to enable authentication">
-      <Badge variant="outline" className="hidden font-normal lg:inline-flex">
+    <Group gap="xs" wrap="nowrap" title="Add the variables from .env.example to enable authentication">
+      <Badge variant="outline" color="gray" className="hidden font-normal lg:block">
         Demo mode
       </Badge>
-      <Button size="sm" variant="outline" disabled>
+      <Button size="compact-sm" variant="outline" disabled>
         Sign in
       </Button>
-    </div>
+    </Group>
   );
 }

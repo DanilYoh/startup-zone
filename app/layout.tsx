@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
+import {
+  ColorSchemeScript,
+  createTheme,
+  MantineProvider,
+  mantineHtmlProps,
+} from "@mantine/core";
+import "@mantine/core/styles.css";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -30,18 +36,29 @@ const geistSans = Geist({
   subsets: ["latin", "cyrillic"],
 });
 
+const theme = createTheme({
+  primaryColor: "indigo",
+  defaultRadius: "md",
+  fontFamily: "var(--font-geist-sans), sans-serif",
+  headings: {
+    fontFamily: "var(--font-geist-sans), sans-serif",
+  },
+});
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
+    <html lang="en" data-scroll-behavior="smooth" {...mantineHtmlProps}>
+      <head>
+        <ColorSchemeScript defaultColorScheme="auto" />
+      </head>
+      <body className={`${geistSans.variable} antialiased`}>
+        <MantineProvider
+          theme={theme}
+          defaultColorScheme="auto"
+          deduplicateInlineStyles
         >
           {children}
-        </ThemeProvider>
+        </MantineProvider>
       </body>
     </html>
   );

@@ -1,17 +1,15 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Alert,
+  Button,
+  Paper,
+  PasswordInput,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -43,36 +41,31 @@ export function UpdatePasswordForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-          <CardDescription>
-            Please enter your new password below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className={className} {...props}>
+      <Paper withBorder shadow="sm" radius="lg" p="xl">
+        <Stack gap="lg">
+          <div>
+            <Title order={1} size="h2">Reset Your Password</Title>
+            <Text c="dimmed" size="sm" mt={4}>Please enter your new password below.</Text>
+          </div>
           <form onSubmit={handleForgotPassword}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="password">New password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="New password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save new password"}
+            <Stack gap="md">
+              <PasswordInput
+                id="password"
+                label="New password"
+                placeholder="New password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.currentTarget.value)}
+              />
+              {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
+              <Button type="submit" fullWidth loading={isLoading}>
+                Save new password
               </Button>
-            </div>
+            </Stack>
           </form>
-        </CardContent>
-      </Card>
+        </Stack>
+      </Paper>
     </div>
   );
 }
