@@ -2,8 +2,10 @@ import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { LinkButton } from "@/components/link-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { listActiveStartups } from "@/lib/supabase/startups";
 import { hasEnvVars } from "@/lib/utils";
-import { Button, Skeleton } from "@mantine/core";
+import { startupStageLabels } from "@/lib/validations";
+import { Badge, Button, Skeleton } from "@mantine/core";
 import {
   ArrowRight,
   CheckCircle2,
@@ -19,21 +21,21 @@ import { Suspense } from "react";
 const capabilities = [
   {
     icon: Users,
-    title: "Marketplace domain foundation",
+    title: "Role-aware onboarding",
     description:
-      "The data model and role boundaries cover founders, investors, specialists, and startup ownership.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Security designed into the model",
-    description:
-      "Supabase sessions, schema validation, database migrations, and row-level security define the authorization boundary.",
+      "Join as a founder, specialist, or investor, then maintain a profile built for marketplace collaboration.",
   },
   {
     icon: Rocket,
-    title: "A reviewable product slice",
+    title: "Persisted startup management",
     description:
-      "The public repository implements role-aware onboarding, profiles, startup management, discovery, and applications with automated checks.",
+      "Founders publish, edit, deactivate, and republish real projects that immediately appear in public discovery.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Applications and decisions",
+    description:
+      "Specialists and investors contact founders, track status, and receive database-enforced terminal decisions.",
   },
 ] as const;
 
@@ -61,6 +63,74 @@ function Brand() {
       <span>Startup Zone</span>
     </Link>
   );
+}
+
+async function FeaturedStartup() {
+  const result = await listActiveStartups({});
+
+  if (result.status !== "ready" || result.data.length === 0) {
+    return (
+      <div className="rounded-3xl border bg-card p-3 shadow-2xl">
+        <div className="rounded-2xl border bg-background p-6">
+          <p className="text-sm text-muted-foreground">Live marketplace</p>
+          <h2 className="mt-1 text-xl font-semibold">
+            {result.status === "ready" ? "Publish the first startup" : "Marketplace unavailable"}
+          </h2>
+          <p className="mt-5 leading-7 text-muted-foreground">
+            {result.status === "ready"
+              ? "Create a founder account and publish a project to make it visible to specialists and investors."
+              : "The marketplace data could not be loaded. Try the startup directory again in a moment."}
+          </p>
+          <LinkButton
+            href={result.status === "ready" ? "/auth/sign-up" : "/startups"}
+            variant="outline"
+            className="mt-6"
+          >
+            {result.status === "ready" ? "Create founder account" : "Open directory"}
+          </LinkButton>
+        </div>
+      </div>
+    );
+  }
+
+  const startup = result.data[0];
+
+  return (
+    <div className="rounded-3xl border bg-card p-3 shadow-2xl">
+      <div className="rounded-2xl border bg-background p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Featured live project</p>
+            <h2 className="mt-1 text-xl font-semibold">{startup.title}</h2>
+          </div>
+          <Badge variant="light">{startupStageLabels[startup.stage]}</Badge>
+        </div>
+        <p className="mt-5 leading-7 text-muted-foreground">{startup.one_pager}</p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {startup.niche.map((tag) => (
+            <span key={tag} className="rounded-full border px-3 py-1 text-xs">
+              {tag}
+            </span>
+          ))}
+        </div>
+        <div className="mt-8 flex items-center justify-between gap-4 border-t pt-5">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Founder</p>
+            <p className="mt-1 font-medium">
+              {startup.founder?.full_name ?? "Startup Zone founder"}
+            </p>
+          </div>
+          <LinkButton href={`/startups/${startup.slug}`} variant="subtle">
+            View project
+          </LinkButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeaturedStartupSkeleton() {
+  return <Skeleton height={336} radius="xl" aria-label="Loading featured startup" />;
 }
 
 export default function Home() {
@@ -126,15 +196,15 @@ export default function Home() {
             <div>
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground shadow-sm">
                 <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
-                Product foundation · current scope
+                Live end-to-end marketplace demo
               </div>
               <h1 className="max-w-3xl text-balance text-5xl font-semibold tracking-[-0.04em] sm:text-6xl">
                 Find the right people to move a startup forward.
               </h1>
               <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-muted-foreground">
-                Startup Zone explores how founders, specialists, and early-stage investors could
-                collaborate in one focused workspace. This demo presents the implemented product
-                shell and architecture, not a finished marketplace.
+                Founders publish real projects, specialists apply to join teams, and early-stage
+                investors send focused interest requests. Create an account to try the complete
+                role-aware workflow.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <LinkButton
@@ -144,53 +214,28 @@ export default function Home() {
                 >
                   Discover startups
                 </LinkButton>
-                <Button
-                  component="a"
-                  href="https://github.com/DanilYoh/startup-zone"
-                  target="_blank"
-                  rel="noreferrer"
-                  size="lg"
-                  variant="outline"
-                >
-                  View source on GitHub
-                </Button>
+                {hasEnvVars ? (
+                  <LinkButton href="/auth/sign-up" size="lg" variant="outline">
+                    Create an account
+                  </LinkButton>
+                ) : (
+                  <Button
+                    component="a"
+                    href="https://github.com/DanilYoh/startup-zone"
+                    target="_blank"
+                    rel="noreferrer"
+                    size="lg"
+                    variant="outline"
+                  >
+                    View source on GitHub
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="rounded-3xl border bg-card p-3 shadow-2xl">
-              <div className="rounded-2xl border bg-background p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Example opportunity</p>
-                    <h2 className="mt-1 text-xl font-semibold">Climate analytics for logistics</h2>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-[var(--mantine-color-teal-text)]">
-                    MVP
-                  </span>
-                </div>
-                <p className="mt-5 leading-7 text-muted-foreground">
-                  A decision-support platform helping operations teams reduce emissions and cost
-                  across complex delivery networks.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {['ClimateTech', 'B2B SaaS', 'Data'].map((tag) => (
-                    <span key={tag} className="rounded-full border px-3 py-1 text-xs">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-8 grid grid-cols-2 gap-4 border-t pt-5">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">Looking for</p>
-                    <p className="mt-1 font-medium">Product engineer</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">Funding stage</p>
-                    <p className="mt-1 font-medium">Pre-seed</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Suspense fallback={<FeaturedStartupSkeleton />}>
+              <FeaturedStartup />
+            </Suspense>
           </div>
         </section>
 
@@ -200,12 +245,12 @@ export default function Home() {
               Product thinking
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              A marketplace foundation, not a finished product.
+              A focused marketplace MVP you can use end to end.
             </h2>
             <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Today the repository covers the secure domain foundation, role-aware onboarding,
-              profile editing, startup management, public discovery, role-aware applications, and
-              founder decisions. Production observability remains planned product work.
+              The public demo uses isolated synthetic data and exposes the same validated,
+              role-aware flows covered by the automated test suite: onboarding, profiles, startup
+              management, discovery, applications, and founder moderation.
             </p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -293,7 +338,7 @@ export default function Home() {
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>Startup Zone · A production-minded marketplace foundation.</p>
+          <p>Startup Zone · A working marketplace MVP.</p>
           <a
             className="transition-colors hover:text-foreground"
             href="https://github.com/DanilYoh"

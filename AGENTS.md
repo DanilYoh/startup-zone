@@ -37,7 +37,7 @@ architectural decision changes.
 - Authentication and data access: Supabase SSR and Supabase JS.
 - Database: Supabase PostgreSQL, migrations, constraints, triggers, indexes, RLS.
 - Validation: Zod.
-- Tests: Vitest, pgTAP / Supabase CLI, Playwright.
+- Tests: Vitest with React Testing Library, pgTAP / Supabase CLI, Playwright.
 - CI: GitHub Actions.
 - Runtime: Node.js 20.9+ and npm with `package-lock.json`.
 

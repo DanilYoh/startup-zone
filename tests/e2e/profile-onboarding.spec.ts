@@ -1,18 +1,24 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import { passwordSchema } from "../../features/auth/schemas";
 import type { UserRole, Database } from "../../lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !serviceRoleKey) {
+if (!supabaseUrl || !publishableKey || !serviceRoleKey) {
   throw new Error(
-    "The profile onboarding E2E tests require NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from a local or test Supabase instance.",
+    "The profile onboarding E2E tests require NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, and SUPABASE_SERVICE_ROLE_KEY from a local or test Supabase instance.",
   );
 }
 
 const admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const publicAuth = createClient<Database>(supabaseUrl, publishableKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
@@ -21,6 +27,31 @@ const roles: ReadonlyArray<{ role: UserRole; label: string }> = [
   { role: "specialist", label: "Specialist" },
   { role: "investor", label: "Investor" },
 ];
+
+test("public Auth rejects passwords shorter than the shared policy", async () => {
+  const email = `weak-password-${randomUUID()}@example.com`;
+  const password = "Abc123";
+  let userId: string | undefined;
+
+  try {
+    expect(passwordSchema.safeParse(password).success).toBe(false);
+
+    const { data, error } = await publicAuth.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: "Weak Password", role: "specialist" },
+      },
+    });
+    userId = data.user?.id;
+
+    expect(error).not.toBeNull();
+    expect(error?.status).toBe(422);
+    expect(data.user).toBeNull();
+  } finally {
+    if (userId) await admin.auth.admin.deleteUser(userId);
+  }
+});
 
 for (const { role, label } of roles) {
   test(`a new ${role} chooses a locked role and edits their profile`, async ({ page }) => {

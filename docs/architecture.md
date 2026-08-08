@@ -231,6 +231,10 @@ Prefer a small complete workflow over several partial screens.
 
 - Vitest covers schemas, parsers, formatting, routing helpers, and other pure
   domain behavior.
+- Vitest with React Testing Library covers synchronous Client Components,
+  accessible UI states, and user interactions with server boundaries mocked.
+  Complete Server Action and async Server Component behavior stays in
+  Playwright.
 - pgTAP and the Supabase CLI cover constraints, grants, RLS, ownership, roles,
   and allowed state transitions.
 - Playwright covers critical journeys across UI, authentication, server logic,

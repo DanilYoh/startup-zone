@@ -1,5 +1,7 @@
 "use client";
 
+import { getAuthErrorMessage } from "@/features/auth/errors";
+import { updatePasswordSchema } from "@/features/auth/schemas";
 import { createClient } from "@/lib/supabase/client";
 import {
   Alert,
@@ -22,18 +24,31 @@ export function UpdatePasswordForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
+    const validated = updatePasswordSchema.safeParse({ password });
+    if (!validated.success) {
+      setError(
+        validated.error.flatten().fieldErrors.password?.[0] ??
+          "Enter a valid password",
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser(validated.data);
+      if (error) {
+        setError(getAuthErrorMessage("password_update_failed"));
+        return;
+      }
       router.push("/dashboard");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+    } catch {
+      setError(getAuthErrorMessage("password_update_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -47,13 +62,15 @@ export function UpdatePasswordForm({
             <Title order={1} size="h2">Reset Your Password</Title>
             <Text c="dimmed" size="sm" mt={4}>Please enter your new password below.</Text>
           </div>
-          <form onSubmit={handleForgotPassword}>
+          <form onSubmit={handleUpdatePassword}>
             <Stack gap="md">
               <PasswordInput
                 id="password"
                 label="New password"
                 placeholder="New password"
                 required
+                minLength={8}
+                maxLength={72}
                 value={password}
                 onChange={(event) => setPassword(event.currentTarget.value)}
               />
