@@ -18,6 +18,9 @@ The manual `Staging database` GitHub Actions workflow deploys migrations to the
 dedicated test project and then runs remote pgTAP, the production build, and
 Playwright against that environment. It reads configuration only from the
 GitHub `Preview` environment and never receives production credentials.
+The environment stores the project URL, reference, site URL, and session-pooler
+host as variables; the publishable key, service-role key, and database password
+remain encrypted secrets.
 
 The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
