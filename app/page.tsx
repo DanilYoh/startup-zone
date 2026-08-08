@@ -18,21 +18,21 @@ import { Suspense } from "react";
 const capabilities = [
   {
     icon: Users,
-    title: "Role-based marketplace",
+    title: "Marketplace domain foundation",
     description:
-      "Founders, investors, and specialists get focused profiles and collaboration flows.",
+      "The data model and role boundaries cover founders, investors, specialists, and startup ownership.",
   },
   {
     icon: ShieldCheck,
-    title: "Secure by default",
+    title: "Security designed into the model",
     description:
-      "Supabase Auth, server-side sessions, schema validation, and row-level security protect user data.",
+      "Supabase sessions, schema validation, database migrations, and row-level security define the authorization boundary.",
   },
   {
     icon: Rocket,
-    title: "Built for delivery",
+    title: "A reviewable product slice",
     description:
-      "Server Components, typed actions, automated checks, and a PostgreSQL-backed domain model.",
+      "The public repository implements the product shell and startup-creation slice with typed actions and automated checks.",
   },
 ] as const;
 
@@ -110,14 +110,15 @@ export default function Home() {
             <div>
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground shadow-sm">
                 <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
-                Full-stack portfolio project
+                Product foundation · current scope
               </div>
               <h1 className="max-w-3xl text-balance text-5xl font-semibold tracking-[-0.04em] sm:text-6xl">
                 Find the right people to move a startup forward.
               </h1>
               <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-muted-foreground">
-                Startup Zone connects founders, specialists, and early-stage investors in one
-                focused workspace—from a clear pitch to the first collaboration.
+                Startup Zone explores how founders, specialists, and early-stage investors could
+                collaborate in one focused workspace. This demo presents the implemented product
+                shell and architecture, not a finished marketplace.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg">
@@ -177,11 +178,11 @@ export default function Home() {
               Product thinking
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              More than another CRUD demo.
+              A marketplace foundation, not a finished product.
             </h2>
             <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              The domain model, access rules, and interface are designed around a real marketplace
-              workflow rather than a collection of disconnected screens.
+              Today the repository covers the secure domain foundation and startup-creation slice.
+              Directory, discovery, applications, and investor workflows remain planned product work.
             </p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -264,7 +265,7 @@ export default function Home() {
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>Startup Zone · Built as a production-minded portfolio project.</p>
+          <p>Startup Zone · A production-minded marketplace foundation.</p>
           <a
             className="transition-colors hover:text-foreground"
             href="https://github.com/DanilYoh"
