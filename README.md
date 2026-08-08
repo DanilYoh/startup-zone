@@ -2,6 +2,10 @@
 
 Startup Zone is a production-minded foundation for a future marketplace where founders can present early-stage products, find specialists, and connect with investors. The current repository establishes the secure product shell - domain model, authentication, database authorization, startup creation, automated checks and reproducible setup - rather than claiming a finished end-to-end marketplace.
 
+**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — it runs in read-only demo mode; authentication and startup creation require your own Supabase environment.
+
+![Startup Zone product foundation](docs/startup-zone.png)
+
 ## Why this project exists
 
 Early-stage teams usually spread their pitch, hiring, and investor conversations across unrelated tools. The product vision brings the first collaboration step into one focused flow:
