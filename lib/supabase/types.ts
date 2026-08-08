@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "founder" | "team_seeker" | "investor";
+export type UserRole = "founder" | "specialist" | "investor";
 export type StartupStage = "idea" | "mvp" | "pre_seed" | "seed" | "series_a" | "later";
 export type ApplicationType = "team" | "investor";
 export type ApplicationStatus = "pending" | "accepted" | "rejected";
@@ -119,6 +119,36 @@ export type Database = {
             columns: ["startup_id"];
             isOneToOne: false;
             referencedRelation: "startups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      application_status_audit: {
+        Row: {
+          id: number;
+          application_id: number | null;
+          startup_id: number;
+          actor_id: string | null;
+          previous_status: "pending";
+          new_status: "accepted" | "rejected";
+          changed_at: string;
+        };
+        Insert: {
+          id?: number;
+          application_id?: number | null;
+          startup_id: number;
+          actor_id?: string | null;
+          previous_status: "pending";
+          new_status: "accepted" | "rejected";
+          changed_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["application_status_audit"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "application_status_audit_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
             referencedColumns: ["id"];
           },
         ];

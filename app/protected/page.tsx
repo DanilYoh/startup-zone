@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/link-button";
+import { StartupStatusForm } from "@/features/startups/components/startup-status-form";
 import { createClient } from "@/lib/supabase/server";
 import { startupStageLabels } from "@/lib/validations";
 import {
@@ -57,13 +58,18 @@ async function ProtectedContent() {
             </div>
           </div>
           {isFounder && (
-            <LinkButton
-              href="/protected/startups/new"
-              size="md"
-              leftSection={<Plus size={18} aria-hidden="true" />}
-            >
-              Publish startup
-            </LinkButton>
+            <Group gap="sm">
+              <LinkButton href="/dashboard/applications/inbox" variant="outline" size="md">
+                Incoming applications
+              </LinkButton>
+              <LinkButton
+                href="/protected/startups/new"
+                size="md"
+                leftSection={<Plus size={18} aria-hidden="true" />}
+              >
+                Publish startup
+              </LinkButton>
+            </Group>
           )}
         </div>
 
@@ -106,7 +112,15 @@ async function ProtectedContent() {
         ) : startups?.length ? (
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             {startups.map((startup) => (
-              <Paper key={startup.id} withBorder shadow="xs" radius="lg" p="lg">
+              <Paper
+                key={startup.id}
+                component="article"
+                aria-label={startup.title}
+                withBorder
+                shadow="xs"
+                radius="lg"
+                p="lg"
+              >
                 <Stack gap="md">
                   <Group justify="space-between" align="flex-start" wrap="nowrap">
                     <div>
@@ -128,11 +142,17 @@ async function ProtectedContent() {
                       </Badge>
                     ))}
                   </Group>
-                  {startup.is_active && (
-                    <LinkButton href={`/startups/${startup.slug}`} variant="subtle" px={0}>
-                      View public page
+                  <Group gap="sm" align="flex-start">
+                    <LinkButton href={`/protected/startups/${startup.id}/edit`} size="compact-sm">
+                      Edit
                     </LinkButton>
-                  )}
+                    <StartupStatusForm id={startup.id} isActive={startup.is_active} />
+                    {startup.is_active && (
+                      <LinkButton href={`/startups/${startup.slug}`} variant="subtle" size="compact-sm">
+                        View public page
+                      </LinkButton>
+                    )}
+                  </Group>
                 </Stack>
               </Paper>
             ))}

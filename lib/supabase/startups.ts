@@ -3,6 +3,7 @@ import "server-only";
 import type { StartupDirectoryFilters } from "@/lib/startup-directory";
 import { toIlikePattern } from "@/lib/startup-directory";
 import { hasEnvVars } from "@/lib/utils";
+import { logServerError } from "@/lib/logger";
 import { createClient } from "./server";
 
 export type PublicStartupRead<T> =
@@ -19,7 +20,7 @@ export async function listActiveStartups(
     const data = await queryActiveStartups(filters);
     return { status: "ready", data };
   } catch (error) {
-    console.error("Unable to load the public startup directory", {
+    logServerError("startup.directory_read_failed", {
       code: error instanceof StartupReadError ? error.code : "unexpected",
     });
     return { status: "error" };
@@ -34,7 +35,7 @@ export async function getActiveStartupBySlug(slug: string) {
     const { data, error } = await supabase
       .from("startups")
       .select(
-        "id, title, slug, one_pager, description, stage, niche, funding_ask, equity_offered, website_url, deck_url, created_at, founder:profiles!startups_founder_id_fkey(full_name, location)",
+        "id, founder_id, title, slug, one_pager, description, stage, niche, funding_ask, equity_offered, website_url, deck_url, created_at, founder:profiles!startups_founder_id_fkey(full_name, location)",
       )
       .eq("is_active", true)
       .eq("slug", slug)
@@ -43,7 +44,7 @@ export async function getActiveStartupBySlug(slug: string) {
     if (error) throw new StartupReadError(error.code);
     return { status: "ready", data } as const;
   } catch (error) {
-    console.error("Unable to load a public startup", {
+    logServerError("startup.public_read_failed", {
       code: error instanceof StartupReadError ? error.code : "unexpected",
     });
     return { status: "error" } as const;
