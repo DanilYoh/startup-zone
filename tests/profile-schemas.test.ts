@@ -110,6 +110,25 @@ describe("profileSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("accepts space-grouped ruble ticket values", () => {
+    const result = profileSchema.safeParse({
+      ...emptyRoleFields,
+      full_name: "Taylor Jordan",
+      bio: "",
+      location: "",
+      avatar_url: "",
+      linkedin_url: "",
+      ticket_min: "100 000",
+      ticket_max: "500\u00a0000",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.ticket_min).toBe(100_000);
+      expect(result.data.ticket_max).toBe(500_000);
+    }
+  });
 });
 
 describe("profileContactSchema", () => {

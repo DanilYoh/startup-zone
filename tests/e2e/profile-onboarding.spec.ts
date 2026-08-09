@@ -110,8 +110,8 @@ for (const { role, label } of roles) {
         );
         await page.getByRole("checkbox", { name: "Pre-seed", exact: true }).check();
         await page.getByRole("checkbox", { name: "Seed", exact: true }).check();
-        await page.getByLabel("Minimum ticket (USD)").fill("100000");
-        await page.getByLabel("Maximum ticket (USD)").fill("500000");
+        await page.getByLabel("Minimum ticket (RUB)").fill("100000");
+        await page.getByLabel("Maximum ticket (RUB)").fill("500000");
       }
       await page.getByRole("button", { name: "Save profile" }).click();
 

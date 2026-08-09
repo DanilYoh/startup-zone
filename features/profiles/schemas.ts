@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { startupStages } from "@/lib/validations";
+import { parseMarketNumber } from "@/lib/market";
 
 function isHttpUrl(value: string) {
   try {
@@ -95,7 +96,7 @@ export const profileSchema = z.object({
 
 function normalizeCurrencyInput(value: unknown) {
   if (value === "" || value === null) return null;
-  return typeof value === "string" ? Number(value.replaceAll(",", "")) : value;
+  return typeof value === "string" ? parseMarketNumber(value) : value;
 }
 
 export type ProfileInput = z.infer<typeof profileSchema>;

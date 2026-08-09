@@ -1,4 +1,5 @@
 import { startupSchema } from "@/lib/validations";
+import { parseMarketNumber } from "@/lib/market";
 
 function singleValue(formData: FormData, name: string) {
   const values = formData.getAll(name);
@@ -18,7 +19,7 @@ function optionalNumber(formData: FormData, name: string) {
   if (values.length !== 1 || typeof values[0] !== "string") return Number.NaN;
 
   const value = values[0].trim();
-  return value === "" ? undefined : Number(value);
+  return value === "" ? undefined : parseMarketNumber(value);
 }
 
 function niches(formData: FormData) {

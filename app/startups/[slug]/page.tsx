@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/link-button";
+import { formatMarketCurrency } from "@/lib/market";
 import { ApplicationPanel } from "@/features/applications/components/application-panel";
 import { getActiveStartupBySlug } from "@/lib/supabase/startups";
 import { startupStageLabels } from "@/lib/validations";
@@ -23,12 +24,6 @@ import styles from "../startups-supabase.module.css";
 type StartupDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "long" });
 
@@ -180,7 +175,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                       Funding ask
                     </Text>
                     <Text mt={3} fw={600}>
-                      {currencyFormatter.format(startup.funding_ask)}
+                      {formatMarketCurrency(startup.funding_ask)}
                     </Text>
                   </div>
                 )}

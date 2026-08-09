@@ -230,25 +230,25 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
                   <NumberInput
                     id="profile-ticket-min"
                     name="ticket_min"
-                    label="Minimum ticket (USD)"
+                    label="Minimum ticket (RUB)"
                     defaultValue={profile.ticket_min ?? undefined}
                     min={1}
                     max={1_000_000_000}
                     decimalScale={0}
                     allowNegative={false}
-                    thousandSeparator=","
+                    thousandSeparator=" "
                     error={fieldError("ticket_min")}
                   />
                   <NumberInput
                     id="profile-ticket-max"
                     name="ticket_max"
-                    label="Maximum ticket (USD)"
+                    label="Maximum ticket (RUB)"
                     defaultValue={profile.ticket_max ?? undefined}
                     min={1}
                     max={1_000_000_000}
                     decimalScale={0}
                     allowNegative={false}
-                    thousandSeparator=","
+                    thousandSeparator=" "
                     error={fieldError("ticket_max")}
                   />
                 </SimpleGrid>

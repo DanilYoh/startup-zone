@@ -60,7 +60,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
         "A decision-support platform that helps logistics teams model emissions, compare routes, and reduce operating costs.",
       );
     await page.getByLabel("Niches").fill("ClimateTech, B2B SaaS");
-    await page.getByLabel("Funding ask (USD)").fill("250000");
+    await page.getByLabel("Funding ask (RUB)").fill("250000");
     await page.getByLabel("Equity offered (%)").fill("8");
     await page.getByLabel("Website URL").fill("https://example.com");
     await page.getByRole("button", { name: "Publish startup" }).click();
@@ -90,7 +90,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
     const publicHeading = page.getByRole("heading", { level: 1, name: startupTitle });
     await expect(publicHeading).toBeVisible();
     await expect(publicHeading.locator("..").getByText(updatedSummary, { exact: true })).toBeVisible();
-    await expect(page.getByText("$250,000", { exact: true })).toBeVisible();
+    await expect(page.getByText(/250\s000\s₽/u)).toBeVisible();
 
     await page.getByRole("link", { name: "All startups" }).click();
     await expect(page).toHaveURL(/\/startups$/);

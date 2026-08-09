@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { formatMarketCurrency } from "@/lib/market";
 import {
   hasStartupDirectoryFilters,
   parseStartupDirectoryFilters,
@@ -37,12 +38,6 @@ export const metadata: Metadata = {
 type StartupsPageProps = {
   searchParams: Promise<StartupDirectorySearchParams>;
 };
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 function DirectorySkeleton() {
   return (
@@ -215,7 +210,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                       <div>
                         {startup.funding_ask !== null && (
                           <Text size="sm" fw={600}>
-                            Seeking {currencyFormatter.format(startup.funding_ask)}
+                            Seeking {formatMarketCurrency(startup.funding_ask)}
                           </Text>
                         )}
                         {startup.founder?.location && (

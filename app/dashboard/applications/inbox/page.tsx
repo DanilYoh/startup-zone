@@ -3,6 +3,7 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { AcceptedContactCard } from "@/features/applications/components/accepted-contact-card";
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
+import { formatMarketCurrency } from "@/lib/market";
 import { parsePage } from "@/lib/pagination";
 import { startupStageLabels } from "@/lib/validations";
 import { Alert, Anchor, Badge, Group, Paper, Stack, Text, Title } from "@mantine/core";
@@ -10,12 +11,6 @@ import styles from "../../dashboard.module.css";
 
 const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
 const statusColors = { pending: "yellow", accepted: "teal", rejected: "red" } as const;
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 type FounderApplicationsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -139,9 +134,9 @@ export default async function FounderApplicationsPage({
                     )}
                     {(application.applicant.ticket_min !== null || application.applicant.ticket_max !== null) && (
                       <Text size="sm" c="dimmed">
-                        Typical ticket: {application.applicant.ticket_min !== null ? currencyFormatter.format(application.applicant.ticket_min) : "Open"}
+                        Typical ticket: {application.applicant.ticket_min !== null ? formatMarketCurrency(application.applicant.ticket_min) : "Open"}
                         {" – "}
-                        {application.applicant.ticket_max !== null ? currencyFormatter.format(application.applicant.ticket_max) : "Open"}
+                        {application.applicant.ticket_max !== null ? formatMarketCurrency(application.applicant.ticket_max) : "Open"}
                       </Text>
                     )}
                     {application.applicant.linkedin_url && (

@@ -134,12 +134,13 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             <NumberInput
               id="funding_ask"
               name="funding_ask"
-              label="Funding ask (USD)"
+              label="Funding ask (RUB)"
               defaultValue={startup?.funding_ask ?? undefined}
               min={1}
               max={1_000_000_000}
               decimalScale={0}
               allowNegative={false}
+              thousandSeparator=" "
               error={fieldError("funding_ask")}
             />
             <NumberInput
