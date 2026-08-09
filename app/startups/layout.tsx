@@ -5,39 +5,35 @@ import { hasEnvVars } from "@/lib/utils";
 import { Skeleton } from "@mantine/core";
 import Link from "next/link";
 import { Suspense } from "react";
+import styles from "./startups.module.css";
 
 export default function StartupsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header
-        className="sticky top-0 z-40 border-b backdrop-blur"
-        style={{
-          background: "color-mix(in srgb, var(--mantine-color-body) 92%, transparent)",
-        }}
-      >
+    <div className={styles.shell}>
+      <header className={styles.header}>
         <nav
           aria-label="Marketplace navigation"
-          className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5"
+          className={styles.nav}
         >
-          <div className="flex items-center gap-6">
+          <div className={styles.navStart}>
             <Link
               href="/"
-              className="flex items-center gap-2 font-semibold tracking-tight"
+              className={styles.brand}
               aria-label="Startup Zone home"
             >
-              <span className="grid size-8 place-items-center rounded-xl bg-primary text-sm text-primary-foreground">
+              <span className={styles.brandMark}>
                 SZ
               </span>
               <span>Startup Zone</span>
             </Link>
             <Link
               href="/startups"
-              className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+              className={styles.directoryLink}
             >
               Discover startups
             </Link>
           </div>
-          <div className="flex items-center gap-2">
+          <div className={styles.navActions}>
             <ThemeSwitcher />
             {!hasEnvVars ? (
               <EnvVarWarning />
@@ -50,12 +46,12 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
         </nav>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className={styles.main}>{children}</main>
 
-      <footer className="border-t">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
           <p>Startup Zone · Real projects published by founders.</p>
-          <Link className="transition-colors hover:text-foreground" href="/">
+          <Link className={styles.footerLink} href="/">
             About the product
           </Link>
         </div>

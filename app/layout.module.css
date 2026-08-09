@@ -1,0 +1,7 @@
+.body {
+  min-height: 100%;
+  font-family: var(--font-geist-sans), sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

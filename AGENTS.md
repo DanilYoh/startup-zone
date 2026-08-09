@@ -32,7 +32,7 @@ architectural decision changes.
 
 ## Stack
 
-- Frontend: Next.js 16 App Router, React 19, TypeScript, Mantine UI, Tailwind CSS.
+- Frontend: Next.js 16 App Router, React 19, TypeScript, Mantine UI, CSS Modules.
 - Server: React Server Components, Server Actions, Route Handlers.
 - Authentication and data access: Supabase SSR and Supabase JS.
 - Database: Supabase PostgreSQL, migrations, constraints, triggers, indexes, RLS.

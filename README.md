@@ -26,7 +26,7 @@ The public demo never uses production data or a service-role key at runtime. Ope
 
 ## Stack
 
-Next.js 16, React 19, strict TypeScript, Mantine UI, Tailwind CSS, Supabase Auth and PostgreSQL, Zod, Vitest with React Testing Library, pgTAP, and Playwright.
+Next.js 16, React 19, strict TypeScript, Mantine UI, CSS Modules, Supabase Auth and PostgreSQL, Zod, Vitest with React Testing Library, pgTAP, and Playwright.
 
 Server Components handle reads, Server Actions handle validated mutations, and PostgreSQL RLS enforces ownership independently of the UI.
 
