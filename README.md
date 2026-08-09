@@ -14,15 +14,15 @@ Implemented:
 - persisted startup creation and management with server-side Zod validation;
 - specialist applications and investor interest requests with status tracking;
 - founder moderation with database-enforced terminal decisions;
-- filterable public startup directory and detail pages;
+- filterable, paginated public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
-- structured server logs, unexpected request capture, application rate limiting, and decision auditing;
+- request-correlated structured server logs, unexpected request capture, application rate limiting, and decision auditing;
 - responsive light and dark UI;
 - Vitest, React Testing Library, Playwright, and GitHub Actions coverage for core flows.
 
-Deployment gates, environment isolation, monitoring expectations, and backup/restore drills are documented in [operations](docs/operations.md). Connecting a production log destination and enabling managed backups remain deployment-environment responsibilities.
+Deployment gates, environment isolation, monitoring gaps, and backup/restore drills are documented in [operations](docs/operations.md). The repository provides a structured-logging baseline; it does not include an external monitoring backend, verified ingestion, metrics, alerts, or client-error collection.
 
-The public demo never uses production data or a service-role key at runtime. Operators can populate an isolated demo or test project with `npm run demo:seed`; the command requires the same test-only environment variables used by Playwright fixtures.
+The public demo never uses production data or a service-role key at runtime. Operators can populate an isolated demo or test project with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, and an exact `DEMO_SEED_PROJECT_REF` match.
 
 ## Stack
 
@@ -57,6 +57,8 @@ npm run test:e2e
 ```
 
 `npm run check` runs linting, type-checking, unit tests, and component tests. RLS and E2E tests require a local or explicitly designated test Supabase environment; E2E also requires `SUPABASE_SERVICE_ROLE_KEY`.
+
+Coverage includes all executable application, component, feature, and shared-library files, counting untested files as zero. Its threshold is a regression floor; pgTAP and Playwright remain the authoritative checks for database authorization and complete product flows.
 
 For clean migration verification, release checks, environment separation, logging, rate limits, and recovery procedures, see [docs/operations.md](docs/operations.md).
 

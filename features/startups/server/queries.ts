@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { logServerError } from "@/lib/logger";
+import { logRequestError } from "@/lib/logger";
 import { redirect } from "next/navigation";
 
 export async function getOwnedStartupForEdit(id: number) {
@@ -26,7 +26,7 @@ export async function getOwnedStartupForEdit(id: number) {
     ]);
 
   if (profileError || startupError) {
-    logServerError("startup.owned_read_failed", {
+    await logRequestError("startup.owned_read_failed", {
       profileCode: profileError?.code,
       startupCode: startupError?.code,
     });

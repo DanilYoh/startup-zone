@@ -1,6 +1,6 @@
 begin;
 
-select plan(38);
+select plan(49);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -250,7 +250,7 @@ select throws_like(
       array['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']
     )
   $$,
-  '%startups_niche_count_check%',
+  '%startups_niche_%check%',
   'startup niches are limited to the same count as startupSchema'
 );
 
@@ -613,5 +613,152 @@ select results_eq(
 );
 
 reset role;
+
+select columns_are(
+  'public',
+  'public_founder_profiles',
+  array['id', 'full_name', 'location'],
+  'the public founder view exposes only the documented minimal columns'
+);
+
+set local role anon;
+
+select throws_like(
+  $$ select * from public.profiles $$,
+  '%permission denied%',
+  'anonymous users cannot read the profiles table'
+);
+
+select results_eq(
+  $$ select full_name, location from public.public_founder_profiles order by full_name $$,
+  $$ values ('Test Founder', null::text) $$,
+  'anonymous users can read minimal attribution only for an active founder'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profiles
+    where id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values (0::bigint) $$,
+  'an authenticated specialist cannot browse another specialist profile'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select results_eq(
+  $$
+    select full_name
+    from public.profiles
+    where id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('Test Applicant') $$,
+  'a founder can read the profile attached to an application they received'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      '   ',
+      'blank-title-startup',
+      'A valid startup summary.',
+      'A detailed startup description that is long enough for every database constraint.',
+      'idea',
+      array['Marketplace']
+    )
+  $$,
+  '%startups_title_%check%',
+  'the database rejects a startup title made only of whitespace'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Blank description startup',
+      'blank-description-startup',
+      'A valid startup summary.',
+      '                                                     ',
+      'idea',
+      array['Marketplace']
+    )
+  $$,
+  '%startups_description_%check%',
+  'the database rejects a startup description made only of whitespace'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Oversized niche startup',
+      'oversized-niche-startup',
+      'A valid startup summary.',
+      'A detailed startup description that is long enough for every database constraint.',
+      'idea',
+      array[repeat('n', 41)]
+    )
+  $$,
+  '%startups_niche_content_check%',
+  'the database limits every niche to the same length as startupSchema'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Duplicate niche startup',
+      'duplicate-niche-startup',
+      'A valid startup summary.',
+      'A detailed startup description that is long enough for every database constraint.',
+      'idea',
+      array['Marketplace', 'marketplace']
+    )
+  $$,
+  '%startups_niche_content_check%',
+  'the database rejects duplicate niches case-insensitively'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select count(*)
+    from pg_constraint
+    where connamespace = 'public'::regnamespace
+      and not convalidated
+  $$,
+  $$ values (0::bigint) $$,
+  'the migration rollout leaves no unvalidated public constraints'
+);
+
+select results_eq(
+  $$
+    select column_default::text
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'startups'
+      and column_name = 'niche'
+  $$,
+  $$ values (null::text) $$,
+  'startup niche has no default that violates its own minimum cardinality'
+);
+
 select * from finish();
 rollback;

@@ -14,10 +14,13 @@ export const onRequestError: Instrumentation.onRequestError = (
     typeof error === "object" && error !== null && "digest" in error
       ? String(error.digest)
       : undefined;
+  const rawRequestId = request.headers["x-request-id"];
+  const requestId = Array.isArray(rawRequestId) ? rawRequestId[0] : rawRequestId;
 
   logServerError("request.unexpected_error", {
     digest,
     method: request.method,
+    requestId,
     route: context.routePath,
     routeType: context.routeType,
   });
