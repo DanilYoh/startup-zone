@@ -30,6 +30,8 @@ The public demo never uses production data or a service-role key at runtime. Ope
 
 Trusted operators create a one-time invitation with `npm run beta:invite -- --email person@example.ru --role founder`. The command requires explicit `ALLOW_BETA_INVITE_CREATE=true`, an exact `BETA_INVITE_TARGET_URL` match, and a service-role key that is never configured in the application runtime. Full production usage is documented in [operations](docs/operations.md#closed-beta-invitations).
 
+Before opening production traffic, a trusted operator runs `npm run production:preflight`. The read-only gate verifies real HTTPS origins, application and Auth health, deployed legal pages, the exact active database document version, and the invitation boundary without creating accounts or records. It fails on local/test targets and placeholder legal or release metadata; see [operations](docs/operations.md#production-preflight).
+
 ## Stack
 
 Next.js 16, React 19, strict TypeScript, Mantine UI, CSS Modules, Supabase Auth and PostgreSQL, Zod, Vitest with React Testing Library, pgTAP, and Playwright.

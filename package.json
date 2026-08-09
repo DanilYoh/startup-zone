@@ -28,6 +28,7 @@
     "types:check": "node scripts/check-database-types.mjs",
     "test:e2e": "playwright test",
     "beta:invite": "node scripts/create-beta-invite.mjs",
+    "production:preflight": "node scripts/production-preflight.mjs",
     "demo:seed": "node scripts/seed-demo.mjs",
     "check": "npm run lint && npm run typecheck && npm run test"
   },

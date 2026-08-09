@@ -180,6 +180,12 @@ VPS. The checked-in configuration caps request bodies at 1 MB because the MVP
 does not accept uploads. Raise that limit only together with an authenticated
 upload flow and storage-specific abuse controls.
 
+Before opening traffic, load the operator-only service-role key from a secret
+manager on a trusted machine and run `npm run production:preflight`. This
+read-only gate checks the public HTTPS contour, Auth, approved legal pages and
+database version, and the closed-beta invitation boundary. The key is never
+added to the VPS application environment.
+
 ### 4. Verify before inviting users
 
 - Confirm signup and email confirmation for founder and investor accounts.
@@ -207,7 +213,8 @@ been explicitly approved.
   document-version activation, and production configuration. The consent flow
   itself is implemented and covered by unit, database, and browser tests.
 - Deploy staging, run the complete release gate, then deploy the reviewed
-  production candidate with explicit approval.
+  production candidate with explicit approval and pass the read-only production
+  preflight before opening traffic.
 - Translate the acquisition and core marketplace paths into Russian and show
   ticket sizes in RUB while retaining the stored numeric model.
 - Create one support channel and a manual moderation checklist. Do not build an

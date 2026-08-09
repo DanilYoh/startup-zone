@@ -51,9 +51,9 @@ Supabase SSR custom template, so that template is optional rather than an
 undocumented deployment dependency.
 
 The service-role key is used only by isolated test fixture setup and the trusted
-operator invitation CLI. It must never be prefixed with `NEXT_PUBLIC_`, sent to
-the browser, committed, or configured in any application runtime, including the
-public demo and production container.
+operator invitation and production-preflight CLIs. It must never be prefixed
+with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in any
+application runtime, including the public demo and production container.
 
 Playwright global setup requires `APP_ENVIRONMENT=local`, `test`, or `demo` and
 uses the test service-role key to activate `local-development-v1` after a clean
@@ -207,6 +207,30 @@ probe and deliberately bypasses Auth Proxy and Supabase; a green liveness probe
 does not prove database readiness or a complete user flow. Before shifting
 traffic, run the critical browser flows against the production candidate and
 check the Supabase gateway, Auth SMTP delivery, and database separately.
+
+## Production preflight
+
+After deployment, DNS, and TLS are active but before public invitations or user
+traffic, load the runtime variables from `.env.production` on a trusted
+operator machine. Inject `SUPABASE_SERVICE_ROLE_KEY` separately from the secret
+manager into that process, then run:
+
+```bash
+npm run production:preflight
+```
+
+Do not add the service-role key to `.env.production`, Compose, the application
+container, CI logs, or shell history. The preflight uses it only for read-only
+queries and prints neither credential. It refuses non-production mode, HTTP,
+local/test/example domains, placeholder operator or processor details, draft
+legal versions, and mutable release labels.
+
+The command verifies `/healthz`, Supabase Auth health, both deployed legal
+pages, the invitation field on signup, one exact active database legal version,
+read access to the invitation table, and rejection of an impossible anonymous
+invitation probe. It does not create invitations, accounts, consents, or any
+other record. A green report supplements rather than replaces SMTP, backup,
+external monitoring, and complete browser-flow checks.
 
 ## Logging and unexpected errors
 
