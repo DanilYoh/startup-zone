@@ -15,7 +15,7 @@ export async function AuthButton() {
   return user ? (
     <Group gap="xs" wrap="nowrap">
       <Text size="sm" className={styles.email}>
-        {typeof user.email === "string" ? user.email : "Signed in"}
+        {typeof user.email === "string" ? user.email : "Выполнен вход"}
       </Text>
       <LogoutButton />
     </Group>
@@ -27,10 +27,10 @@ export async function AuthButton() {
         variant="outline"
         className={styles.darkSurfaceOutline}
       >
-        Sign in
+        Войти
       </LinkButton>
       <LinkButton href="/auth/sign-up" size="compact-sm">
-        Sign up
+        Регистрация
       </LinkButton>
     </Group>
   );

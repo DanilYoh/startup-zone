@@ -1,12 +1,20 @@
 import { getCurrentProfile } from "@/features/profiles/server/queries";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createClientMock, getUserMock, logRequestErrorMock, maybeSingleMock, redirectMock } =
+const {
+  contactMaybeSingleMock,
+  createClientMock,
+  getUserMock,
+  logRequestErrorMock,
+  profileMaybeSingleMock,
+  redirectMock,
+} =
   vi.hoisted(() => ({
+    contactMaybeSingleMock: vi.fn(),
     createClientMock: vi.fn(),
     getUserMock: vi.fn(),
     logRequestErrorMock: vi.fn(),
-    maybeSingleMock: vi.fn(),
+    profileMaybeSingleMock: vi.fn(),
     redirectMock: vi.fn((pathname: string): never => {
       throw new Error(`REDIRECT:${pathname}`);
     }),
@@ -21,20 +29,30 @@ beforeEach(() => {
   createClientMock.mockReset();
   getUserMock.mockReset();
   logRequestErrorMock.mockReset();
-  maybeSingleMock.mockReset();
+  profileMaybeSingleMock.mockReset();
+  contactMaybeSingleMock.mockReset();
   redirectMock.mockClear();
 
-  const query = {
+  const profileQuery = {
     eq: vi.fn().mockReturnThis(),
-    maybeSingle: maybeSingleMock,
+    maybeSingle: profileMaybeSingleMock,
+    select: vi.fn().mockReturnThis(),
+  };
+  const contactQuery = {
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: contactMaybeSingleMock,
     select: vi.fn().mockReturnThis(),
   };
   createClientMock.mockResolvedValue({
     auth: { getUser: getUserMock },
-    from: vi.fn(() => query),
+    from: vi.fn((table: string) => (table === "profiles" ? profileQuery : contactQuery)),
   });
   getUserMock.mockResolvedValue({
     data: { user: { id: "user-1", email: "founder@example.test" } },
+  });
+  contactMaybeSingleMock.mockResolvedValue({
+    data: { contact_email: null, contact_url: null, sharing_enabled: false },
+    error: null,
   });
 });
 
@@ -43,11 +61,12 @@ describe("getCurrentProfile", () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
 
     await expect(getCurrentProfile()).rejects.toThrow("REDIRECT:/auth/login");
-    expect(maybeSingleMock).not.toHaveBeenCalled();
+    expect(profileMaybeSingleMock).not.toHaveBeenCalled();
+    expect(contactMaybeSingleMock).not.toHaveBeenCalled();
   });
 
   it("returns a ready active-role profile", async () => {
-    maybeSingleMock.mockResolvedValue({
+    profileMaybeSingleMock.mockResolvedValue({
       data: { role: "founder", full_name: "Test Founder" },
       error: null,
     });
@@ -58,11 +77,12 @@ describe("getCurrentProfile", () => {
       status: "ready",
       email: "founder@example.test",
       profile: { role: "founder", full_name: "Test Founder" },
+      contact: { contact_email: null, contact_url: null, sharing_enabled: false },
     });
   });
 
   it("distinguishes missing and retired profiles", async () => {
-    maybeSingleMock
+    profileMaybeSingleMock
       .mockResolvedValueOnce({ data: null, error: null })
       .mockResolvedValueOnce({ data: { role: "specialist" }, error: null });
 
@@ -71,14 +91,18 @@ describe("getCurrentProfile", () => {
   });
 
   it("logs a safe database code and returns an explicit error state", async () => {
-    maybeSingleMock.mockResolvedValue({ data: null, error: { code: "PGRST500" } });
+    profileMaybeSingleMock.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST500" },
+    });
 
     await expect(getCurrentProfile()).resolves.toEqual({
       status: "error",
       email: "founder@example.test",
     });
     expect(logRequestErrorMock).toHaveBeenCalledWith("profile.read_failed", {
-      code: "PGRST500",
+      profileCode: "PGRST500",
+      contactCode: undefined,
     });
   });
 });

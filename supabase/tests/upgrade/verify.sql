@@ -1,6 +1,18 @@
 begin;
 
-select plan(8);
+select plan(10);
+
+select has_table(
+  'public',
+  'beta_invitations',
+  'the upgraded database has the closed-beta invitation boundary'
+);
+
+select ok(
+  pg_get_functiondef('public.handle_new_user()'::regprocedure)
+    like '%public.beta_invitations%',
+  'the upgraded Auth trigger enforces beta invitations'
+);
 
 select results_eq(
   $$ select title from public.startups where slug = 'legacy-startup' $$,

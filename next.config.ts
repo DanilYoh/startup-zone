@@ -10,6 +10,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   cacheComponents: true,
+  // Vercel creates and traces its own runtime output. Standalone is reserved
+  // for the self-hosted Docker image assembled from .next/standalone.
+  output: process.env.VERCEL ? undefined : "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: {

@@ -99,6 +99,137 @@ export type Database = {
           },
         ]
       }
+      beta_invitations: {
+        Row: {
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      legal_consents: {
+        Row: {
+          accepted_at: string
+          document_version: string
+          source: string
+          subject_email: string
+          subject_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          document_version: string
+          source?: string
+          subject_email: string
+          subject_id: string
+        }
+        Update: {
+          accepted_at?: string
+          document_version?: string
+          source?: string
+          subject_email?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_consents_document_version_fkey"
+            columns: ["document_version"]
+            isOneToOne: false
+            referencedRelation: "legal_document_versions"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      legal_document_versions: {
+        Row: {
+          created_at: string
+          effective_date: string
+          is_active: boolean
+          title: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          effective_date: string
+          is_active?: boolean
+          title: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string
+          is_active?: boolean
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      profile_contacts: {
+        Row: {
+          contact_email: string | null
+          contact_url: string | null
+          created_at: string
+          profile_id: string
+          sharing_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          profile_id: string
+          sharing_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          profile_id?: string
+          sharing_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -258,6 +389,18 @@ export type Database = {
     Functions: {
       can_read_profile: {
         Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      can_read_profile_contact: {
+        Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      is_beta_invitation_valid: {
+        Args: {
+          candidate_email: string
+          candidate_hash: string
+          candidate_role: string
+        }
         Returns: boolean
       }
       valid_startup_niches: { Args: { value: string[] }; Returns: boolean }

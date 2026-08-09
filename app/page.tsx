@@ -1,7 +1,7 @@
 import { AuthButton } from "@/components/auth-button";
 import { LinkButton } from "@/components/link-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Button, Skeleton } from "@mantine/core";
+import { Skeleton } from "@mantine/core";
 import {
   ArrowRight,
   Building2,
@@ -17,43 +17,43 @@ import { Suspense } from "react";
 import styles from "./home-supabase.module.css";
 
 const founderFields = [
-  "Identity and professional headline",
-  "Founder experience and domain credibility",
-  "Published startup, traction, and funding ask",
-  "Location and trusted professional links",
+  "Личность и профессиональный заголовок",
+  "Опыт основателя и знание отрасли",
+  "Стартап, прогресс и сумма раунда",
+  "Город и проверяемые профессиональные ссылки",
 ] as const;
 
 const investorFields = [
-  "Identity, fund, or investment organization",
-  "A clear investment thesis",
-  "Preferred startup stages",
-  "Typical ticket range and trusted links",
+  "Личность, фонд или инвестиционная организация",
+  "Понятная инвестиционная стратегия",
+  "Предпочтительные стадии стартапов",
+  "Диапазон чека и проверяемые ссылки",
 ] as const;
 
 const workflow = [
   {
     number: "01",
-    title: "Founders publish the signal",
+    title: "Основатель публикует главное",
     description:
-      "A structured startup page turns the story, stage, market, and funding intent into comparable information.",
+      "Структурированная карточка показывает продукт, стадию, рынок, прогресс и цель раунда в сопоставимом виде.",
   },
   {
     number: "02",
-    title: "Investors qualify the fit",
+    title: "Инвестор оценивает соответствие",
     description:
-      "Discovery filters and a role-specific profile make relevance visible before anyone starts a conversation.",
+      "Фильтры и профиль инвестора помогают понять взаимный интерес до начала разговора.",
   },
   {
     number: "03",
-    title: "Both sides decide deliberately",
+    title: "Обе стороны принимают решение",
     description:
-      "Interest requests are persisted, founder-owned, and resolved through explicit database-enforced decisions.",
+      "Заявка сохраняется, основатель принимает или отклоняет её, а контакты открываются только после принятия.",
   },
 ] as const;
 
 function Brand() {
   return (
-    <Link href="/" className={styles.brand} aria-label="Startup Zone home">
+    <Link href="/" className={styles.brand} aria-label="Главная Startup Zone">
       <span className={styles.brandMark}>SZ</span>
       <span>Startup Zone</span>
     </Link>
@@ -76,16 +76,16 @@ function ProfileFields({ fields }: { fields: readonly string[] }) {
 export default function Home() {
   return (
     <div className={styles.home}>
-      <a href="#main-content" className={styles.skipLink}>Skip to content</a>
+      <a href="#main-content" className={styles.skipLink}>Перейти к содержанию</a>
 
       <header className={styles.header}>
-        <nav className={styles.nav} aria-label="Primary navigation">
+        <nav className={styles.nav} aria-label="Основная навигация">
           <Brand />
           <div className={styles.desktopNav}>
-            <a href="#roles">For whom</a>
-            <a href="#workflow">How it works</a>
-            <Link href="/startups">Startups</Link>
-            <a href="#trust">Trust</a>
+            <a href="#roles">Для кого</a>
+            <a href="#workflow">Как это работает</a>
+            <Link href="/startups">Стартапы</Link>
+            <a href="#trust">Безопасность</a>
           </div>
           <div className={styles.navActions}>
             <ThemeSwitcher />
@@ -103,14 +103,14 @@ export default function Home() {
             <div className={styles.heroCopy}>
               <div className={styles.eyebrow}>
                 <Sparkles size={15} aria-hidden="true" />
-                A focused founder–investor marketplace
+                Площадка для основателей и инвесторов
               </div>
               <h1>
-                Where ambitious founders meet <span>aligned capital.</span>
+                Сильные основатели встречают <span>подходящих инвесторов.</span>
               </h1>
               <p className={styles.heroDescription}>
-                Startup Zone replaces noisy networking with two clear profiles, structured startup
-                data, and a direct path from discovery to a qualified investment conversation.
+                Startup Zone заменяет хаотичный нетворкинг понятными профилями, структурированными
+                карточками стартапов и прямым путём к предметному инвестиционному разговору.
               </p>
               <div className={styles.heroActions}>
                 <LinkButton
@@ -118,7 +118,7 @@ export default function Home() {
                   size="lg"
                   rightSection={<ArrowRight size={17} aria-hidden="true" />}
                 >
-                  Explore startups
+                  Смотреть стартапы
                 </LinkButton>
                 <LinkButton
                   href="/auth/sign-up"
@@ -126,30 +126,30 @@ export default function Home() {
                   variant="outline"
                   className={styles.darkSurfaceOutline}
                 >
-                  Create a profile
+                  Создать профиль
                 </LinkButton>
               </div>
-              <div className={styles.proofRow} aria-label="Product scope">
-                <div><strong>2</strong><span>purpose-built roles</span></div>
-                <div><strong>1</strong><span>decision workflow</span></div>
-                <div><strong>RLS</strong><span>at the data boundary</span></div>
+              <div className={styles.proofRow} aria-label="Возможности продукта">
+                <div><strong>2</strong><span>понятные роли</span></div>
+                <div><strong>1</strong><span>процесс принятия решения</span></div>
+                <div><strong>RLS</strong><span>защита на уровне данных</span></div>
               </div>
             </div>
 
-            <div className={styles.signalBoard} aria-label="Founder and investor profile match">
+            <div className={styles.signalBoard} aria-label="Соответствие профилей основателя и инвестора">
               <div className={`${styles.signalCard} ${styles.founderSignal}`}>
                 <div className={styles.signalHeader}>
                   <span className={styles.signalIcon}><Building2 size={20} aria-hidden="true" /></span>
-                  <span className={styles.signalStatus}>Publishing</span>
+                  <span className={styles.signalStatus}>Публикация</span>
                 </div>
-                <p className={styles.signalKicker}>Founder signal</p>
-                <h2>Make the opportunity legible.</h2>
+                <p className={styles.signalKicker}>Сигнал основателя</p>
+                <h2>Покажите возможность ясно.</h2>
                 <div className={styles.signalLines}>
                   <span style={{ "--line-width": "92%" } as React.CSSProperties} />
                   <span style={{ "--line-width": "68%" } as React.CSSProperties} />
                   <span style={{ "--line-width": "81%" } as React.CSSProperties} />
                 </div>
-                <div className={styles.signalTags}><span>Stage</span><span>Traction</span><span>Ask</span></div>
+                <div className={styles.signalTags}><span>Стадия</span><span>Прогресс</span><span>Раунд</span></div>
               </div>
 
               <div className={styles.matchRail} aria-hidden="true">
@@ -161,14 +161,14 @@ export default function Home() {
               <div className={`${styles.signalCard} ${styles.investorSignal}`}>
                 <div className={styles.signalHeader}>
                   <span className={styles.signalIcon}><Landmark size={20} aria-hidden="true" /></span>
-                  <span className={styles.signalStatus}>Qualifying</span>
+                  <span className={styles.signalStatus}>Оценка</span>
                 </div>
-                <p className={styles.signalKicker}>Investor fit</p>
-                <h2>Invest where you have conviction.</h2>
+                <p className={styles.signalKicker}>Интерес инвестора</p>
+                <h2>Инвестируйте в то, во что верите.</h2>
                 <div className={styles.fitGrid}>
-                  <div><span>Thesis</span><strong>Aligned</strong></div>
-                  <div><span>Stage</span><strong>Seed</strong></div>
-                  <div><span>Ticket</span><strong>In range</strong></div>
+                  <div><span>Стратегия</span><strong>Совпадает</strong></div>
+                  <div><span>Стадия</span><strong>Seed</strong></div>
+                  <div><span>Чек</span><strong>Подходит</strong></div>
                 </div>
               </div>
             </div>
@@ -177,11 +177,11 @@ export default function Home() {
 
         <section id="roles" className={styles.rolesSection}>
           <div className={styles.sectionHeading}>
-            <p className={styles.sectionKicker}>One marketplace, two intentional identities</p>
-            <h2>Profiles should help the other side make a decision.</h2>
+            <p className={styles.sectionKicker}>Одна площадка — две продуманные роли</p>
+            <h2>Профиль должен помогать другой стороне принять решение.</h2>
             <p>
-              Generic social profiles create noise. Startup Zone asks each role for the information
-              that establishes credibility and qualifies fit.
+              Универсальные профили создают шум. Startup Zone собирает только сведения, которые
+              подтверждают компетентность и помогают оценить взаимное соответствие.
             </p>
           </div>
 
@@ -191,15 +191,15 @@ export default function Home() {
                 <span className={styles.roleNumber}>01</span>
                 <Building2 size={30} aria-hidden="true" />
               </div>
-              <p className={styles.roleType}>Founder profile</p>
-              <h3>Credibility around the person. Evidence around the startup.</h3>
+              <p className={styles.roleType}>Профиль основателя</p>
+              <h3>Компетентность человека. Факты о стартапе.</h3>
               <p className={styles.roleDescription}>
-                A founder profile stays concise because product, market, stage, links, and funding
-                belong to the persisted startup page.
+                Профиль основателя остаётся кратким: продукт, рынок, стадия, ссылки и параметры
+                раунда находятся в карточке стартапа.
               </p>
               <ProfileFields fields={founderFields} />
               <LinkButton href="/auth/sign-up" variant="subtle" px={0} rightSection={<ArrowRight size={15} />}>
-                Join as a founder
+                Стать основателем
               </LinkButton>
             </article>
 
@@ -208,15 +208,15 @@ export default function Home() {
                 <span className={styles.roleNumber}>02</span>
                 <Landmark size={30} aria-hidden="true" />
               </div>
-              <p className={styles.roleType}>Investor profile</p>
-              <h3>A visible mandate, so founders can qualify you too.</h3>
+              <p className={styles.roleType}>Профиль инвестора</p>
+              <h3>Открытая стратегия, чтобы основатели тоже могли оценить соответствие.</h3>
               <p className={styles.roleDescription}>
-                An investor profile makes focus and decision range explicit instead of hiding them
-                behind a generic biography.
+                Профиль инвестора показывает направления, стадии и диапазон чека вместо общей
+                биографии без критериев.
               </p>
               <ProfileFields fields={investorFields} />
               <LinkButton href="/auth/sign-up" variant="subtle" px={0} rightSection={<ArrowRight size={15} />}>
-                Join as an investor
+                Стать инвестором
               </LinkButton>
             </article>
           </div>
@@ -225,13 +225,13 @@ export default function Home() {
         <section id="workflow" className={styles.workflowSection}>
           <div className={styles.workflowInner}>
             <div className={styles.workflowIntro}>
-              <p className={styles.sectionKicker}>From signal to conversation</p>
-              <h2>Less browsing. Better qualification.</h2>
+              <p className={styles.sectionKicker}>От сигнала к разговору</p>
+              <h2>Меньше просмотра. Больше релевантности.</h2>
               <p>
-                Every step is reachable in the product and backed by real persisted data—not a set
-                of decorative demo cards.
+                Каждый шаг работает на реальных сохранённых данных — это не набор декоративных
+                демонстрационных карточек.
               </p>
-              <LinkButton href="/startups" variant="outline">Open the live directory</LinkButton>
+              <LinkButton href="/startups" variant="outline">Открыть каталог</LinkButton>
             </div>
             <div className={styles.workflowList}>
               {workflow.map((step) => (
@@ -247,39 +247,43 @@ export default function Home() {
         <section id="trust" className={styles.trustSection}>
           <div className={styles.trustCard}>
             <div>
-              <p className={styles.sectionKicker}>Trust is a product feature</p>
-              <h2>Fast at the edge. Strict at the boundary.</h2>
+              <p className={styles.sectionKicker}>Безопасность — часть продукта</p>
+              <h2>Быстрый интерфейс. Строгая защита данных.</h2>
               <p>
-                Public discovery is server-rendered with bounded queries. Sensitive actions verify
-                identity on the server and remain independently constrained by PostgreSQL and RLS.
+                Публичный каталог формируется на сервере ограниченными запросами. Чувствительные
+                действия проверяют личность, а права независимо контролируются PostgreSQL и RLS.
               </p>
             </div>
             <div className={styles.trustGrid}>
-              <div><Compass size={22} /><strong>Focused discovery</strong><span>Search, stage, niche, and bounded pagination.</span></div>
-              <div><LockKeyhole size={22} /><strong>Role-aware access</strong><span>Ownership and permissions enforced twice.</span></div>
-              <div><Sparkles size={22} /><strong>Honest demo states</strong><span>Loading, empty, errors, and real persistence.</span></div>
+              <div><Compass size={22} /><strong>Точный поиск</strong><span>Название, стадия, ниша и ограниченная пагинация.</span></div>
+              <div><LockKeyhole size={22} /><strong>Доступ по ролям</strong><span>Владение и полномочия проверяются дважды.</span></div>
+              <div><Sparkles size={22} /><strong>Честные состояния</strong><span>Загрузка, пустые данные, ошибки и реальное сохранение.</span></div>
             </div>
           </div>
         </section>
 
         <section className={styles.finalCta}>
           <div>
-            <p className={styles.sectionKicker}>Ready when the fit is real</p>
-            <h2>Build the profile that starts a better conversation.</h2>
+            <p className={styles.sectionKicker}>Когда соответствие действительно есть</p>
+            <h2>Создайте профиль, с которого начинается предметный разговор.</h2>
           </div>
           <div className={styles.finalActions}>
-            <LinkButton href="/auth/sign-up" size="lg" rightSection={<ArrowRight size={17} />}>Create profile</LinkButton>
-            <Button component="a" href="https://github.com/DanilYoh/startup-zone" target="_blank" rel="noreferrer" size="lg" variant="subtle">
-              View source
-            </Button>
+            <LinkButton href="/auth/sign-up" size="lg" rightSection={<ArrowRight size={17} />}>Создать профиль</LinkButton>
+            <LinkButton href="/startups" size="lg" variant="subtle">Каталог стартапов</LinkButton>
           </div>
         </section>
       </main>
 
       <footer className={styles.footer}>
-        <Brand />
-        <p>Founder–investor marketplace MVP · Built for deliberate decisions.</p>
-        <a href="https://github.com/DanilYoh" target="_blank" rel="noreferrer">GitHub · DanilYoh</a>
+        <div className={styles.footerInner}>
+          <Brand />
+          <p>Площадка для осознанных решений основателей и инвесторов.</p>
+          <div className={styles.footerLinks}>
+            <Link href="/startups">Каталог стартапов</Link>
+            <Link href="/legal/privacy">Политика обработки данных</Link>
+            <Link href="/legal/consent">Согласие на обработку данных</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );

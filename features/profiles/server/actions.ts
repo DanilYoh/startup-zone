@@ -1,6 +1,11 @@
 "use server";
 
-import { parseProfileForm, type ProfileInput } from "@/features/profiles/schemas";
+import {
+  parseProfileContactForm,
+  parseProfileForm,
+  type ProfileContactInput,
+  type ProfileInput,
+} from "@/features/profiles/schemas";
 import { logRequestError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/lib/supabase/types";
@@ -11,6 +16,12 @@ export type ProfileActionState = {
   status: "idle" | "success" | "error";
   message?: string;
   errors?: Partial<Record<keyof ProfileInput, string[]>>;
+};
+
+export type ProfileContactActionState = {
+  status: "idle" | "success" | "error";
+  message?: string;
+  errors?: Partial<Record<keyof ProfileContactInput, string[]>>;
 };
 
 export async function updateProfile(
@@ -29,7 +40,7 @@ export async function updateProfile(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -42,11 +53,11 @@ export async function updateProfile(
 
   if (profileError) {
     await logRequestError("profile.authorization_failed", { code: profileError.code });
-    return { status: "error", message: "Could not verify your profile. Please try again." };
+    return { status: "error", message: "Не удалось проверить профиль. Повторите попытку." };
   }
 
   if (currentProfile?.role !== "founder" && currentProfile?.role !== "investor") {
-    return { status: "error", message: "This account no longer has an active marketplace role." };
+    return { status: "error", message: "У этой учётной записи больше нет активной роли на площадке." };
   }
 
   const update: TablesUpdate<"profiles"> = {
@@ -80,14 +91,14 @@ export async function updateProfile(
     await logRequestError("profile.update_failed", { code: error.code });
     return {
       status: "error",
-      message: "Could not save your profile. Please try again.",
+      message: "Не удалось сохранить профиль. Повторите попытку.",
     };
   }
 
   if (!profile) {
     return {
       status: "error",
-      message: "Your profile could not be found. Sign out and contact support if this continues.",
+      message: "Профиль не найден. Если ошибка повторяется, выйдите из аккаунта и обратитесь в поддержку.",
     };
   }
 
@@ -96,6 +107,79 @@ export async function updateProfile(
 
   return {
     status: "success",
-    message: "Profile saved.",
+    message: "Профиль сохранён.",
+  };
+}
+
+export async function updateProfileContact(
+  _previousState: ProfileContactActionState,
+  formData: FormData,
+): Promise<ProfileContactActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth/login");
+
+  const validated = parseProfileContactForm(formData);
+  if (!validated.success) {
+    return {
+      status: "error",
+      message: "Проверьте выделенные поля контактов и повторите попытку.",
+      errors: validated.error.flatten().fieldErrors,
+    };
+  }
+
+  const { data: currentProfile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    await logRequestError("profile.contact_authorization_failed", { code: profileError.code });
+    return { status: "error", message: "Не удалось проверить профиль. Повторите попытку." };
+  }
+
+  if (currentProfile?.role !== "founder" && currentProfile?.role !== "investor") {
+    return { status: "error", message: "У этой учётной записи больше нет активной роли на площадке." };
+  }
+
+  const { data: contact, error } = await supabase
+    .from("profile_contacts")
+    .update({
+      contact_email: validated.data.contact_email,
+      contact_url: validated.data.contact_url,
+      sharing_enabled: validated.data.sharing_enabled,
+    })
+    .eq("profile_id", user.id)
+    .select("profile_id")
+    .maybeSingle();
+
+  if (error) {
+    await logRequestError("profile.contact_update_failed", { code: error.code });
+    return {
+      status: "error",
+      message: "Не удалось сохранить приватный контакт. Повторите попытку.",
+    };
+  }
+
+  if (!contact) {
+    return {
+      status: "error",
+      message: "Запись с приватным контактом не найдена. Если ошибка повторяется, обратитесь в поддержку.",
+    };
+  }
+
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/applications");
+  revalidatePath("/dashboard/applications/inbox");
+
+  return {
+    status: "success",
+    message: validated.data.sharing_enabled
+      ? "Обмен контактами после принятия заявки включён."
+      : "Приватный контакт сохранён без передачи другим участникам.",
   };
 }

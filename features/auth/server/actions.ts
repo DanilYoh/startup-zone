@@ -7,8 +7,10 @@ import {
   type SignUpInput,
 } from "@/features/auth/schemas";
 import { logRequestError } from "@/lib/logger";
+import { getPublicLegalConfig } from "@/features/legal/server/config";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
+import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -35,6 +37,10 @@ function normalizeOrigin(value: string | null) {
   }
 }
 
+function hashBetaInvitationCode(value: string) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
 export async function signUp(
   _previousState: SignUpActionState,
   formData: FormData,
@@ -42,7 +48,15 @@ export async function signUp(
   if (!hasEnvVars) {
     return {
       status: "error",
-      message: "Account creation is unavailable in the unconfigured public demo.",
+      message: "Регистрация недоступна: публичная демоверсия не подключена к базе данных.",
+    };
+  }
+
+  const legalConfig = getPublicLegalConfig();
+  if (!legalConfig.registrationEnabled) {
+    return {
+      status: "error",
+      message: "Регистрация временно закрыта: документы об обработке персональных данных ещё не утверждены.",
     };
   }
 
@@ -51,21 +65,58 @@ export async function signUp(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
+    };
+  }
+
+  if (validated.data.legal_document_version !== legalConfig.documentVersion) {
+    return {
+      status: "error",
+      message: "Версия документов изменилась. Обновите страницу и подтвердите согласие снова.",
+    };
+  }
+
+  const invitationHash = hashBetaInvitationCode(validated.data.beta_invitation_code);
+  const supabase = await createClient();
+  const { data: invitationValid, error: invitationError } = await supabase.rpc(
+    "is_beta_invitation_valid",
+    {
+      candidate_email: validated.data.email,
+      candidate_hash: invitationHash,
+      candidate_role: validated.data.role,
+    },
+  );
+
+  if (invitationError) {
+    await logRequestError("auth.invitation_validation_failed", {
+      code: invitationError.code,
+    });
+    return {
+      status: "error",
+      message: "Регистрация временно недоступна. Попробуйте позже.",
+    };
+  }
+
+  if (!invitationValid) {
+    return {
+      status: "error",
+      message: "Код приглашения недействителен, уже использован или не соответствует email и роли.",
     };
   }
 
   const requestOrigin = normalizeOrigin((await headers()).get("origin"));
   const configuredOrigin = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL ?? null);
   const origin = configuredOrigin ?? requestOrigin ?? "http://localhost:3000";
-  const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: validated.data.email,
     password: validated.data.password,
     options: {
       data: {
+        beta_invitation_hash: invitationHash,
         full_name: validated.data.full_name,
+        legal_consent: true,
+        legal_document_version: legalConfig.documentVersion,
         role: validated.data.role,
       },
       emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/dashboard/profile")}`,
@@ -82,8 +133,8 @@ export async function signUp(
       status: "error",
       message:
         error.status === 429
-          ? "Too many sign-up attempts. Wait a moment and try again."
-          : "Could not create the account. Check the details or try again later.",
+          ? "Слишком много попыток регистрации. Подождите и попробуйте снова."
+          : "Не удалось создать аккаунт. Проверьте email, роль и код приглашения или попробуйте позже.",
     };
   }
 
@@ -96,14 +147,14 @@ export async function signIn(
   formData: FormData,
 ): Promise<SignInActionState> {
   if (!hasEnvVars) {
-    return { status: "error", message: "Sign in is unavailable in the unconfigured public demo." };
+    return { status: "error", message: "Вход недоступен: публичная демоверсия не подключена к базе данных." };
   }
 
   const validated = parseSignInForm(formData);
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -117,8 +168,8 @@ export async function signIn(
       status: "error",
       message:
         error.status === 429
-          ? "Too many sign-in attempts. Wait a moment and try again."
-          : "Email or password is incorrect.",
+          ? "Слишком много попыток входа. Подождите и попробуйте снова."
+          : "Неверная электронная почта или пароль.",
     };
   }
 

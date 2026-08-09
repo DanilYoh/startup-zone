@@ -30,7 +30,7 @@ describe("LogoutButton", () => {
     const user = userEvent.setup();
 
     render(<LogoutButton />);
-    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.click(screen.getByRole("button", { name: "Выйти" }));
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/auth/login"));
     expect(refreshMock).toHaveBeenCalledOnce();
@@ -42,10 +42,10 @@ describe("LogoutButton", () => {
     const user = userEvent.setup();
 
     render(<LogoutButton />);
-    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.click(screen.getByRole("button", { name: "Выйти" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not log out. Check your connection and try again.",
+      "Не удалось выйти. Проверьте соединение и повторите попытку.",
     );
     expect(screen.getByRole("alert")).not.toHaveTextContent("Raw Supabase network details");
     expect(replaceMock).not.toHaveBeenCalled();
@@ -57,10 +57,10 @@ describe("LogoutButton", () => {
     const user = userEvent.setup();
 
     render(<LogoutButton />);
-    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.click(screen.getByRole("button", { name: "Выйти" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not log out. Check your connection and try again.",
+      "Не удалось выйти. Проверьте соединение и повторите попытку.",
     );
     expect(replaceMock).not.toHaveBeenCalled();
   });

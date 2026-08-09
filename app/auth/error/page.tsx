@@ -28,7 +28,7 @@ export default function Page({
         <Stack gap="lg">
           <Paper withBorder shadow="sm" radius="lg" p="xl">
             <Stack gap="md">
-              <Title order={1} size="h2">Sorry, something went wrong.</Title>
+              <Title order={1} size="h2">Не удалось завершить действие</Title>
               <Suspense>
                 <ErrorContent searchParams={searchParams} />
               </Suspense>

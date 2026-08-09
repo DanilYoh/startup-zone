@@ -18,7 +18,7 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: numb
         <input type="hidden" name="application_id" value={applicationId} />
         <Group gap="sm">
           <Button type="submit" name="decision" value="accepted" color="teal" loading={pending}>
-            Accept
+            Принять
           </Button>
           <Button
             type="submit"
@@ -28,7 +28,7 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: numb
             variant="outline"
             loading={pending}
           >
-            Reject
+            Отклонить
           </Button>
         </Group>
       </form>
@@ -44,4 +44,3 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: numb
     </Stack>
   );
 }
-

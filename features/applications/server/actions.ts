@@ -37,7 +37,7 @@ export async function createApplication(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the message and try again.",
+      message: "Проверьте сообщение и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -57,19 +57,19 @@ export async function createApplication(
       profileCode: profileError?.code,
       startupCode: startupError?.code,
     });
-    return { status: "error", message: "Could not verify this opportunity. Try again." };
+    return { status: "error", message: "Не удалось проверить проект. Повторите попытку." };
   }
 
   if (profile?.role !== "investor") {
-    return { status: "error", message: "Only investor profiles can send interest." };
+    return { status: "error", message: "Отправлять заявки могут только инвесторы." };
   }
 
   if (!startup || !startup.is_active) {
-    return { status: "error", message: "This startup is no longer accepting investor interest." };
+    return { status: "error", message: "Этот стартап больше не принимает заявки инвесторов." };
   }
 
   if (startup.founder_id === user.id) {
-    return { status: "error", message: "You cannot apply to your own startup." };
+    return { status: "error", message: "Нельзя отправить заявку на собственный стартап." };
   }
 
   const application: TablesInsert<"applications"> = {
@@ -82,25 +82,25 @@ export async function createApplication(
   const { error } = await supabase.from("applications").insert(application);
   if (error) {
     if (error.code === "23505") {
-      return { status: "error", message: "You already sent interest in this startup." };
+      return { status: "error", message: "Вы уже отправили заявку по этому стартапу." };
     }
 
     if (error.code === "P0001") {
       return {
         status: "error",
-        message: "You reached the interest-request limit. Wait before contacting another startup.",
+        message: "Достигнут лимит заявок. Подождите перед обращением к следующему стартапу.",
       };
     }
 
     await logRequestError("application.create_failed", { code: error.code });
-    return { status: "error", message: "Could not send your interest. Please try again." };
+    return { status: "error", message: "Не удалось отправить заявку. Повторите попытку." };
   }
 
   revalidatePath("/dashboard/applications");
   revalidatePath("/startups");
   return {
     status: "success",
-    message: "Interest sent to the founder.",
+    message: "Заявка отправлена основателю.",
   };
 }
 
@@ -117,7 +117,7 @@ export async function moderateApplication(
 
   const validated = parseModerationForm(formData);
   if (!validated.success) {
-    return { status: "error", message: "The requested decision is invalid." };
+    return { status: "error", message: "Выбранное решение недопустимо." };
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -128,11 +128,11 @@ export async function moderateApplication(
 
   if (profileError) {
     await logRequestError("application.moderation_authorization_failed", { code: profileError.code });
-    return { status: "error", message: "Could not verify your founder profile. Try again." };
+    return { status: "error", message: "Не удалось проверить профиль основателя. Повторите попытку." };
   }
 
   if (profile?.role !== "founder") {
-    return { status: "error", message: "Only founders can decide investor interest." };
+    return { status: "error", message: "Рассматривать заявки инвесторов могут только основатели." };
   }
 
   const { data: application, error: applicationError } = await supabase
@@ -143,15 +143,15 @@ export async function moderateApplication(
 
   if (applicationError) {
     await logRequestError("application.moderation_read_failed", { code: applicationError.code });
-    return { status: "error", message: "Could not load the interest request. Try again." };
+    return { status: "error", message: "Не удалось загрузить заявку. Повторите попытку." };
   }
 
   if (!application || application.startup.founder_id !== user.id) {
-    return { status: "error", message: "Interest request not found or you cannot manage it." };
+    return { status: "error", message: "Заявка не найдена или у вас нет доступа к ней." };
   }
 
   if (application.status !== "pending") {
-    return { status: "error", message: "This interest request has already been decided." };
+    return { status: "error", message: "По этой заявке уже принято решение." };
   }
 
   const { data: updated, error } = await supabase
@@ -164,17 +164,17 @@ export async function moderateApplication(
 
   if (error) {
     await logRequestError("application.moderation_write_failed", { code: error.code });
-    return { status: "error", message: "Could not save the decision. Please try again." };
+    return { status: "error", message: "Не удалось сохранить решение. Повторите попытку." };
   }
 
   if (!updated) {
-    return { status: "error", message: "This interest request was already decided." };
+    return { status: "error", message: "По этой заявке уже было принято решение." };
   }
 
   revalidatePath("/dashboard/applications/inbox");
   revalidatePath("/dashboard/applications");
   return {
     status: "success",
-    message: validated.data.decision === "accepted" ? "Interest accepted." : "Interest rejected.",
+    message: validated.data.decision === "accepted" ? "Заявка принята." : "Заявка отклонена.",
   };
 }

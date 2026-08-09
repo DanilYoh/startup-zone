@@ -1,20 +1,16 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { AcceptedContactCard } from "@/features/applications/components/accepted-contact-card";
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
+import { formatMarketCurrency, russianPlural } from "@/lib/market";
 import { parsePage } from "@/lib/pagination";
 import { startupStageLabels } from "@/lib/validations";
 import { Alert, Anchor, Badge, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import styles from "../../dashboard.module.css";
 
-const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
+const statusLabels = { pending: "На рассмотрении", accepted: "Принята", rejected: "Отклонена" } as const;
 const statusColors = { pending: "yellow", accepted: "teal", rejected: "red" } as const;
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 type FounderApplicationsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -28,14 +24,14 @@ export default async function FounderApplicationsPage({
 
   if (result.status === "forbidden") {
     return (
-      <Alert color="yellow" title="Founder profile required" className={styles.fullWidth}>
-        Incoming investor interest is available only to founders.
+      <Alert color="yellow" title="Нужен профиль основателя" className={styles.fullWidth}>
+        Входящие заявки инвесторов доступны только основателям.
       </Alert>
     );
   }
 
   if (result.status === "error") {
-    return <Alert color="red" role="alert" className={styles.fullWidth}>Investor interest could not be loaded. Refresh and try again.</Alert>;
+    return <Alert color="red" role="alert" className={styles.fullWidth}>Не удалось загрузить заявки инвесторов. Обновите страницу.</Alert>;
   }
 
   const groups = new Map<
@@ -52,23 +48,36 @@ export default async function FounderApplicationsPage({
   return (
     <Stack gap="xl" className={styles.fullWidth}>
       <div>
-        <Title order={1}>Investor interest</Title>
-        <Text c="dimmed" mt={6}>Review each investor request once and make a clear decision.</Text>
+        <Title order={1}>Заявки инвесторов</Title>
+        <Text c="dimmed" mt={6}>Изучите каждое обращение и примите однозначное решение.</Text>
       </div>
+
+      {result.contactStatus === "ready" && !result.ownContactReady && (
+        <Alert color="yellow" variant="light" title="Включите обмен контактами">
+          <Stack gap="sm" align="flex-start">
+            <Text size="sm">
+              Добавьте приватный контакт, чтобы принятые инвесторы могли продолжить общение с вами.
+            </Text>
+            <LinkButton href="/dashboard/profile" variant="subtle" px={0}>
+              Настроить контакт
+            </LinkButton>
+          </Stack>
+        </Alert>
+      )}
 
       {groups.size === 0 ? (
         <Paper withBorder radius="lg" p="xl">
           <Stack gap="md" align="flex-start">
             <Title order={2} size="h4">
-              {result.total > 0 ? "No requests on this page" : "No investor interest yet"}
+              {result.total > 0 ? "На этой странице нет заявок" : "Заявок инвесторов пока нет"}
             </Title>
             <Text c="dimmed">
               {result.total > 0
-                ? "Return to the first page to continue reviewing incoming interest."
-                : "Interest requests for your active startups will appear here."}
+                ? "Вернитесь на первую страницу, чтобы продолжить просмотр входящих заявок."
+                : "Заявки по вашим активным стартапам появятся здесь."}
             </Text>
             <LinkButton href={result.total > 0 ? "/dashboard/applications/inbox" : "/dashboard"}>
-              {result.total > 0 ? "First page" : "Back to dashboard"}
+              {result.total > 0 ? "На первую страницу" : "В личный кабинет"}
             </LinkButton>
           </Stack>
         </Paper>
@@ -80,7 +89,7 @@ export default async function FounderApplicationsPage({
               <div>
                 <Title order={2} size="h3" id={`startup-${group.startup.id}`}>{group.startup.title}</Title>
                 <LinkButton href={`/startups/${group.startup.slug}`} variant="subtle" px={0}>
-                  View public startup
+                  Открыть публичную страницу
                 </LinkButton>
               </div>
               {group.applications.map((application) => (
@@ -91,28 +100,28 @@ export default async function FounderApplicationsPage({
                     </Badge>
                     <div>
                       <Title order={3} size="h4">
-                        {application.applicant.full_name ?? "Investor"}
+                        {application.applicant.full_name ?? "Инвестор"}
                       </Title>
                       {application.applicant.headline && (
                         <Text size="sm" mt={2}>{application.applicant.headline}</Text>
                       )}
                       <Text size="sm" c="dimmed" mt={4}>
-                        Investor interest
+                        Инвестиционная заявка
                         {application.applicant.location ? ` · ${application.applicant.location}` : ""}
                       </Text>
                     </div>
                     {application.applicant.bio && <Text c="dimmed">{application.applicant.bio}</Text>}
                     {(application.applicant.investor_organization || application.applicant.website_url) && (
                       <Text size="sm">
-                        {application.applicant.investor_organization ?? "Investment organization"}
+                        {application.applicant.investor_organization ?? "Инвестиционная организация"}
                         {application.applicant.website_url && (
-                          <> · <Anchor href={application.applicant.website_url} target="_blank" rel="noreferrer">Website</Anchor></>
+                          <> · <Anchor href={application.applicant.website_url} target="_blank" rel="noreferrer">Сайт</Anchor></>
                         )}
                       </Text>
                     )}
                     {application.applicant.investment_thesis && (
                       <div>
-                        <Text size="xs" tt="uppercase" c="dimmed" fw={700}>Investment thesis</Text>
+                        <Text size="xs" tt="uppercase" c="dimmed" fw={700}>Инвестиционная стратегия</Text>
                         <Text mt={4}>{application.applicant.investment_thesis}</Text>
                       </div>
                     )}
@@ -125,14 +134,14 @@ export default async function FounderApplicationsPage({
                     )}
                     {(application.applicant.ticket_min !== null || application.applicant.ticket_max !== null) && (
                       <Text size="sm" c="dimmed">
-                        Typical ticket: {application.applicant.ticket_min !== null ? currencyFormatter.format(application.applicant.ticket_min) : "Open"}
+                        Типичный чек: {application.applicant.ticket_min !== null ? formatMarketCurrency(application.applicant.ticket_min) : "не указан"}
                         {" – "}
-                        {application.applicant.ticket_max !== null ? currencyFormatter.format(application.applicant.ticket_max) : "Open"}
+                        {application.applicant.ticket_max !== null ? formatMarketCurrency(application.applicant.ticket_max) : "не указан"}
                       </Text>
                     )}
                     {application.applicant.linkedin_url && (
                       <Anchor href={application.applicant.linkedin_url} target="_blank" rel="noreferrer">
-                        LinkedIn profile
+                        Профиль LinkedIn
                       </Anchor>
                     )}
                     <Paper bg="var(--mantine-color-default-hover)" radius="md" p="md" className={styles.messagePanel}>
@@ -140,6 +149,13 @@ export default async function FounderApplicationsPage({
                     </Paper>
                     {application.status === "pending" && (
                       <ApplicationDecisionForm applicationId={application.id} />
+                    )}
+                    {application.status === "accepted" && (
+                      <AcceptedContactCard
+                        contact={result.contacts[application.applicant.id]}
+                        contactStatus={result.contactStatus}
+                        counterpartLabel="investor"
+                      />
                     )}
                   </Stack>
                 </Paper>
@@ -151,7 +167,7 @@ export default async function FounderApplicationsPage({
             page={result.page}
             pageCount={result.pageCount}
             total={result.total}
-            itemLabel={result.total === 1 ? "request" : "requests"}
+            itemLabel={russianPlural(result.total, "заявка", "заявки", "заявок")}
             previousHref={
               result.page > 1
                 ? `/dashboard/applications/inbox?page=${result.page - 1}`

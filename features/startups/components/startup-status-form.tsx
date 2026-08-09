@@ -24,7 +24,7 @@ export function StartupStatusForm({ id, isActive }: { id: number; isActive: bool
           size="compact-sm"
           loading={pending}
         >
-          {isActive ? "Deactivate" : "Republish"}
+          {isActive ? "Снять с публикации" : "Опубликовать снова"}
         </Button>
       </form>
       {state.message && (
@@ -40,4 +40,3 @@ export function StartupStatusForm({ id, isActive }: { id: number; isActive: bool
     </Stack>
   );
 }
-

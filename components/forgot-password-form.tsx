@@ -34,7 +34,7 @@ export function ForgotPasswordForm({
     if (!validated.success) {
       setError(
         validated.error.flatten().fieldErrors.email?.[0] ??
-          "Enter a valid email address",
+          "Введите корректный адрес электронной почты",
       );
       setIsLoading(false);
       return;
@@ -64,12 +64,12 @@ export function ForgotPasswordForm({
         <Paper withBorder shadow="sm" radius="lg" p="xl">
           <Stack gap="md">
             <div>
-              <Title order={1} size="h2">Check Your Email</Title>
-              <Text c="dimmed" size="sm" mt={4}>Password reset instructions sent</Text>
+              <Title order={1} size="h2">Проверьте почту</Title>
+              <Text c="dimmed" size="sm" mt={4}>Инструкция по восстановлению отправлена</Text>
             </div>
             <Text size="sm" c="dimmed">
-              If you registered using your email and password, you will receive
-              a password reset email.
+              Если аккаунт зарегистрирован по электронной почте, вы получите
+              письмо со ссылкой для смены пароля.
             </Text>
           </Stack>
         </Paper>
@@ -77,9 +77,9 @@ export function ForgotPasswordForm({
         <Paper withBorder shadow="sm" radius="lg" p="xl">
           <Stack gap="lg">
             <div>
-              <Title order={1} size="h2">Reset Your Password</Title>
+              <Title order={1} size="h2">Восстановление пароля</Title>
               <Text c="dimmed" size="sm" mt={4}>
-                Type in your email and we&apos;ll send you a link to reset your password
+                Введите электронную почту, и мы отправим ссылку для смены пароля.
               </Text>
             </div>
             <form onSubmit={handleForgotPassword}>
@@ -87,7 +87,7 @@ export function ForgotPasswordForm({
                 <TextInput
                   id="email"
                   type="email"
-                  label="Email"
+                  label="Электронная почта"
                   placeholder="m@example.com"
                   required
                   value={email}
@@ -95,12 +95,12 @@ export function ForgotPasswordForm({
                 />
                 {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
                 <Button type="submit" fullWidth loading={isLoading}>
-                  Send reset email
+                  Отправить ссылку
                 </Button>
               </Stack>
               <Text mt="md" ta="center" size="sm">
-                Already have an account?{" "}
-                <Anchor component={Link} href="/auth/login">Login</Anchor>
+                Уже есть аккаунт?{" "}
+                <Anchor component={Link} href="/auth/login">Войти</Anchor>
               </Text>
             </form>
           </Stack>

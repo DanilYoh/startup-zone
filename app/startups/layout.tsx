@@ -12,14 +12,14 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
     <div className={styles.shell}>
       <header className={styles.header}>
         <nav
-          aria-label="Marketplace navigation"
+          aria-label="Навигация по площадке"
           className={styles.nav}
         >
           <div className={styles.navStart}>
             <Link
               href="/"
               className={styles.brand}
-              aria-label="Startup Zone home"
+              aria-label="Главная Startup Zone"
             >
               <span className={styles.brandMark}>
                 SZ
@@ -30,7 +30,7 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
               href="/startups"
               className={styles.directoryLink}
             >
-              Discover startups
+              Каталог стартапов
             </Link>
           </div>
           <div className={styles.navActions}>
@@ -50,10 +50,13 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <p>Startup Zone · Real founder projects for aligned investors.</p>
-          <Link className={styles.footerLink} href="/">
-            About the product
-          </Link>
+          <p>Startup Zone · Реальные проекты для подходящих инвесторов.</p>
+          <div className={styles.footerLinks}>
+            <Link className={styles.footerLink} href="/">О продукте</Link>
+            <Link className={styles.footerLink} href="/legal/privacy">
+              Политика обработки данных
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

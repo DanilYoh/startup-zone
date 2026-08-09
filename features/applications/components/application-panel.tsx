@@ -4,7 +4,7 @@ import { getApplicationContext } from "@/features/applications/server/queries";
 import { Alert, Badge, Stack, Text, Title } from "@mantine/core";
 import styles from "./applications.module.css";
 
-const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
+const statusLabels = { pending: "На рассмотрении", accepted: "Принята", rejected: "Отклонена" } as const;
 
 export async function ApplicationPanel({
   startupId,
@@ -17,23 +17,23 @@ export async function ApplicationPanel({
 
   return (
     <Stack gap="md">
-      <Title order={2} size="h3">Interested in this project?</Title>
+      <Title order={2} size="h3">Интересен этот проект?</Title>
       {context.status === "signed_out" ? (
         <>
-          <Text c="dimmed">Sign in with an investor account to contact the founder.</Text>
-          <LinkButton href="/auth/login" className={styles.fitWidth}>Sign in to respond</LinkButton>
+          <Text c="dimmed">Войдите как инвестор, чтобы связаться с основателем.</Text>
+          <LinkButton href="/auth/login" className={styles.fitWidth}>Войти и откликнуться</LinkButton>
         </>
       ) : context.status === "owner" ? (
-        <Text c="dimmed">This is your startup. Investor interest appears in your dashboard.</Text>
+        <Text c="dimmed">Это ваш стартап. Заявки инвесторов появятся в личном кабинете.</Text>
       ) : context.status === "unsupported_role" ? (
-        <Text c="dimmed">Only investor profiles can send investment interest.</Text>
+        <Text c="dimmed">Отправлять инвестиционные заявки могут только инвесторы.</Text>
       ) : context.status === "error" ? (
-        <Alert color="red" role="alert">The interest form could not be loaded. Refresh and try again.</Alert>
+        <Alert color="red" role="alert">Не удалось загрузить форму заявки. Обновите страницу.</Alert>
       ) : context.existing ? (
         <Stack gap="xs" align="flex-start">
-          <Text c="dimmed">You already sent this interest request.</Text>
+          <Text c="dimmed">Вы уже отправили заявку по этому проекту.</Text>
           <Badge variant="light">{statusLabels[context.existing.status]}</Badge>
-          <LinkButton href="/dashboard/applications" variant="subtle" px={0}>View my interest</LinkButton>
+          <LinkButton href="/dashboard/applications" variant="subtle" px={0}>Посмотреть мои заявки</LinkButton>
         </Stack>
       ) : (
         <ApplicationForm startupId={startupId} />

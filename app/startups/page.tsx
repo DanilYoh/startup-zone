@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { formatMarketCurrency, russianPlural } from "@/lib/market";
 import {
   hasStartupDirectoryFilters,
   parseStartupDirectoryFilters,
@@ -30,23 +31,17 @@ import { Suspense } from "react";
 import styles from "./startups-supabase.module.css";
 
 export const metadata: Metadata = {
-  title: "Discover startups",
-  description: "Browse active startups published by Startup Zone founders.",
+  title: "Каталог стартапов",
+  description: "Активные стартапы, опубликованные основателями Startup Zone.",
 };
 
 type StartupsPageProps = {
   searchParams: Promise<StartupDirectorySearchParams>;
 };
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 function DirectorySkeleton() {
   return (
-    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" aria-label="Loading startups">
+    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" aria-label="Загрузка стартапов">
       {[1, 2, 3, 4].map((item) => (
         <Skeleton key={item} height={250} radius="lg" />
       ))}
@@ -92,7 +87,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
         <div className={styles.filterGrid}>
           <TextInput
             name="q"
-            label="Search by startup name"
+            label="Поиск по названию"
             placeholder="Climate Lens"
             defaultValue={filters.query}
             maxLength={80}
@@ -101,10 +96,10 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
           <NativeSelect
             id="directory-stage"
             name="stage"
-            label="Stage"
+            label="Стадия"
             defaultValue={filters.stage ?? ""}
             data={[
-              { value: "", label: "All stages" },
+              { value: "", label: "Все стадии" },
               ...startupStages.map((stage) => ({
                 value: stage,
                 label: startupStageLabels[stage],
@@ -114,52 +109,51 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
           <TextInput
             id="directory-niche"
             name="niche"
-            label="Exact niche"
+            label="Точная ниша"
             placeholder="ClimateTech"
             defaultValue={filters.niche}
             maxLength={40}
           />
-          <Button type="submit">Apply filters</Button>
+          <Button type="submit">Применить фильтры</Button>
         </div>
         {hasStartupDirectoryFilters(filters) && (
           <Group mt="md" justify="space-between">
             <Text size="sm" c="dimmed">
-              Showing filtered active startups.
+              Показаны активные стартапы по выбранным фильтрам.
             </Text>
             <LinkButton href="/startups" variant="subtle" size="compact-sm">
-              Clear filters
+              Сбросить фильтры
             </LinkButton>
           </Group>
         )}
       </Paper>
 
       {result.status === "unconfigured" ? (
-        <DirectoryNotice icon={ServerOff} title="Directory unavailable in demo mode">
-          Connect a local or test Supabase environment to browse persisted founder projects. The
-          public portfolio demo does not substitute static cards for marketplace data.
+        <DirectoryNotice icon={ServerOff} title="Каталог недоступен в деморежиме">
+          Подключите локальное или тестовое окружение Supabase, чтобы увидеть сохранённые проекты.
+          Публичная демоверсия не подменяет данные статическими карточками.
         </DirectoryNotice>
       ) : result.status === "error" ? (
-        <Alert color="red" variant="light" title="Startups could not be loaded" role="alert">
-          Refresh the page and try again. If the problem continues, the marketplace data service
-          may be unavailable.
+        <Alert color="red" variant="light" title="Не удалось загрузить стартапы" role="alert">
+          Обновите страницу. Если ошибка сохраняется, сервис данных может быть недоступен.
         </Alert>
       ) : result.data.items.length === 0 ? (
         <DirectoryNotice
           icon={hasStartupDirectoryFilters(filters) ? SearchX : Rocket}
           title={
             result.data.total > 0
-              ? "No startups on this page"
+              ? "На этой странице нет стартапов"
               : hasStartupDirectoryFilters(filters)
-                ? "No matching startups"
-                : "No startups yet"
+                ? "Подходящих стартапов не найдено"
+                : "Стартапов пока нет"
           }
         >
           {result.data.total > 0 ? (
-            <Link href={startupDirectoryHref(filters, 1)}>Return to the first results page.</Link>
+            <Link href={startupDirectoryHref(filters, 1)}>Вернуться на первую страницу.</Link>
           ) : hasStartupDirectoryFilters(filters) ? (
-            "Try a broader name, another stage, or remove the niche filter."
+            "Попробуйте другое название или стадию либо уберите фильтр по нише."
           ) : (
-            "Active founder projects will appear here after they are published."
+            "Активные проекты появятся здесь после публикации основателями."
           )}
         </DirectoryNotice>
       ) : (
@@ -167,10 +161,10 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
           <Group justify="space-between" align="flex-end" mb="lg">
             <div>
               <Title order={2} id="startup-results-heading" size="h3">
-                Active startups
+                Активные стартапы
               </Title>
               <Text mt={4} size="sm" c="dimmed" aria-live="polite">
-                {result.data.total} {result.data.total === 1 ? "project" : "projects"}
+                {result.data.total} {russianPlural(result.data.total, "стартап", "стартапа", "стартапов")}
               </Text>
             </div>
           </Group>
@@ -191,7 +185,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                       </Title>
                       {startup.founder?.full_name && (
                         <Text mt={4} size="sm" c="dimmed">
-                          Founded by {startup.founder.full_name}
+                          Основатель: {startup.founder.full_name}
                         </Text>
                       )}
                     </div>
@@ -215,7 +209,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                       <div>
                         {startup.funding_ask !== null && (
                           <Text size="sm" fw={600}>
-                            Seeking {currencyFormatter.format(startup.funding_ask)}
+                            Требуется {formatMarketCurrency(startup.funding_ask)}
                           </Text>
                         )}
                         {startup.founder?.location && (
@@ -232,7 +226,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                         variant="subtle"
                         rightSection={<ArrowRight size={15} aria-hidden="true" />}
                       >
-                        View project
+                        Открыть проект
                       </LinkButton>
                     </Group>
                   </div>
@@ -244,7 +238,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
             page={result.data.page}
             pageCount={result.data.pageCount}
             total={result.data.total}
-            itemLabel={result.data.total === 1 ? "project" : "projects"}
+            itemLabel={russianPlural(result.data.total, "стартап", "стартапа", "стартапов")}
             previousHref={
               result.data.page > 1
                 ? startupDirectoryHref(filters, result.data.page - 1)
@@ -267,14 +261,14 @@ export default function StartupsPage({ searchParams }: StartupsPageProps) {
     <div className={styles.pageContainer}>
       <div className={styles.heroIntro}>
         <Badge variant="light" size="lg">
-          Founder–investor marketplace
+          Стартапы и инвесторы
         </Badge>
         <Title order={1} mt="md" className={styles.textBalance} fz={{ base: 40, sm: 52 }} lh={1.08}>
-          Find startups that fit your conviction.
+          Найдите стартап, который соответствует вашей стратегии.
         </Title>
         <Text mt="lg" size="lg" c="dimmed" lh={1.7}>
-          Browse active founder projects, qualify the stage and niche, then open the full persisted
-          startup profile before sending investment interest.
+          Изучайте активные проекты, оценивайте стадию и нишу, а затем открывайте полную карточку
+          перед отправкой инвестиционной заявки.
         </Text>
       </div>
 

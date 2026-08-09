@@ -10,23 +10,23 @@ import "@mantine/core/styles.css";
 import "./globals.css";
 import styles from "./layout.module.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+const defaultUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: {
-    default: "Startup Zone — Founder–investor marketplace",
+    default: "Startup Zone — стартапы и инвесторы",
     template: "%s · Startup Zone",
   },
   description:
-    "A focused marketplace where founders publish startups and aligned investors request a conversation.",
-  keywords: ["startups", "founders", "investors", "Next.js", "Supabase"],
+    "Площадка, где основатели публикуют стартапы, а инвесторы находят подходящие проекты и начинают предметный разговор.",
+  keywords: ["стартапы", "основатели", "инвесторы", "инвестиции", "венчурный рынок"],
   authors: [{ name: "DanilYoh", url: "https://github.com/DanilYoh" }],
   openGraph: {
     title: "Startup Zone",
-    description: "Where ambitious founders meet aligned capital.",
+    description: "Место встречи сильных стартапов и подходящих инвесторов.",
     type: "website",
   },
 };
@@ -63,7 +63,7 @@ const theme = createTheme({
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" {...mantineHtmlProps}>
+    <html lang="ru" data-scroll-behavior="smooth" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript defaultColorScheme="dark" />
       </head>

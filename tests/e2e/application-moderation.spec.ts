@@ -2,10 +2,10 @@ import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import type { Database } from "../../lib/supabase/types";
+import { createInvitedUser } from "./support/beta-invitations";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
     "Moderation E2E tests require NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from a local or test Supabase instance.",
@@ -29,25 +29,45 @@ test("a founder accepts a pending application to their startup", async ({ page }
   let applicationId: number | undefined;
 
   try {
-    const { data: founder, error: founderError } = await admin.auth.admin.createUser({
+    const { data: founder, error: founderError } = await createInvitedUser(admin, {
       email: founderEmail,
+      fullName: "Moderation Founder",
       password,
-      email_confirm: true,
-      user_metadata: { full_name: "Moderation Founder", role: "founder" },
+      role: "founder",
     });
     expect(founderError).toBeNull();
     founderId = founder.user?.id;
     if (!founderId) throw new Error("Founder fixture was not created");
 
-    const { data: investor, error: investorError } = await admin.auth.admin.createUser({
+    const { data: investor, error: investorError } = await createInvitedUser(admin, {
       email: investorEmail,
+      fullName: "Seed Investor",
       password,
-      email_confirm: true,
-      user_metadata: { full_name: "Seed Investor", role: "investor" },
+      role: "investor",
     });
     expect(investorError).toBeNull();
     investorId = investor.user?.id;
     if (!investorId) throw new Error("Investor fixture was not created");
+
+    const { error: founderContactError } = await admin
+      .from("profile_contacts")
+      .update({
+        contact_email: founderEmail,
+        contact_url: "https://t.me/moderation_founder",
+        sharing_enabled: true,
+      })
+      .eq("profile_id", founderId);
+    expect(founderContactError).toBeNull();
+
+    const { error: investorContactError } = await admin
+      .from("profile_contacts")
+      .update({
+        contact_email: investorEmail,
+        contact_url: "https://t.me/moderation_investor",
+        sharing_enabled: true,
+      })
+      .eq("profile_id", investorId);
+    expect(investorContactError).toBeNull();
 
     const { error: profileError } = await admin
       .from("profiles")
@@ -91,9 +111,9 @@ test("a founder accepts a pending application to their startup", async ({ page }
     if (!applicationId) throw new Error("Application fixture was not created");
 
     await page.goto("/auth/login");
-    await page.getByLabel("Email").fill(founderEmail);
+    await page.getByLabel("Электронная почта").fill(founderEmail);
     await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("button", { name: "Войти" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
 
     await page.goto("/dashboard/applications/inbox");
@@ -102,9 +122,18 @@ test("a founder accepts a pending application to their startup", async ({ page }
     await expect(page.getByText(message, { exact: true })).toBeVisible();
     await expect(page.getByText("Yekaterinburg", { exact: false })).toBeVisible();
 
-    await page.getByRole("button", { name: "Accept" }).click();
-    await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Reject" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Принять" }).click();
+    await expect(page.getByText("Принята", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Отклонить" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Продолжите общение напрямую" })).toBeVisible();
+    await expect(page.getByRole("link", { name: investorEmail })).toHaveAttribute(
+      "href",
+      `mailto:${investorEmail}`,
+    );
+    await expect(page.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
+      "href",
+      "https://t.me/moderation_investor",
+    );
 
     const { data: persisted, error: persistedError } = await admin
       .from("applications")
@@ -114,6 +143,24 @@ test("a founder accepts a pending application to their startup", async ({ page }
 
     expect(persistedError).toBeNull();
     expect(persisted).toEqual({ status: "accepted", message });
+
+    await page.context().clearCookies();
+    await page.goto("/auth/login");
+    await page.getByLabel("Электронная почта").fill(investorEmail);
+    await page.locator("#password").fill(password);
+    await page.getByRole("button", { name: "Войти" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    await page.goto("/dashboard/applications");
+    await expect(page.getByText("Принята", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: founderEmail })).toHaveAttribute(
+      "href",
+      `mailto:${founderEmail}`,
+    );
+    await expect(page.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
+      "href",
+      "https://t.me/moderation_founder",
+    );
   } finally {
     if (investorId) await admin.auth.admin.deleteUser(investorId);
     if (founderId) await admin.auth.admin.deleteUser(founderId);

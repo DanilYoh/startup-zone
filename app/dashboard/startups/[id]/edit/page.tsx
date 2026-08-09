@@ -19,9 +19,9 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
     return (
       <Paper withBorder radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
-          <Title order={1} size="h3">Founder profile required</Title>
-          <Text c="dimmed">Only founders can edit startups.</Text>
-          <LinkButton href="/dashboard" variant="outline">Back to dashboard</LinkButton>
+          <Title order={1} size="h3">Требуется профиль основателя</Title>
+          <Text c="dimmed">Редактировать стартапы могут только основатели.</Text>
+          <LinkButton href="/dashboard" variant="outline">Назад в кабинет</LinkButton>
         </Stack>
       </Paper>
     );
@@ -30,7 +30,7 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
   return (
     <div className={styles.formPage}>
       <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
-        Back to dashboard
+        Назад в кабинет
       </LinkButton>
       <StartupForm startup={result.startup} />
     </div>

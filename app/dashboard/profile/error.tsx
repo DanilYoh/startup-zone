@@ -5,11 +5,11 @@ import styles from "../dashboard.module.css";
 
 export default function ProfileError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Profile unavailable" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Профиль временно недоступен" role="alert" className={styles.fullWidth}>
       <Stack gap="md">
-        Something unexpected happened while loading the profile.
+        При загрузке профиля произошла ошибка.
         <Button variant="light" color="red" onClick={reset} className={styles.alignStart}>
-          Try again
+          Повторить
         </Button>
       </Stack>
     </Alert>

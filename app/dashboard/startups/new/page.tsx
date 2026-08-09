@@ -24,12 +24,12 @@ async function NewStartupContent() {
     return (
       <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
-          <Title order={1} size="h3">Founder profile unavailable</Title>
+          <Title order={1} size="h3">Профиль основателя недоступен</Title>
           <Text size="sm" c="dimmed">
-            We could not verify your profile. Try again before publishing a startup.
+            Не удалось проверить профиль. Повторите попытку перед публикацией стартапа.
           </Text>
           <LinkButton href="/dashboard" variant="outline">
-            Back to dashboard
+            Назад в кабинет
           </LinkButton>
         </Stack>
       </Paper>
@@ -40,10 +40,10 @@ async function NewStartupContent() {
     return (
       <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
-          <Title order={1} size="h3">Founder profile required</Title>
-          <Text size="sm" c="dimmed">Only founder profiles can publish startups.</Text>
+          <Title order={1} size="h3">Требуется профиль основателя</Title>
+          <Text size="sm" c="dimmed">Публиковать стартапы могут только основатели.</Text>
           <LinkButton href="/dashboard" variant="outline">
-            Back to dashboard
+            Назад в кабинет
           </LinkButton>
         </Stack>
       </Paper>
@@ -53,7 +53,7 @@ async function NewStartupContent() {
   return (
     <div className={styles.formPage}>
       <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
-        Back to dashboard
+        Назад в кабинет
       </LinkButton>
       <StartupForm />
     </div>

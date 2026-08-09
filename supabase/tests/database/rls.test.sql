@@ -1,6 +1,6 @@
 begin;
 
-select plan(49);
+select plan(84);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -8,33 +8,268 @@ select ok(
   'application rate limiting takes a transaction-scoped applicant lock'
 );
 
+insert into public.legal_document_versions (version, title, effective_date, is_active)
+values
+  ('local-development-v1', 'Local development privacy and consent draft', '2026-08-09', true),
+  ('inactive-test-v1', 'Inactive consent test document', '2026-08-08', false)
+on conflict (version) do update
+set
+  title = excluded.title,
+  effective_date = excluded.effective_date,
+  is_active = excluded.is_active;
+
+insert into public.beta_invitations (code_hash, email, role, expires_at)
+values
+  (repeat('1', 64), 'founder@example.test', 'founder', now() + interval '1 day'),
+  (repeat('2', 64), 'primary-investor@example.test', 'investor', now() + interval '1 day'),
+  (repeat('3', 64), 'applicant@example.test', 'investor', now() + interval '1 day'),
+  (repeat('4', 64), 'other-founder@example.test', 'founder', now() + interval '1 day'),
+  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day');
+
+set local role anon;
+
+select results_eq(
+  $$
+    select public.is_beta_invitation_valid(
+      repeat('1', 64),
+      'founder@example.test',
+      'founder'
+    )
+  $$,
+  $$ values (true) $$,
+  'anonymous signup can pre-validate an exact high-entropy invitation tuple'
+);
+
+select results_eq(
+  $$
+    select public.is_beta_invitation_valid(
+      repeat('1', 64),
+      'other-email@example.test',
+      'founder'
+    )
+  $$,
+  $$ values (false) $$,
+  'invitation pre-validation does not accept another email'
+);
+
+reset role;
+
 insert into auth.users (id, email, raw_user_meta_data)
 values
   (
     '10000000-0000-0000-0000-000000000001',
     'founder@example.test',
-    '{"role":"founder","full_name":"Test Founder"}'
+    '{"role":"founder","full_name":"Test Founder","beta_invitation_hash":"1111111111111111111111111111111111111111111111111111111111111111","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000002',
     'primary-investor@example.test',
-    '{"role":"investor","full_name":"Primary Investor"}'
+    '{"role":"investor","full_name":"Primary Investor","beta_invitation_hash":"2222222222222222222222222222222222222222222222222222222222222222","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000003',
     'applicant@example.test',
-    '{"role":"investor","full_name":"Test Applicant"}'
+    '{"role":"investor","full_name":"Test Applicant","beta_invitation_hash":"3333333333333333333333333333333333333333333333333333333333333333","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000004',
     'other-founder@example.test',
-    '{"role":"founder","full_name":"Other Founder"}'
+    '{"role":"founder","full_name":"Other Founder","beta_invitation_hash":"4444444444444444444444444444444444444444444444444444444444444444","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000005',
     'investor@example.test',
-    '{"role":"investor","full_name":"Test Investor"}'
+    '{"role":"investor","full_name":"Test Investor","beta_invitation_hash":"5555555555555555555555555555555555555555555555555555555555555555","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
+
+select results_eq(
+  $$
+    select count(*)
+    from public.beta_invitations
+    where used_at is not null and used_by is not null
+  $$,
+  $$ values (5::bigint) $$,
+  'onboarding atomically consumes every one-time beta invitation'
+);
+
+select results_eq(
+  $$
+    select email, role::text, used_by
+    from public.beta_invitations
+    where code_hash = repeat('1', 64)
+  $$,
+  $$ values ('founder@example.test', 'founder', '10000000-0000-0000-0000-000000000001'::uuid) $$,
+  'the consumed invitation remains bound to its email, role, and account'
+);
+
+select results_eq(
+  $$ select count(*) from public.legal_consents $$,
+  $$ values (5::bigint) $$,
+  'onboarding records one immutable consent for every profile'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.legal_consents
+    where document_version = 'local-development-v1'
+      and source = 'signup'
+  $$,
+  $$ values (5::bigint) $$,
+  'onboarding records the active document version and signup source'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000008',
+      'missing-consent@example.test',
+      '{"role":"founder","full_name":"Missing Consent"}'
+    )
+  $$,
+  '%Versioned personal data consent is required%',
+  'onboarding rejects an account without explicit versioned consent'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000009',
+      'inactive-consent@example.test',
+      '{"role":"founder","full_name":"Inactive Consent","legal_consent":true,"legal_document_version":"inactive-test-v1"}'
+    )
+  $$,
+  '%The personal data consent version is not active%',
+  'onboarding rejects an inactive legal document version'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000010',
+      'missing-invitation@example.test',
+      '{"role":"founder","full_name":"Missing Invitation","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%A valid beta invitation is required%',
+  'onboarding rejects an account without a beta invitation hash'
+);
+
+insert into public.beta_invitations (code_hash, email, role, created_at, expires_at)
+values
+  (repeat('6', 64), 'invited-email@example.test', 'founder', now(), now() + interval '1 day'),
+  (repeat('7', 64), 'wrong-role@example.test', 'founder', now(), now() + interval '1 day'),
+  (
+    repeat('8', 64),
+    'expired-invitation@example.test',
+    'founder',
+    now() - interval '2 days',
+    now() - interval '1 day'
+  );
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000011',
+      'different-email@example.test',
+      '{"role":"founder","full_name":"Wrong Email","beta_invitation_hash":"6666666666666666666666666666666666666666666666666666666666666666","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an invitation issued for another email'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000012',
+      'wrong-role@example.test',
+      '{"role":"investor","full_name":"Wrong Role","beta_invitation_hash":"7777777777777777777777777777777777777777777777777777777777777777","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an invitation issued for another role'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000013',
+      'expired-invitation@example.test',
+      '{"role":"founder","full_name":"Expired Invitation","beta_invitation_hash":"8888888888888888888888888888888888888888888888888888888888888888","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an expired invitation'
+);
+
+update public.beta_invitations
+set email = 'used-invitation@example.test'
+where code_hash = repeat('1', 64);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000014',
+      'used-invitation@example.test',
+      '{"role":"founder","full_name":"Used Invitation","beta_invitation_hash":"1111111111111111111111111111111111111111111111111111111111111111","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an already consumed invitation'
+);
+
+set local role anon;
+
+select throws_like(
+  $$ select * from public.beta_invitations $$,
+  '%permission denied%',
+  'anonymous clients cannot read beta invitations'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select throws_like(
+  $$ select * from public.beta_invitations $$,
+  '%permission denied%',
+  'authenticated clients cannot read beta invitations'
+);
+
+select throws_like(
+  $$
+    insert into public.beta_invitations (code_hash, email, role, expires_at)
+    values (repeat('9', 64), 'client-created@example.test', 'founder', now() + interval '1 day')
+  $$,
+  '%permission denied%',
+  'authenticated clients cannot create beta invitations'
+);
+
+reset role;
+
+select throws_like(
+  $$
+    update public.legal_consents
+    set accepted_at = accepted_at + interval '1 second'
+    where subject_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  '%Legal consent records are immutable%',
+  'even privileged callers cannot rewrite consent evidence'
+);
+
+select results_eq(
+  $$ select count(*) from public.profile_contacts $$,
+  $$ values (5::bigint) $$,
+  'onboarding creates one private contact record for every profile'
+);
 
 select results_eq(
   $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000001' $$,
@@ -151,6 +386,42 @@ where slug = 'existing-startup';
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select lives_ok(
+  $$
+    update public.profile_contacts
+    set
+      contact_email = 'founder-contact@example.test',
+      contact_url = 'https://t.me/test_founder',
+      sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  'a founder can enable sharing for their own private contact'
+);
+
+select results_eq(
+  $$
+    with updated as (
+      update public.profile_contacts
+      set contact_email = 'spoofed@example.test'
+      where profile_id = '10000000-0000-0000-0000-000000000004'
+      returning profile_id
+    )
+    select count(*) from updated
+  $$,
+  $$ values (0::bigint) $$,
+  'a user cannot update another profile private contact'
+);
+
+select throws_like(
+  $$
+    update public.profile_contacts
+    set contact_url = 'javascript:alert(1)'
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  '%profile_contacts_url_check%',
+  'private contact links are restricted to HTTP and HTTPS'
+);
 
 select lives_ok(
   $$
@@ -305,6 +576,12 @@ select lives_ok(
   'an investor can update every allowed common and role-specific profile field'
 );
 
+update public.profile_contacts
+set
+  contact_email = 'rejected-investor@example.test',
+  sharing_enabled = true
+where profile_id = '10000000-0000-0000-0000-000000000002';
+
 select throws_like(
   $$
     update public.profiles
@@ -365,6 +642,16 @@ select lives_ok(
     where slug = 'existing-startup'
   $$,
   'an investor can send interest to an active startup owned by another user'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'a pending investor cannot read the founder private contact'
 );
 
 select throws_like(
@@ -474,6 +761,46 @@ select throws_like(
 
 reset role;
 set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select lives_ok(
+  $$
+    update public.profile_contacts
+    set
+      contact_email = 'accepted-investor@example.test',
+      contact_url = 'https://t.me/accepted_investor',
+      sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  'an investor can enable sharing for their own private contact'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'an applicant cannot read the founder private contact before acceptance'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000005', true);
+
+select throws_like(
+  $$
+    update public.profile_contacts
+    set sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000005'
+  $$,
+  '%profile_contacts_enabled_value_check%',
+  'contact exchange cannot be enabled without an email or contact link'
+);
+
+reset role;
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select throws_like(
@@ -529,6 +856,26 @@ select lives_ok(
   'a founder can reject a pending application to their startup'
 );
 
+select results_eq(
+  $$
+    select contact_email, contact_url
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('accepted-investor@example.test', 'https://t.me/accepted_investor') $$,
+  'a founder can read an accepted investor private contact'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  $$ values (0::bigint) $$,
+  'a founder cannot read a rejected investor private contact'
+);
+
 select throws_like(
   $$
     update public.applications
@@ -574,6 +921,51 @@ select throws_like(
   $$,
   '%permission denied%',
   'a founder cannot rewrite applicant-owned application content'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select results_eq(
+  $$
+    select contact_email, contact_url
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values ('founder-contact@example.test', 'https://t.me/test_founder') $$,
+  'an accepted investor can read the founder private contact'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'a rejected investor cannot read the founder private contact'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id in (
+      '10000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000003'
+    )
+  $$,
+  $$ values (0::bigint) $$,
+  'an unrelated founder cannot read accepted-match private contacts'
 );
 
 reset role;
@@ -638,6 +1030,18 @@ select columns_are(
 set local role anon;
 
 select throws_like(
+  $$ select * from public.legal_consents $$,
+  '%permission denied%',
+  'anonymous users cannot read legal consent evidence'
+);
+
+select throws_like(
+  $$ select * from public.profile_contacts $$,
+  '%permission denied%',
+  'anonymous users cannot read private profile contacts'
+);
+
+select throws_like(
   $$ select * from public.profiles $$,
   '%permission denied%',
   'anonymous users cannot read the profiles table'
@@ -656,6 +1060,42 @@ select results_eq(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select results_eq(
+  $$
+    select document_version
+    from public.legal_consents
+    where subject_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  $$ values ('local-development-v1') $$,
+  'an authenticated user can read their own consent evidence'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.legal_consents
+    where subject_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values (0::bigint) $$,
+  'an authenticated user cannot read another account consent'
+);
+
+select throws_like(
+  $$
+    insert into public.legal_consents (
+      subject_id,
+      subject_email,
+      document_version
+    ) values (
+      '10000000-0000-0000-0000-000000000002',
+      'primary-investor@example.test',
+      'inactive-test-v1'
+    )
+  $$,
+  '%permission denied%',
+  'authenticated users cannot manufacture consent evidence'
+);
 
 select results_eq(
   $$

@@ -5,10 +5,10 @@ import styles from "../dashboard.module.css";
 
 export default function ApplicationsError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Interest unavailable" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Заявки временно недоступны" role="alert" className={styles.fullWidth}>
       <Stack gap="md">
-        Something unexpected happened while loading your interest requests.
-        <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Try again</Button>
+        При загрузке ваших заявок произошла ошибка.
+        <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Повторить</Button>
       </Stack>
     </Alert>
   );

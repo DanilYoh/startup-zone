@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 describe("getAuthErrorMessage", () => {
   it("maps stable auth codes to safe user-facing messages", () => {
     expect(getAuthErrorMessage("confirmation_failed")).toBe(
-      "This confirmation link is invalid or has expired. Request a new link and try again.",
+      "Ссылка подтверждения недействительна или устарела. Запросите новую ссылку.",
     );
   });
 
@@ -12,7 +12,7 @@ describe("getAuthErrorMessage", () => {
     const rawMessage = "User token secret failed in upstream Auth service";
     const message = getAuthErrorMessage(rawMessage);
 
-    expect(message).toBe("Authentication could not be completed. Please try again.");
+    expect(message).toBe("Не удалось завершить аутентификацию. Повторите попытку.");
     expect(message).not.toContain(rawMessage);
   });
 });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { startupStages } from "@/lib/validations";
+import { parseMarketNumber } from "@/lib/market";
 
 function isHttpUrl(value: string) {
   try {
@@ -32,34 +33,44 @@ const optionalText = (maximum: number, message: string) =>
 const optionalHttpUrl = z
   .string()
   .trim()
-  .max(2_048, "Keep the URL under 2,048 characters")
-  .refine((value) => value === "" || isHttpUrl(value), "Use an HTTP(S) URL")
+  .max(2_048, "Введите не более 2 048 символов")
+  .refine((value) => value === "" || isHttpUrl(value), "Укажите ссылку с протоколом HTTP(S)")
   .transform((value) => value || null);
 
 const optionalLinkedInUrl = z
   .string()
   .trim()
-  .max(2_048, "Keep the URL under 2,048 characters")
+  .max(2_048, "Введите не более 2 048 символов")
   .refine(
     (value) => value === "" || isLinkedInUrl(value),
-    "Use an HTTPS linkedin.com URL",
+    "Укажите HTTPS-ссылку на linkedin.com",
   )
   .transform((value) => value || null);
 
+const optionalEmail = z
+  .string()
+  .trim()
+  .max(254, "Введите не более 254 символов")
+  .refine(
+    (value) => value === "" || z.email().safeParse(value).success,
+    "Введите корректный адрес электронной почты",
+  )
+  .transform((value) => value.toLowerCase() || null);
+
 export const profileSchema = z.object({
-  full_name: z.string().trim().min(2, "Use at least 2 characters").max(80),
-  headline: optionalText(120, "Keep the headline under 120 characters"),
-  bio: optionalText(1_000, "Keep the description under 1,000 characters"),
-  location: optionalText(120, "Keep the location under 120 characters"),
+  full_name: z.string().trim().min(2, "Введите не менее 2 символов").max(80, "Введите не более 80 символов"),
+  headline: optionalText(120, "Введите не более 120 символов"),
+  bio: optionalText(1_000, "Введите не более 1 000 символов"),
+  location: optionalText(120, "Введите не более 120 символов"),
   avatar_url: optionalHttpUrl,
   linkedin_url: optionalLinkedInUrl,
-  founder_experience: optionalText(1_200, "Keep founder experience under 1,200 characters"),
-  investor_organization: optionalText(120, "Keep the organization under 120 characters"),
-  investment_thesis: optionalText(1_500, "Keep the investment thesis under 1,500 characters"),
+  founder_experience: optionalText(1_200, "Введите не более 1 200 символов"),
+  investor_organization: optionalText(120, "Введите не более 120 символов"),
+  investment_thesis: optionalText(1_500, "Введите не более 1 500 символов"),
   preferred_stages: z
     .array(z.enum(startupStages))
-    .max(6, "Choose no more than six stages")
-    .refine((stages) => new Set(stages).size === stages.length, "Choose each stage only once"),
+    .max(6, "Выберите не более шести стадий")
+    .refine((stages) => new Set(stages).size === stages.length, "Каждую стадию можно выбрать только один раз"),
   ticket_min: z.preprocess(
     normalizeCurrencyInput,
     z.number().int().positive().max(1_000_000_000).nullable(),
@@ -77,7 +88,7 @@ export const profileSchema = z.object({
   ) {
     context.addIssue({
       code: "custom",
-      message: "Maximum ticket must be greater than or equal to the minimum",
+      message: "Максимальный чек должен быть не меньше минимального",
       path: ["ticket_max"],
     });
   }
@@ -85,10 +96,28 @@ export const profileSchema = z.object({
 
 function normalizeCurrencyInput(value: unknown) {
   if (value === "" || value === null) return null;
-  return typeof value === "string" ? Number(value.replaceAll(",", "")) : value;
+  return typeof value === "string" ? parseMarketNumber(value) : value;
 }
 
 export type ProfileInput = z.infer<typeof profileSchema>;
+
+export const profileContactSchema = z
+  .object({
+    contact_email: optionalEmail,
+    contact_url: optionalHttpUrl,
+    sharing_enabled: z.boolean(),
+  })
+  .superRefine((contact, context) => {
+    if (contact.sharing_enabled && !contact.contact_email && !contact.contact_url) {
+      context.addIssue({
+        code: "custom",
+        message: "Добавьте электронную почту или ссылку перед включением обмена контактами",
+        path: ["contact_email"],
+      });
+    }
+  });
+
+export type ProfileContactInput = z.infer<typeof profileContactSchema>;
 
 function singleText(formData: FormData, name: string) {
   const values = formData.getAll(name);
@@ -113,5 +142,20 @@ export function parseProfileForm(formData: FormData) {
     ticket_min: singleText(formData, "ticket_min"),
     ticket_max: singleText(formData, "ticket_max"),
     website_url: singleText(formData, "website_url"),
+  });
+}
+
+export function parseProfileContactForm(formData: FormData) {
+  const sharingValues = formData.getAll("sharing_enabled");
+
+  return profileContactSchema.safeParse({
+    contact_email: singleText(formData, "contact_email"),
+    contact_url: singleText(formData, "contact_url"),
+    sharing_enabled:
+      sharingValues.length === 0
+        ? false
+        : sharingValues.length === 1 && sharingValues[0] === "on"
+          ? true
+          : null,
   });
 }

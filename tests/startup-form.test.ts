@@ -34,6 +34,16 @@ describe("parseStartupForm", () => {
     });
   });
 
+  it("accepts space-grouped ruble amounts", () => {
+    const formData = validFormData();
+    formData.set("funding_ask", "250 000");
+
+    const result = parseStartupForm(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.funding_ask).toBe(250_000);
+  });
+
   it("rejects malformed optional numbers", () => {
     const formData = validFormData();
     formData.set("funding_ask", "not-a-number");

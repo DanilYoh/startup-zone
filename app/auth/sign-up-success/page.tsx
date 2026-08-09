@@ -9,12 +9,12 @@ export default function Page() {
           <Paper withBorder shadow="sm" radius="lg" p="xl">
             <Stack gap="md">
               <div>
-                <Title order={1} size="h2">Thank you for signing up!</Title>
-                <Text c="dimmed" size="sm" mt={4}>Check your email to confirm</Text>
+                <Title order={1} size="h2">Регистрация почти завершена</Title>
+                <Text c="dimmed" size="sm" mt={4}>Подтвердите электронную почту</Text>
               </div>
               <Text size="sm" c="dimmed">
-                You&apos;ve successfully signed up. Please check your email to
-                confirm your account before signing in.
+                Мы создали аккаунт. Перейдите по ссылке из письма, чтобы подтвердить
+                электронную почту и войти.
               </Text>
             </Stack>
           </Paper>

@@ -49,10 +49,10 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
       <Stack gap="xl">
         <div>
           <Title order={1} size="h2">
-            {startup ? "Edit startup" : "Publish a startup"}
+            {startup ? "Редактирование стартапа" : "Публикация стартапа"}
           </Title>
           <Text c="dimmed" size="sm" mt={4}>
-            Add the core information investors need to understand and qualify the project.
+            Добавьте ключевую информацию, по которой инвестор сможет оценить проект.
           </Text>
         </div>
         <form action={formAction} className={styles.form}>
@@ -62,7 +62,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               className={styles.wideField}
               id="title"
               name="title"
-              label="Startup name"
+              label="Название стартапа"
               defaultValue={startup?.title ?? ""}
               minLength={3}
               maxLength={80}
@@ -72,8 +72,8 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             <TextInput
               id="slug"
               name="slug"
-              label="Slug"
-              description="Lowercase letters, numbers, and hyphens."
+              label="Адрес страницы"
+              description="Латинские строчные буквы, цифры и дефисы."
               placeholder="climate-lens"
               defaultValue={startup?.slug ?? ""}
               pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
@@ -85,9 +85,9 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             <NativeSelect
               id="stage"
               name="stage"
-              label="Stage"
+              label="Стадия"
               data={[
-                { value: "", label: "Select a stage", disabled: true },
+                { value: "", label: "Выберите стадию", disabled: true },
                 ...startupStages.map((stage) => ({
                   value: stage,
                   label: startupStageLabels[stage],
@@ -101,7 +101,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               className={styles.wideField}
               id={startup ? "edit-one_pager" : "one_pager"}
               name="one_pager"
-              label="One-line summary"
+              label="Краткое описание"
               defaultValue={startup?.one_pager ?? ""}
               minLength={10}
               maxLength={240}
@@ -112,7 +112,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               className={styles.wideField}
               id="description"
               name="description"
-              label="Description"
+              label="Подробное описание"
               defaultValue={startup?.description ?? ""}
               rows={7}
               minLength={50}
@@ -124,8 +124,8 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               className={styles.wideField}
               id="niche"
               name="niche"
-              label="Niches"
-              description="Separate up to eight niches with commas."
+              label="Ниши"
+              description="Укажите до восьми ниш через запятую."
               placeholder="ClimateTech, B2B SaaS"
               defaultValue={startup?.niche.join(", ") ?? ""}
               required
@@ -134,18 +134,19 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             <NumberInput
               id="funding_ask"
               name="funding_ask"
-              label="Funding ask (USD)"
+              label="Требуемая сумма (₽)"
               defaultValue={startup?.funding_ask ?? undefined}
               min={1}
               max={1_000_000_000}
               decimalScale={0}
               allowNegative={false}
+              thousandSeparator=" "
               error={fieldError("funding_ask")}
             />
             <NumberInput
               id="equity_offered"
               name="equity_offered"
-              label="Equity offered (%)"
+              label="Предлагаемая доля (%)"
               defaultValue={startup?.equity_offered ?? undefined}
               min={0}
               max={100}
@@ -158,7 +159,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               id="website_url"
               name="website_url"
               type="url"
-              label="Website URL"
+              label="Сайт проекта"
               placeholder="https://example.com"
               defaultValue={startup?.website_url ?? ""}
               error={fieldError("website_url")}
@@ -167,7 +168,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               id="deck_url"
               name="deck_url"
               type="url"
-              label="Pitch deck URL"
+              label="Ссылка на презентацию"
               placeholder="https://example.com/deck"
               defaultValue={startup?.deck_url ?? ""}
               error={fieldError("deck_url")}
@@ -180,7 +181,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
           )}
           <div className={styles.actions}>
             <Button type="submit" size="md" loading={pending}>
-              {startup ? "Save changes" : "Publish startup"}
+              {startup ? "Сохранить изменения" : "Опубликовать стартап"}
             </Button>
           </div>
         </form>

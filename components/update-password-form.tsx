@@ -33,7 +33,7 @@ export function UpdatePasswordForm({
     if (!validated.success) {
       setError(
         validated.error.flatten().fieldErrors.password?.[0] ??
-          "Enter a valid password",
+          "Введите корректный пароль",
       );
       setIsLoading(false);
       return;
@@ -59,15 +59,16 @@ export function UpdatePasswordForm({
       <Paper withBorder shadow="sm" radius="lg" p="xl">
         <Stack gap="lg">
           <div>
-            <Title order={1} size="h2">Reset Your Password</Title>
-            <Text c="dimmed" size="sm" mt={4}>Please enter your new password below.</Text>
+            <Title order={1} size="h2">Новый пароль</Title>
+            <Text c="dimmed" size="sm" mt={4}>Введите новый пароль.</Text>
           </div>
           <form onSubmit={handleUpdatePassword}>
             <Stack gap="md">
               <PasswordInput
                 id="password"
-                label="New password"
-                placeholder="New password"
+                label="Новый пароль"
+                placeholder="Новый пароль"
+                visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                 required
                 minLength={8}
                 maxLength={72}
@@ -76,7 +77,7 @@ export function UpdatePasswordForm({
               />
               {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
               <Button type="submit" fullWidth loading={isLoading}>
-                Save new password
+                Сохранить пароль
               </Button>
             </Stack>
           </form>

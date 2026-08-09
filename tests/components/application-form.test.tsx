@@ -20,20 +20,20 @@ describe("ApplicationForm", () => {
   it("submits investor interest and replaces the form with confirmation", async () => {
     createApplicationMock.mockResolvedValue({
       status: "success",
-      message: "Your application was sent to the founder.",
+      message: "Заявка отправлена основателю.",
     });
     const user = userEvent.setup();
 
     render(<ApplicationForm startupId={42} />);
 
-    const message = screen.getByRole("textbox", { name: "Investment interest" });
+    const message = screen.getByRole("textbox", { name: "Сообщение основателю" });
     await user.type(message, "This company fits my seed thesis and I would like to meet the founder.");
-    await user.click(screen.getByRole("button", { name: "Send interest" }));
+    await user.click(screen.getByRole("button", { name: "Отправить заявку" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Your application was sent to the founder.",
+      "Заявка отправлена основателю.",
     );
-    expect(screen.queryByRole("textbox", { name: "Investment interest" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Сообщение основателю" })).not.toBeInTheDocument();
     expect(createApplicationMock).toHaveBeenCalledOnce();
 
     const submitted = createApplicationMock.mock.calls[0]?.[1];
@@ -47,9 +47,9 @@ describe("ApplicationForm", () => {
   it("explains the information an investor should send", () => {
     render(<ApplicationForm startupId={7} />);
 
-    expect(screen.getByRole("textbox", { name: "Investment interest" })).toHaveAccessibleDescription(
-      "Explain the fit with your thesis and the conversation you would like to request.",
+    expect(screen.getByRole("textbox", { name: "Сообщение основателю" })).toHaveAccessibleDescription(
+      "Объясните, почему проект соответствует вашей стратегии и что вы хотите обсудить.",
     );
-    expect(screen.getByRole("button", { name: "Send interest" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Отправить заявку" })).toBeEnabled();
   });
 });

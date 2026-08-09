@@ -31,8 +31,8 @@ export function LoginForm({
       <Paper withBorder radius="md" p="xl" className={styles.authCard}>
         <Stack gap="lg">
           <div>
-            <Title order={1} size="h2">Login</Title>
-            <Text c="dimmed" size="sm" mt={4}>Enter your email to access your marketplace dashboard.</Text>
+            <Title order={1} size="h2">Вход</Title>
+            <Text c="dimmed" size="sm" mt={4}>Введите email, чтобы открыть личный кабинет.</Text>
           </div>
           <form action={formAction}>
             <Stack gap="md">
@@ -40,7 +40,7 @@ export function LoginForm({
                 id="email"
                 name="email"
                 type="email"
-                label="Email"
+                label="Электронная почта"
                 placeholder="m@example.com"
                 autoComplete="email"
                 required
@@ -50,21 +50,22 @@ export function LoginForm({
                 <PasswordInput
                   id="password"
                   name="password"
-                  label="Password"
+                  label="Пароль"
                   autoComplete="current-password"
+                  visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                   required
                   error={fieldError("password")}
                 />
                 <Anchor component={Link} href="/auth/forgot-password" size="sm" ta="right">
-                  Forgot your password?
+                  Забыли пароль?
                 </Anchor>
               </Stack>
               {state.message && <Alert color="red" variant="light" role="alert">{state.message}</Alert>}
-              <Button type="submit" fullWidth loading={pending}>Login</Button>
+              <Button type="submit" fullWidth loading={pending}>Войти</Button>
             </Stack>
             <Text mt="md" ta="center" size="sm">
-              Don&apos;t have an account?{" "}
-              <Anchor component={Link} href="/auth/sign-up">Sign up</Anchor>
+              Нет аккаунта?{" "}
+              <Anchor component={Link} href="/auth/sign-up">Зарегистрироваться</Anchor>
             </Text>
           </form>
         </Stack>

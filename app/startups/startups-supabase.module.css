@@ -76,6 +76,12 @@
 .footerLink,
 .startupLink { transition: color 120ms ease; }
 
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
 .pageContainer,
 .narrowContainer {
   width: 100%;

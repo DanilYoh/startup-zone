@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { passwordSchema } from "../../features/auth/schemas";
 import type { MarketplaceRole } from "../../lib/domain-types";
 import type { Database } from "../../lib/supabase/types";
+import { issueBetaInvitation } from "./support/beta-invitations";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -24,8 +25,8 @@ const publicAuth = createClient<Database>(supabaseUrl, publishableKey, {
 });
 
 const roles: ReadonlyArray<{ role: MarketplaceRole; label: string }> = [
-  { role: "founder", label: "Founder" },
-  { role: "investor", label: "Investor" },
+  { role: "founder", label: "Основатель" },
+  { role: "investor", label: "Инвестор" },
 ];
 
 test("public Auth rejects passwords shorter than the shared policy", async () => {
@@ -53,6 +54,41 @@ test("public Auth rejects passwords shorter than the shared policy", async () =>
   }
 });
 
+test("signup rejects a valid-format code that does not match the issued invitation", async ({ page }) => {
+  const suffix = randomUUID();
+  const email = `wrong-invitation-${suffix}@example.test`;
+  const password = `Test-${suffix}-password`;
+  const invitation = await issueBetaInvitation(admin, email, "founder");
+
+  try {
+    await page.goto("/auth/sign-up");
+    await page.getByRole("textbox", { name: "Код приглашения" }).fill("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    await page.getByLabel("Имя и фамилия").fill("Wrong Invitation");
+    await page.getByLabel("Электронная почта").fill(email);
+    await page.locator("#password").fill(password);
+    await page.locator("#repeat-password").fill(password);
+    await page
+      .getByRole("checkbox", { name: /Я даю отдельное согласие/u })
+      .check();
+    await page.getByRole("button", { name: "Создать аккаунт" }).click();
+
+    await expect(page).toHaveURL(/\/auth\/sign-up$/);
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Код приглашения недействителен" }),
+    ).toBeVisible();
+
+    const { data: storedInvitation, error } = await admin
+      .from("beta_invitations")
+      .select("used_at, used_by")
+      .eq("id", invitation.id)
+      .single();
+    expect(error).toBeNull();
+    expect(storedInvitation).toEqual({ used_at: null, used_by: null });
+  } finally {
+    await admin.from("beta_invitations").delete().eq("id", invitation.id);
+  }
+});
+
 for (const { role, label } of roles) {
   test(`a new ${role} chooses a locked role and edits their profile`, async ({ page }) => {
     const suffix = randomUUID();
@@ -63,17 +99,26 @@ for (const { role, label } of roles) {
     let userId: string | undefined;
 
     try {
+      if (role === "founder") {
+        await page.setViewportSize({ width: 390, height: 844 });
+      }
+
+      const invitation = await issueBetaInvitation(admin, email, role);
       await page.goto("/auth/sign-up");
-      await page.getByLabel("Full name").fill(initialName);
-      await page.getByLabel("Email").fill(email);
+      await page.getByRole("textbox", { name: "Код приглашения" }).fill(invitation.code);
+      await page.getByLabel("Имя и фамилия").fill(initialName);
+      await page.getByLabel("Электронная почта").fill(email);
       await page.getByRole("radio", { name: label }).check();
       await page.locator("#password").fill(password);
       await page.locator("#repeat-password").fill(password);
-      await page.getByRole("button", { name: "Create account" }).click();
+      await page
+        .getByRole("checkbox", { name: /Я даю отдельное согласие/u })
+        .check();
+      await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
       await expect(page).toHaveURL(/\/dashboard\/profile$/);
-      await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible();
-      await expect(page.getByRole("textbox", { name: "Role" })).toHaveValue(label);
+      await expect(page.getByRole("heading", { level: 1, name: "Профиль" })).toBeVisible();
+      await expect(page.getByRole("textbox", { name: "Роль" })).toHaveValue(label);
 
       const { data: users, error: usersError } = await admin.auth.admin.listUsers();
       expect(usersError).toBeNull();
@@ -82,36 +127,45 @@ for (const { role, label } of roles) {
       if (!userId) throw new Error("The registered user could not be found");
 
       await page.locator("#profile-full-name").fill(updatedName);
-      await page.getByLabel("Professional headline").fill(
+      await page.getByLabel("Профессиональный заголовок").fill(
         role === "founder" ? "Founder · Vertical software" : "Partner · Seed-stage B2B",
       );
-      await page.getByLabel("About").fill(`A verified ${role} marketplace profile.`);
-      await page.getByLabel("Location").fill("Yekaterinburg");
+      await page.getByLabel("О себе").fill(`A verified ${role} marketplace profile.`);
+      await page.getByLabel("Город").fill("Yekaterinburg");
       await page
-        .getByLabel("Avatar URL")
+        .getByLabel("Ссылка на фотографию")
         .fill(`https://images.example.test/${role}-${suffix}.png`);
       await page
-        .getByLabel("LinkedIn URL")
+        .getByLabel("Ссылка на LinkedIn")
         .fill(`https://www.linkedin.com/in/${role}-${suffix}`);
 
       if (role === "founder") {
-        await page.getByLabel("Relevant founder experience").fill(
+        await page.getByLabel("Релевантный опыт").fill(
           "Built and sold workflow software to regional operations teams.",
         );
       } else {
-        await page.getByLabel("Fund or organization").fill("Northstar Ventures");
-        await page.getByLabel("Organization website").fill("https://northstar.example.test");
-        await page.getByLabel("Investment thesis").fill(
+        await page.getByLabel("Фонд или организация").fill("Northstar Ventures");
+        await page.getByLabel("Сайт организации").fill("https://northstar.example.test");
+        await page.getByLabel("Инвестиционная стратегия").fill(
           "Backing capital-efficient B2B software at pre-seed and seed.",
         );
         await page.getByRole("checkbox", { name: "Pre-seed", exact: true }).check();
         await page.getByRole("checkbox", { name: "Seed", exact: true }).check();
-        await page.getByLabel("Minimum ticket (USD)").fill("100000");
-        await page.getByLabel("Maximum ticket (USD)").fill("500000");
+        await page.getByLabel("Минимальный чек (₽)").fill("100000");
+        await page.getByLabel("Максимальный чек (₽)").fill("500000");
       }
-      await page.getByRole("button", { name: "Save profile" }).click();
+      await page.getByRole("button", { name: "Сохранить профиль" }).click();
 
-      await expect(page.getByRole("status")).toHaveText("Profile saved.");
+      await expect(page.getByRole("status")).toHaveText("Профиль сохранён.");
+
+      const contactUrl = `https://t.me/${role}_${suffix.replaceAll("-", "").slice(0, 20)}`;
+      await page.getByLabel("Электронная почта для связи").fill(email);
+      await page.getByLabel("Ссылка для связи").fill(contactUrl);
+      await page
+        .getByRole("checkbox", { name: "Показывать эти данные после того, как я приму заявку", exact: false })
+        .check();
+      await page.getByRole("button", { name: "Сохранить настройки контактов" }).click();
+      await expect(page.getByText("Обмен контактами после принятия заявки включён.", { exact: true })).toBeVisible();
 
       const { data: profile, error: profileError } = await admin
         .from("profiles")
@@ -144,6 +198,56 @@ for (const { role, label } of roles) {
         ticket_max: role === "investor" ? 500_000 : null,
         website_url: role === "investor" ? "https://northstar.example.test" : null,
       });
+
+      const { data: contact, error: contactError } = await admin
+        .from("profile_contacts")
+        .select("contact_email, contact_url, sharing_enabled")
+        .eq("profile_id", userId)
+        .single();
+
+      expect(contactError).toBeNull();
+      expect(contact).toEqual({
+        contact_email: email,
+        contact_url: contactUrl,
+        sharing_enabled: true,
+      });
+
+      const { data: consent, error: consentError } = await admin
+        .from("legal_consents")
+        .select("subject_email, document_version, source, accepted_at")
+        .eq("subject_id", userId)
+        .single();
+
+      expect(consentError).toBeNull();
+      expect(consent).toMatchObject({
+        subject_email: email,
+        document_version: "local-development-v1",
+        source: "signup",
+      });
+      expect(Number.isNaN(Date.parse(consent?.accepted_at ?? ""))).toBe(false);
+
+      const { data: usedInvitation, error: invitationError } = await admin
+        .from("beta_invitations")
+        .select("email, role, used_at, used_by")
+        .eq("id", invitation.id)
+        .single();
+
+      expect(invitationError).toBeNull();
+      expect(usedInvitation).toMatchObject({
+        email,
+        role,
+        used_by: userId,
+      });
+      expect(Number.isNaN(Date.parse(usedInvitation?.used_at ?? ""))).toBe(false);
+
+      if (role === "founder") {
+        const viewport = await page.evaluate(() => ({
+          clientWidth: document.documentElement.clientWidth,
+          scrollWidth: document.documentElement.scrollWidth,
+        }));
+        expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+        await expect(page.getByRole("heading", { name: "Контакты после принятия заявки" })).toBeVisible();
+      }
     } finally {
       if (userId) await admin.auth.admin.deleteUser(userId);
     }

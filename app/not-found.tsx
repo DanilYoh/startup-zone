@@ -7,11 +7,11 @@ export default function NotFound() {
     <main className={styles.page}>
       <Stack gap="lg" className={styles.content}>
         <Text c="dimmed" fw={600}>404</Text>
-        <Title order={1}>Page not found</Title>
-        <Text c="dimmed">The page may have moved, or the address may be incorrect.</Text>
+        <Title order={1}>Страница не найдена</Title>
+        <Text c="dimmed">Возможно, страница перемещена или адрес указан неверно.</Text>
         <div>
           <Link href="/">
-            <Button component="span">Return home</Button>
+            <Button component="span">На главную</Button>
           </Link>
         </div>
       </Stack>

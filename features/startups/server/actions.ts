@@ -52,8 +52,8 @@ function authorizationError(status: "error" | "forbidden"): StartupActionState {
     status: "error",
     message:
       status === "forbidden"
-        ? "Only founder profiles can manage startups."
-        : "Could not verify your founder profile. Please try again.",
+        ? "Управлять стартапами могут только основатели."
+        : "Не удалось проверить профиль основателя. Повторите попытку.",
   };
 }
 
@@ -68,7 +68,7 @@ export async function createStartup(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -99,13 +99,13 @@ export async function updateStartup(
   const validated = parseStartupForm(formData);
 
   if (!startupId.success) {
-    return { status: "error", message: "The startup identifier is invalid." };
+    return { status: "error", message: "Некорректный идентификатор стартапа." };
   }
 
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -119,11 +119,11 @@ export async function updateStartup(
 
   if (readError) {
     await logRequestError("startup.update_read_failed", { code: readError.code });
-    return { status: "error", message: "Could not load the startup. Please try again." };
+    return { status: "error", message: "Не удалось загрузить стартап. Повторите попытку." };
   }
 
   if (!current) {
-    return { status: "error", message: "Startup not found or you cannot edit it." };
+    return { status: "error", message: "Стартап не найден или у вас нет права его редактировать." };
   }
 
   const update: TablesUpdate<"startups"> = {
@@ -141,7 +141,7 @@ export async function updateStartup(
     .maybeSingle();
 
   if (error) return startupWriteError(error.code);
-  if (!updated) return { status: "error", message: "Startup not found or you cannot edit it." };
+  if (!updated) return { status: "error", message: "Стартап не найден или у вас нет права его редактировать." };
 
   revalidatePath("/dashboard");
   revalidatePath(`/startups/${current.slug}`);
@@ -162,7 +162,7 @@ export async function updateStartupStatus(
   });
 
   if (!validated.success) {
-    return { status: "error", message: "The requested startup status is invalid." };
+    return { status: "error", message: "Некорректный статус стартапа." };
   }
 
   const { data: updated, error } = await authorization.supabase
@@ -175,11 +175,11 @@ export async function updateStartupStatus(
 
   if (error) {
     await logRequestError("startup.status_write_failed", { code: error.code });
-    return { status: "error", message: "Could not update the startup status. Try again." };
+    return { status: "error", message: "Не удалось изменить статус стартапа. Повторите попытку." };
   }
 
   if (!updated) {
-    return { status: "error", message: "Startup not found or you cannot manage it." };
+    return { status: "error", message: "Стартап не найден или у вас нет права им управлять." };
   }
 
   revalidatePath("/dashboard");
@@ -188,7 +188,7 @@ export async function updateStartupStatus(
 
   return {
     status: "success",
-    message: validated.data.is_active ? "Startup republished." : "Startup deactivated.",
+    message: validated.data.is_active ? "Стартап снова опубликован." : "Стартап снят с публикации.",
   };
 }
 
@@ -196,11 +196,11 @@ async function startupWriteError(code: string): Promise<StartupActionState> {
   if (code === "23505") {
     return {
       status: "error",
-      message: "Choose a different slug and try again.",
-      errors: { slug: ["This slug is already in use"] },
+      message: "Выберите другой адрес страницы и повторите попытку.",
+      errors: { slug: ["Этот адрес уже используется"] },
     };
   }
 
   await logRequestError("startup.write_failed", { code });
-  return { status: "error", message: "Could not save the startup. Please try again." };
+  return { status: "error", message: "Не удалось сохранить стартап. Повторите попытку." };
 }
