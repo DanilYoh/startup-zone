@@ -25,6 +25,7 @@ const {
 }));
 
 vi.mock("@/lib/utils", () => ({ hasEnvVars: true }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 vi.mock("@/lib/logger", () => ({ logRequestError: logRequestErrorMock }));
 vi.mock("next/headers", () => ({ headers: headersMock }));
@@ -40,6 +41,8 @@ function validSignUpForm() {
   formData.set("role", "founder");
   formData.set("password", "safe-password");
   formData.set("repeat_password", "safe-password");
+  formData.set("legal_document_version", "local-development-v1");
+  formData.set("personal_data_consent", "accepted");
   return formData;
 }
 
@@ -84,7 +87,12 @@ describe("auth Server Actions", () => {
       email: "taylor@example.test",
       password: "safe-password",
       options: {
-        data: { full_name: "Taylor Jordan", role: "founder" },
+        data: {
+          full_name: "Taylor Jordan",
+          legal_consent: true,
+          legal_document_version: "local-development-v1",
+          role: "founder",
+        },
         emailRedirectTo:
           "https://startup.example/auth/confirm?next=%2Fdashboard%2Fprofile",
       },
@@ -96,6 +104,31 @@ describe("auth Server Actions", () => {
 
     expect(state.status).toBe("error");
     expect(state.errors?.email).toBeDefined();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when production legal documents are not approved", async () => {
+    vi.stubEnv("APP_ENVIRONMENT", "production");
+    vi.stubEnv("LEGAL_DOCUMENT_APPROVED", "false");
+
+    const state = await signUp(initialSignUpState, validSignUpForm());
+
+    expect(state).toEqual({
+      status: "error",
+      message: "Регистрация временно закрыта: документы об обработке персональных данных ещё не утверждены.",
+    });
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a stale legal document version before contacting Auth", async () => {
+    const formData = validSignUpForm();
+    formData.set("legal_document_version", "outdated-v1");
+
+    const state = await signUp(initialSignUpState, formData);
+
+    expect(state.message).toBe(
+      "Версия документов изменилась. Обновите страницу и подтвердите согласие снова.",
+    );
     expect(signUpMock).not.toHaveBeenCalled();
   });
 

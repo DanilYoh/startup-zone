@@ -51,9 +51,12 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <p>Startup Zone · Реальные проекты для подходящих инвесторов.</p>
-          <Link className={styles.footerLink} href="/">
-            О продукте
-          </Link>
+          <div className={styles.footerLinks}>
+            <Link className={styles.footerLink} href="/">О продукте</Link>
+            <Link className={styles.footerLink} href="/legal/privacy">
+              Политика обработки данных
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

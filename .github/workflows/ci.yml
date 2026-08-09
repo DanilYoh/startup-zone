@@ -73,6 +73,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
             echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000"
+            echo "APP_ENVIRONMENT=local"
           } >> "$GITHUB_ENV"
       - name: Verify upgrade from the immutable April schema
         run: |

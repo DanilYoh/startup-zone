@@ -5,6 +5,10 @@ import type { Database } from "../../lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const legalMetadata = {
+  legal_consent: true,
+  legal_document_version: "local-development-v1",
+};
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -32,7 +36,7 @@ test("an investor submits and tracks investment interest", async ({ page }) => {
       email: founderEmail,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Application Founder", role: "founder" },
+      user_metadata: { full_name: "Application Founder", role: "founder", ...legalMetadata },
     });
     expect(founderError).toBeNull();
     founderId = founder.user?.id;
@@ -42,7 +46,7 @@ test("an investor submits and tracks investment interest", async ({ page }) => {
       email: investorEmail,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Application Investor", role: "investor" },
+      user_metadata: { full_name: "Application Investor", role: "investor", ...legalMetadata },
     });
     expect(investorError).toBeNull();
     investorId = investor.user?.id;

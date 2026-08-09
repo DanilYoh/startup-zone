@@ -9,6 +9,7 @@ Startup Zone is a focused marketplace MVP where founders publish projects and in
 Implemented:
 
 - Supabase authentication with explicit founder or investor onboarding and an SSR-safe email-confirmation callback;
+- separate, versioned personal-data consent at signup, with immutable server-timestamped evidence and production registration that fails closed until operator-approved documents are configured;
 - protected, role-specific profile editing with immutable marketplace roles;
 - distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;
@@ -44,7 +45,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL` in `.env.local`, then apply the migrations from `supabase/migrations/`. Open [http://localhost:3000](http://localhost:3000).
+Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL` in `.env.local`, then apply the migrations from `supabase/migrations/`. Local and test environments use the seeded `local-development-v1` legal-document version. The `/legal/privacy` and `/legal/consent` pages clearly identify it as a draft that is not valid for production. Open [http://localhost:3000](http://localhost:3000).
+
+Production registration is disabled unless every `LEGAL_*` value documented in `.env.example` is complete, `LEGAL_DOCUMENT_APPROVED=true`, and the same non-draft version is active in `legal_document_versions`. Operator identity and legal approval are deployment inputs, not repository defaults.
 
 Never use production Supabase credentials for local development or tests.
 

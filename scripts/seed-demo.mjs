@@ -4,6 +4,7 @@ import { assertDemoSeedAllowed } from "./demo-seed-guard.mjs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const legalDocumentVersion = process.env.LEGAL_DOCUMENT_VERSION ?? "local-development-v1";
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -79,6 +80,8 @@ if (!founder) {
     email_confirm: true,
     user_metadata: {
       full_name: "Startup Zone Demo Team",
+      legal_consent: true,
+      legal_document_version: legalDocumentVersion,
       role: "founder",
     },
   });

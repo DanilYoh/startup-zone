@@ -84,9 +84,13 @@ flows before public signup.
 - Avoid foreign analytics, error tracking, email, and support tools until their
   personal-data flows and any cross-border notification are approved.
 
-Public signup remains blocked from being called production-ready until this
-gate is complete. The repository does not yet contain operator-specific legal
-documents or versioned consent capture.
+The repository now provides separate `/legal/privacy` and `/legal/consent`
+pages, a mandatory unchecked signup consent, immutable server-timestamped
+version evidence, and a database trigger that rejects direct Auth signup without
+an active version. These are engineering controls, not approved legal text.
+Production registration fails closed until the operator's actual identity,
+address, privacy contact, processors, approved non-draft document version, and
+effective date are configured both in the database and application runtime.
 
 ## Deployment runbook
 
@@ -127,6 +131,13 @@ Review the dry run and take an encrypted backup before applying migrations.
 Never use a production URL in local tests. Run pgTAP and Playwright against an
 isolated staging clone before repeating the approved production rollout.
 
+The repository seed activates only `local-development-v1` for local and test
+work. Before production, counsel must approve the operator-specific texts and an
+additive migration must insert and activate their exact version. Confirm that
+the database has exactly one active approved version before deploying the
+matching runtime configuration; see the activation procedure in
+[`operations.md`](operations.md#production-legal-document-activation).
+
 ### 3. Build and start the application edge
 
 Create an untracked `.env.production` on the VPS:
@@ -138,8 +149,20 @@ SUPABASE_UPSTREAM=host.docker.internal:8000
 NEXT_PUBLIC_SUPABASE_URL=https://api.example.ru
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=replace-with-production-publishable-key
 NEXT_PUBLIC_SITE_URL=https://app.example.ru
+APP_ENVIRONMENT=production
 RELEASE_VERSION=replace-with-immutable-git-sha
+LEGAL_DOCUMENT_APPROVED=true
+LEGAL_DOCUMENT_VERSION=replace-with-approved-non-draft-version
+LEGAL_DOCUMENT_EFFECTIVE_DATE=2026-08-09
+LEGAL_OPERATOR_NAME=replace-with-legal-name-or-full-name
+LEGAL_OPERATOR_ADDRESS=replace-with-operator-address
+LEGAL_OPERATOR_EMAIL=privacy@example.ru
+LEGAL_PROCESSORS=replace-with-russian-vps-provider; replace-with-russian-email-provider
 ```
+
+Use the real effective date and the exact version activated by the approved
+migration. Keep registration disabled if legal review, the Roskomnadzor filing,
+or any operator detail is incomplete.
 
 Then deploy the reviewed commit:
 
@@ -176,7 +199,9 @@ been explicitly approved.
 
 ### Weeks 1-2: make the beta legally and operationally launchable
 
-- Complete the legal/data gate and operator-specific consent flow.
+- Complete operator identification, legal review, Roskomnadzor filing, approved
+  document-version activation, and production configuration. The consent flow
+  itself is implemented and covered by unit, database, and browser tests.
 - Deploy staging, run the complete release gate, then deploy the reviewed
   production candidate with explicit approval.
 - Translate the acquisition and core marketplace paths into Russian and show
@@ -234,8 +259,9 @@ quality problem.
 
 ## Remaining blockers to a real production launch
 
-- the operator's legal identity, approved privacy documents, and versioned
-  consent capture are unknown;
+- the operator's legal identity, approved privacy documents, their production
+  version/effective date, and the Roskomnadzor notification decision are still
+  external inputs; the repository's versioned consent capture is implemented;
 - a Russian VPS, domain, SMTP account, and backup destination have not been
   purchased or configured;
 - no external monitoring backend or verified production alert route exists;

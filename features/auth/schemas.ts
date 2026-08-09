@@ -30,6 +30,14 @@ export const signUpSchema = z
     role: z.enum(marketplaceRoles, { error: "Выберите роль на площадке" }),
     password: passwordSchema,
     repeat_password: z.string(),
+    legal_document_version: z
+      .string()
+      .trim()
+      .min(3, "Обновите страницу и повторите регистрацию")
+      .max(80),
+    personal_data_consent: z.literal("accepted", {
+      error: "Подтвердите согласие на обработку персональных данных",
+    }),
   })
   .refine((value) => value.password === value.repeat_password, {
     message: "Пароли не совпадают",
@@ -60,6 +68,8 @@ export function parseSignUpForm(formData: FormData) {
     role: formData.get("role"),
     password: formData.get("password"),
     repeat_password: formData.get("repeat_password"),
+    legal_document_version: formData.get("legal_document_version"),
+    personal_data_consent: formData.get("personal_data_consent"),
   });
 }
 

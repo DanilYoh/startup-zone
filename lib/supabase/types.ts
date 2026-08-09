@@ -99,6 +99,62 @@ export type Database = {
           },
         ]
       }
+      legal_consents: {
+        Row: {
+          accepted_at: string
+          document_version: string
+          source: string
+          subject_email: string
+          subject_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          document_version: string
+          source?: string
+          subject_email: string
+          subject_id: string
+        }
+        Update: {
+          accepted_at?: string
+          document_version?: string
+          source?: string
+          subject_email?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_consents_document_version_fkey"
+            columns: ["document_version"]
+            isOneToOne: false
+            referencedRelation: "legal_document_versions"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      legal_document_versions: {
+        Row: {
+          created_at: string
+          effective_date: string
+          is_active: boolean
+          title: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          effective_date: string
+          is_active?: boolean
+          title: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string
+          is_active?: boolean
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       profile_contacts: {
         Row: {
           contact_email: string | null

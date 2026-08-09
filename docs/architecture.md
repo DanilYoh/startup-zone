@@ -91,6 +91,11 @@ features/
       queries.ts
     schemas.ts
     types.ts
+  legal/
+    components/                  # Public privacy and consent documents
+    server/
+      config.ts                  # Fail-closed runtime legal configuration
+    types.ts
 
 components/
   layout/                      # Shared application chrome
@@ -220,6 +225,17 @@ webhook, external integration, file response, or public API.
   profile-read policy. RLS permits the owner to manage that record and reveals
   an explicitly enabled contact to the other participant only after an
   investor-interest request reaches the terminal `accepted` state.
+- Signup presents personal-data consent separately from other account fields and
+  submits an exact legal-document version. The Server Action validates that
+  version against runtime configuration and sends only the server-selected
+  version to Auth. The Auth database trigger independently requires that version
+  to be active before it creates a marketplace profile.
+- `legal_consents` stores the subject id, normalized signup email, document
+  version, source, and a database-generated acceptance timestamp. Consent rows
+  are immutable, readable only by their subject through RLS, and have no browser
+  write grant. They intentionally have no cascading Auth foreign key so account
+  deletion cannot silently erase evidence; the operator's approved retention
+  policy must define eventual evidence deletion.
 - Collection reads use server-validated page numbers, stable ordering, bounded
   database ranges, and an exact count. They never rely on a silent terminal
   `limit` or load an unbounded dashboard history.

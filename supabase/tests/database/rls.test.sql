@@ -1,6 +1,6 @@
 begin;
 
-select plan(63);
+select plan(72);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -8,33 +8,96 @@ select ok(
   'application rate limiting takes a transaction-scoped applicant lock'
 );
 
+insert into public.legal_document_versions (version, title, effective_date, is_active)
+values
+  ('local-development-v1', 'Local development privacy and consent draft', '2026-08-09', true),
+  ('inactive-test-v1', 'Inactive consent test document', '2026-08-08', false)
+on conflict (version) do update
+set
+  title = excluded.title,
+  effective_date = excluded.effective_date,
+  is_active = excluded.is_active;
+
 insert into auth.users (id, email, raw_user_meta_data)
 values
   (
     '10000000-0000-0000-0000-000000000001',
     'founder@example.test',
-    '{"role":"founder","full_name":"Test Founder"}'
+    '{"role":"founder","full_name":"Test Founder","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000002',
     'primary-investor@example.test',
-    '{"role":"investor","full_name":"Primary Investor"}'
+    '{"role":"investor","full_name":"Primary Investor","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000003',
     'applicant@example.test',
-    '{"role":"investor","full_name":"Test Applicant"}'
+    '{"role":"investor","full_name":"Test Applicant","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000004',
     'other-founder@example.test',
-    '{"role":"founder","full_name":"Other Founder"}'
+    '{"role":"founder","full_name":"Other Founder","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000005',
     'investor@example.test',
-    '{"role":"investor","full_name":"Test Investor"}'
+    '{"role":"investor","full_name":"Test Investor","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
+
+select results_eq(
+  $$ select count(*) from public.legal_consents $$,
+  $$ values (5::bigint) $$,
+  'onboarding records one immutable consent for every profile'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.legal_consents
+    where document_version = 'local-development-v1'
+      and source = 'signup'
+  $$,
+  $$ values (5::bigint) $$,
+  'onboarding records the active document version and signup source'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000008',
+      'missing-consent@example.test',
+      '{"role":"founder","full_name":"Missing Consent"}'
+    )
+  $$,
+  '%Versioned personal data consent is required%',
+  'onboarding rejects an account without explicit versioned consent'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000009',
+      'inactive-consent@example.test',
+      '{"role":"founder","full_name":"Inactive Consent","legal_consent":true,"legal_document_version":"inactive-test-v1"}'
+    )
+  $$,
+  '%The personal data consent version is not active%',
+  'onboarding rejects an inactive legal document version'
+);
+
+select throws_like(
+  $$
+    update public.legal_consents
+    set accepted_at = accepted_at + interval '1 second'
+    where subject_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  '%Legal consent records are immutable%',
+  'even privileged callers cannot rewrite consent evidence'
+);
 
 select results_eq(
   $$ select count(*) from public.profile_contacts $$,
@@ -801,6 +864,12 @@ select columns_are(
 set local role anon;
 
 select throws_like(
+  $$ select * from public.legal_consents $$,
+  '%permission denied%',
+  'anonymous users cannot read legal consent evidence'
+);
+
+select throws_like(
   $$ select * from public.profile_contacts $$,
   '%permission denied%',
   'anonymous users cannot read private profile contacts'
@@ -825,6 +894,42 @@ select results_eq(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select results_eq(
+  $$
+    select document_version
+    from public.legal_consents
+    where subject_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  $$ values ('local-development-v1') $$,
+  'an authenticated user can read their own consent evidence'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.legal_consents
+    where subject_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values (0::bigint) $$,
+  'an authenticated user cannot read another account consent'
+);
+
+select throws_like(
+  $$
+    insert into public.legal_consents (
+      subject_id,
+      subject_email,
+      document_version
+    ) values (
+      '10000000-0000-0000-0000-000000000002',
+      'primary-investor@example.test',
+      'inactive-test-v1'
+    )
+  $$,
+  '%permission denied%',
+  'authenticated users cannot manufacture consent evidence'
+);
 
 select results_eq(
   $$

@@ -1,6 +1,15 @@
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
+import { getPublicLegalConfig } from "@/features/legal/server/config";
+import { Skeleton } from "@mantine/core";
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import styles from "../auth-layout.module.css";
+
+async function SignUpContent() {
+  await connection();
+  return <SignUpForm legalConfig={getPublicLegalConfig()} />;
+}
 
 export default function Page() {
   return (
@@ -10,7 +19,9 @@ export default function Page() {
         <span>Startup Zone</span>
       </Link>
       <div className={styles.wide}>
-        <SignUpForm />
+        <Suspense fallback={<Skeleton height="44rem" radius="lg" />}>
+          <SignUpContent />
+        </Suspense>
       </div>
     </div>
   );

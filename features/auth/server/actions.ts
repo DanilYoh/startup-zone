@@ -7,6 +7,7 @@ import {
   type SignUpInput,
 } from "@/features/auth/schemas";
 import { logRequestError } from "@/lib/logger";
+import { getPublicLegalConfig } from "@/features/legal/server/config";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { headers } from "next/headers";
@@ -46,6 +47,14 @@ export async function signUp(
     };
   }
 
+  const legalConfig = getPublicLegalConfig();
+  if (!legalConfig.registrationEnabled) {
+    return {
+      status: "error",
+      message: "Регистрация временно закрыта: документы об обработке персональных данных ещё не утверждены.",
+    };
+  }
+
   const validated = parseSignUpForm(formData);
 
   if (!validated.success) {
@@ -53,6 +62,13 @@ export async function signUp(
       status: "error",
       message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
+    };
+  }
+
+  if (validated.data.legal_document_version !== legalConfig.documentVersion) {
+    return {
+      status: "error",
+      message: "Версия документов изменилась. Обновите страницу и подтвердите согласие снова.",
     };
   }
 
@@ -66,6 +82,8 @@ export async function signUp(
     options: {
       data: {
         full_name: validated.data.full_name,
+        legal_consent: true,
+        legal_document_version: legalConfig.documentVersion,
         role: validated.data.role,
       },
       emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/dashboard/profile")}`,

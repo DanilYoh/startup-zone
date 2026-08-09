@@ -7,10 +7,12 @@ import {
   marketplaceRoles,
   type SignUpInput,
 } from "@/features/auth/schemas";
+import type { PublicLegalConfig } from "@/features/legal/types";
 import {
   Alert,
   Anchor,
   Button,
+  Checkbox,
   Paper,
   PasswordInput,
   Radio,
@@ -26,9 +28,10 @@ import styles from "./auth-form.module.css";
 const initialState: SignUpActionState = { status: "idle" };
 
 export function SignUpForm({
+  legalConfig,
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { legalConfig: PublicLegalConfig }) {
   const [state, formAction, pending] = useActionState(signUp, initialState);
   const fieldError = (field: keyof SignUpInput) => state.errors?.[field]?.[0];
 
@@ -45,6 +48,11 @@ export function SignUpForm({
           </div>
           <form action={formAction}>
             <Stack gap="md">
+              <input
+                type="hidden"
+                name="legal_document_version"
+                value={legalConfig.documentVersion}
+              />
               <TextInput
                 id="full-name"
                 name="full_name"
@@ -104,12 +112,54 @@ export function SignUpForm({
                 maxLength={72}
                 error={fieldError("repeat_password")}
               />
+              <div>
+                <Checkbox
+                  name="personal_data_consent"
+                  value="accepted"
+                  required
+                  disabled={!legalConfig.registrationEnabled}
+                  label={
+                    <Text size="sm">
+                      Я даю отдельное{" "}
+                      <Anchor component={Link} href="/legal/consent" target="_blank">
+                        согласие на обработку персональных данных
+                      </Anchor>{" "}
+                      и ознакомился с{" "}
+                      <Anchor component={Link} href="/legal/privacy" target="_blank">
+                        политикой обработки персональных данных
+                      </Anchor>.
+                    </Text>
+                  }
+                />
+                {fieldError("personal_data_consent") && (
+                  <Text size="xs" c="red" mt={5} role="alert">
+                    {fieldError("personal_data_consent")}
+                  </Text>
+                )}
+              </div>
+              {legalConfig.mode !== "approved" && (
+                <Alert
+                  color={legalConfig.mode === "blocked" ? "red" : "yellow"}
+                  variant="light"
+                  role={legalConfig.mode === "blocked" ? "alert" : "status"}
+                  title={legalConfig.mode === "blocked" ? "Регистрация временно закрыта" : "Локальная тестовая версия"}
+                >
+                  {legalConfig.mode === "blocked"
+                    ? "Документы и реквизиты оператора ещё не готовы для production-регистрации."
+                    : "В этой среде используется черновая версия документов, не предназначенная для production."}
+                </Alert>
+              )}
               {state.message && (
                 <Alert color="red" variant="light" role="alert">
                   {state.message}
                 </Alert>
               )}
-              <Button type="submit" fullWidth loading={pending}>
+              <Button
+                type="submit"
+                fullWidth
+                loading={pending}
+                disabled={!legalConfig.registrationEnabled}
+              >
                 Создать аккаунт
               </Button>
             </Stack>

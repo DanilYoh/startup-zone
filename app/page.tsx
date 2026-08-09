@@ -275,9 +275,15 @@ export default function Home() {
       </main>
 
       <footer className={styles.footer}>
-        <Brand />
-        <p>Площадка для осознанных решений основателей и инвесторов.</p>
-        <Link href="/startups">Каталог стартапов</Link>
+        <div className={styles.footerInner}>
+          <Brand />
+          <p>Площадка для осознанных решений основателей и инвесторов.</p>
+          <div className={styles.footerLinks}>
+            <Link href="/startups">Каталог стартапов</Link>
+            <Link href="/legal/privacy">Политика обработки данных</Link>
+            <Link href="/legal/consent">Согласие на обработку данных</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );

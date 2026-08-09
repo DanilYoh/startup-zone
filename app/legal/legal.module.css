@@ -1,0 +1,79 @@
+.page {
+  min-height: 100svh;
+  background: var(--mantine-color-body);
+}
+
+.header {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.nav,
+.main,
+.footer {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+}
+
+.nav {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--mantine-color-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brandMark {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 0.35rem;
+  background: var(--sz-accent);
+  color: #09291b;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.6rem;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.documentLink {
+  color: var(--mantine-color-anchor);
+  text-decoration: none;
+}
+
+.documentLink:hover {
+  text-decoration: underline;
+}
+
+.main {
+  padding-block: 3rem 4rem;
+}
+
+.footer {
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+@media (max-width: 40rem) {
+  .links {
+    gap: 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .main {
+    padding-block: 1.5rem 2.5rem;
+  }
+}

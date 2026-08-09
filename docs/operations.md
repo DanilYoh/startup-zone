@@ -16,9 +16,9 @@ Use three isolated Supabase environments:
 - production, available only to the deployment runtime and approved operators.
 
 The public portfolio deployment may use the demo/test project so visitors can
-complete the marketplace flows. Its runtime receives only the project URL and
-publishable key. Never configure the service-role key in Vercel or another
-public application runtime.
+complete the marketplace flows. Its runtime receives the project URL,
+publishable key, and non-secret draft legal metadata. Never configure the
+service-role key in Vercel or another public application runtime.
 
 CI starts a fresh local Supabase stack, resets it from every migration with
 `npx supabase db reset --local --no-seed`. It also resets specifically to the
@@ -54,6 +54,12 @@ The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
 the public demo.
 
+Playwright global setup requires `APP_ENVIRONMENT=local`, `test`, or `demo` and
+uses the test service-role key to activate `local-development-v1` after a clean
+no-seed migration. It refuses production mode. This keeps clean-migration CI and
+the isolated staging workflow reproducible without adding any draft legal
+version to a production migration.
+
 Populate the isolated demo/test project with repeatable synthetic marketplace
 data from a trusted operator machine:
 
@@ -87,6 +93,39 @@ enum label and does not replace newer onboarding or RLS policies when applied
 out of order. Active onboarding still permits only founders and investors.
 Never repair migration history merely to hide a missing schema change.
 
+## Production legal-document activation
+
+Local and test resets seed `local-development-v1`; that seed is never a
+production approval. Production signup has two independent gates:
+
+1. an additive, reviewed migration must insert the counsel-approved version in
+   `legal_document_versions`, deactivate any previous version, and activate
+   exactly the approved version;
+2. the application runtime must set `APP_ENVIRONMENT=production`, every
+   `LEGAL_*` value from `.env.example`, and `LEGAL_DOCUMENT_APPROVED=true` with
+   an identical version and effective date.
+
+Apply the database migration first while the application remains unavailable to
+new registrations. Verify the active version from an approved operator session:
+
+```sql
+select version, title, effective_date
+from public.legal_document_versions
+where is_active;
+```
+
+Only then deploy the matching application configuration. Missing operator
+details, an unsafe `draft`, `local`, or `test` version, a stale submitted
+version, or no active database version keeps account creation closed. Do not set
+the approval flag merely to pass the release gate. A new legal text requires a
+new immutable version and additive migration; never rewrite a version that users
+already accepted.
+
+`compose.production.yaml` injects these values only into the server runtime. If
+they are empty or approval is false, the application can still serve public and
+existing-user routes while its registration form stays disabled. None of the
+operator fields is a `NEXT_PUBLIC_*` build argument.
+
 ## Release gate
 
 Run this sequence from a clean checkout before deployment:
@@ -119,6 +158,12 @@ Verify signup for both roles, role-specific profile editing, startup publication
 and deactivation, investor interest submission, founder moderation, and the
 accepted private-contact exchange from both dashboards. Production migration or
 deployment requires explicit approval and a recorded rollback decision.
+
+For a production candidate, also verify that `/legal/privacy` and
+`/legal/consent` show the approved operator, processors, version, and effective
+date; signup records one matching `legal_consents` row with a server timestamp;
+and production registration is disabled when any legal value is removed. Do not
+copy the local seed version into production.
 
 The production image is a Next.js standalone build and runs as an unprivileged
 user with a read-only root filesystem. `GET /healthz` is a process-liveness

@@ -5,6 +5,10 @@ import type { Database } from "../../lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const legalMetadata = {
+  legal_consent: true,
+  legal_document_version: "local-development-v1",
+};
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -30,7 +34,7 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Playwright Founder", role: "founder" },
+      user_metadata: { full_name: "Playwright Founder", role: "founder", ...legalMetadata },
     });
 
     expect(error).toBeNull();

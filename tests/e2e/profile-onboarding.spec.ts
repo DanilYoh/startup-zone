@@ -73,6 +73,9 @@ for (const { role, label } of roles) {
       await page.getByRole("radio", { name: label }).check();
       await page.locator("#password").fill(password);
       await page.locator("#repeat-password").fill(password);
+      await page
+        .getByRole("checkbox", { name: /Я даю отдельное согласие/u })
+        .check();
       await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
       await expect(page).toHaveURL(/\/dashboard\/profile$/);
@@ -170,6 +173,20 @@ for (const { role, label } of roles) {
         contact_url: contactUrl,
         sharing_enabled: true,
       });
+
+      const { data: consent, error: consentError } = await admin
+        .from("legal_consents")
+        .select("subject_email, document_version, source, accepted_at")
+        .eq("subject_id", userId)
+        .single();
+
+      expect(consentError).toBeNull();
+      expect(consent).toMatchObject({
+        subject_email: email,
+        document_version: "local-development-v1",
+        source: "signup",
+      });
+      expect(Number.isNaN(Date.parse(consent?.accepted_at ?? ""))).toBe(false);
 
       if (role === "founder") {
         const viewport = await page.evaluate(() => ({

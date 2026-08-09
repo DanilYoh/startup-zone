@@ -4,11 +4,23 @@ import { LoginForm } from "@/features/auth/components/login-form";
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
 import { render, screen, userEvent } from "../test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { PublicLegalConfig } from "@/features/legal/types";
 
 const { signInMock, signUpMock } = vi.hoisted(() => ({
   signInMock: vi.fn(),
   signUpMock: vi.fn(),
 }));
+
+const localLegalConfig: PublicLegalConfig = {
+  documentVersion: "local-development-v1",
+  effectiveDate: "2026-08-09",
+  mode: "draft",
+  operatorAddress: "Локальная среда",
+  operatorEmail: "privacy@example.test",
+  operatorName: "Startup Zone",
+  processors: ["Локальная инфраструктура"],
+  registrationEnabled: true,
+};
 
 vi.mock("@/features/auth/server/actions", () => ({
   signIn: signInMock,
@@ -53,13 +65,16 @@ describe("authentication forms", () => {
     });
     const user = userEvent.setup();
 
-    render(<SignUpForm />);
+    render(<SignUpForm legalConfig={localLegalConfig} />);
 
     await user.type(screen.getByRole("textbox", { name: "Имя и фамилия" }), "Sam Investor");
     await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "investor@example.test");
     await user.click(screen.getByRole("radio", { name: "Инвестор" }));
     await user.type(screen.getByLabelText(/^Пароль/), "investor-password");
     await user.type(screen.getByLabelText(/^Повторите пароль/), "different-password");
+    await user.click(
+      screen.getByRole("checkbox", { name: /Я даю отдельное согласие/u }),
+    );
     await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -71,5 +86,24 @@ describe("authentication forms", () => {
     const submitted = signUpMock.mock.calls[0]?.[1];
     expect(submitted).toBeInstanceOf(FormData);
     expect(submitted.get("role")).toBe("investor");
+    expect(submitted.get("legal_document_version")).toBe("local-development-v1");
+    expect(submitted.get("personal_data_consent")).toBe("accepted");
+  });
+
+  it("disables registration when production legal configuration is incomplete", () => {
+    render(
+      <SignUpForm
+        legalConfig={{
+          ...localLegalConfig,
+          documentVersion: "",
+          mode: "blocked",
+          registrationEnabled: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Регистрация временно закрыта")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Создать аккаунт" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /Я даю отдельное согласие/u })).toBeDisabled();
   });
 });
