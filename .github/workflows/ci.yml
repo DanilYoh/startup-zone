@@ -57,8 +57,15 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
             echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000"
           } >> "$GITHUB_ENV"
+      - name: Verify upgrade from the immutable April schema
+        run: |
+          npx supabase db reset --local --version 20260401102910 --sql-paths ./tests/upgrade/legacy-fixture.sql
+          npx supabase migration up --local
+          npx supabase test db supabase/tests/upgrade/verify.sql
       - name: Verify migrations on a clean database
         run: npx supabase db reset --local --no-seed
+      - name: Verify generated database types
+        run: npm run types:check
       - name: Test database authorization
         run: npm run test:rls
       - name: Build production bundle

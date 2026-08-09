@@ -6,8 +6,9 @@ import {
   type ApplicationInput,
 } from "@/features/applications/schemas";
 import { createClient } from "@/lib/supabase/server";
-import { logServerError } from "@/lib/logger";
-import type { ApplicationType, TablesInsert } from "@/lib/supabase/types";
+import { logRequestError } from "@/lib/logger";
+import type { ApplicationType } from "@/lib/domain-types";
+import type { TablesInsert } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -53,7 +54,7 @@ export async function createApplication(
     ]);
 
   if (profileError || startupError) {
-    logServerError("application.authorization_failed", {
+    await logRequestError("application.authorization_failed", {
       profileCode: profileError?.code,
       startupCode: startupError?.code,
     });
@@ -99,7 +100,7 @@ export async function createApplication(
       };
     }
 
-    logServerError("application.create_failed", { code: error.code });
+    await logRequestError("application.create_failed", { code: error.code });
     return { status: "error", message: "Could not send the application. Please try again." };
   }
 
@@ -134,7 +135,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (profileError) {
-    logServerError("application.moderation_authorization_failed", { code: profileError.code });
+    await logRequestError("application.moderation_authorization_failed", { code: profileError.code });
     return { status: "error", message: "Could not verify your founder profile. Try again." };
   }
 
@@ -149,7 +150,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (applicationError) {
-    logServerError("application.moderation_read_failed", { code: applicationError.code });
+    await logRequestError("application.moderation_read_failed", { code: applicationError.code });
     return { status: "error", message: "Could not load the application. Try again." };
   }
 
@@ -170,7 +171,7 @@ export async function moderateApplication(
     .maybeSingle();
 
   if (error) {
-    logServerError("application.moderation_write_failed", { code: error.code });
+    await logRequestError("application.moderation_write_failed", { code: error.code });
     return { status: "error", message: "Could not save the decision. Please try again." };
   }
 

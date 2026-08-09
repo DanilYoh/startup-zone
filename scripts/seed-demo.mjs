@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { assertDemoSeedAllowed } from "./demo-seed-guard.mjs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -9,6 +10,8 @@ if (!supabaseUrl || !serviceRoleKey) {
     "Demo seeding requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY for an isolated demo or test project.",
   );
 }
+
+const projectRef = assertDemoSeedAllowed(process.env);
 
 const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -111,4 +114,6 @@ const { error: startupError } = await admin.from("startups").upsert(rows, {
 
 if (startupError) throw startupError;
 
-console.log(`Seeded ${rows.length} demo startups: ${rows.map(({ slug }) => slug).join(", ")}`);
+console.log(
+  `Seeded ${rows.length} demo startups in ${projectRef}: ${rows.map(({ slug }) => slug).join(", ")}`,
+);

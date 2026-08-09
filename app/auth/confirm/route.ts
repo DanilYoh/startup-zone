@@ -1,7 +1,7 @@
 import { type AuthErrorCode } from "@/features/auth/errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSafeAuthRedirectPath } from "@/lib/routing";
-import { logServerError } from "@/lib/logger";
+import { logRequestError } from "@/lib/logger";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     if (!error) {
       redirect(next);
     } else {
-      logServerError("auth.confirm_failed", {
+      await logRequestError("auth.confirm_failed", {
         code: error.code,
         status: error.status,
       });

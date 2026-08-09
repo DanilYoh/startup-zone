@@ -5,9 +5,26 @@ import { hasEnvVars } from "../utils";
 import type { Database } from "./types";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const incomingRequestId = request.headers.get("x-request-id");
+  const requestId =
+    incomingRequestId && /^[a-zA-Z0-9._:-]{1,128}$/.test(incomingRequestId)
+      ? incomingRequestId
+      : crypto.randomUUID();
+
+  const createForwardResponse = () => {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-request-id", requestId);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set("x-request-id", requestId);
+    return response;
+  };
+
+  const withRequestId = (response: NextResponse) => {
+    response.headers.set("x-request-id", requestId);
+    return response;
+  };
+
+  let supabaseResponse = createForwardResponse();
 
   // Keep the hosted read-only demo away from routes that require a Supabase
   // client. Public pages render their existing unconfigured state instead.
@@ -16,7 +33,7 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "";
-      return NextResponse.redirect(url);
+      return withRequestId(NextResponse.redirect(url));
     }
 
     return supabaseResponse;
@@ -36,9 +53,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
+          supabaseResponse = createForwardResponse();
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -60,7 +75,7 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
+    return withRequestId(NextResponse.redirect(url));
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

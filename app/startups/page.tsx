@@ -1,7 +1,9 @@
 import { LinkButton } from "@/components/link-button";
+import { PaginationNav } from "@/components/pagination-nav";
 import {
   hasStartupDirectoryFilters,
   parseStartupDirectoryFilters,
+  startupDirectoryHref,
   type StartupDirectorySearchParams,
 } from "@/lib/startup-directory";
 import { listActiveStartups } from "@/lib/supabase/startups";
@@ -141,14 +143,24 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
           Refresh the page and try again. If the problem continues, the marketplace data service
           may be unavailable.
         </Alert>
-      ) : result.data.length === 0 ? (
+      ) : result.data.items.length === 0 ? (
         <DirectoryNotice
           icon={hasStartupDirectoryFilters(filters) ? SearchX : Rocket}
-          title={hasStartupDirectoryFilters(filters) ? "No matching startups" : "No startups yet"}
+          title={
+            result.data.total > 0
+              ? "No startups on this page"
+              : hasStartupDirectoryFilters(filters)
+                ? "No matching startups"
+                : "No startups yet"
+          }
         >
-          {hasStartupDirectoryFilters(filters)
-            ? "Try a broader name, another stage, or remove the niche filter."
-            : "Active founder projects will appear here after they are published."}
+          {result.data.total > 0 ? (
+            <Link href={startupDirectoryHref(filters, 1)}>Return to the first results page.</Link>
+          ) : hasStartupDirectoryFilters(filters) ? (
+            "Try a broader name, another stage, or remove the niche filter."
+          ) : (
+            "Active founder projects will appear here after they are published."
+          )}
         </DirectoryNotice>
       ) : (
         <section aria-labelledby="startup-results-heading">
@@ -158,13 +170,13 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                 Active startups
               </Title>
               <Text mt={4} size="sm" c="dimmed" aria-live="polite">
-                {result.data.length} {result.data.length === 1 ? "project" : "projects"}
+                {result.data.total} {result.data.total === 1 ? "project" : "projects"}
               </Text>
             </div>
           </Group>
 
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-            {result.data.map((startup) => (
+            {result.data.items.map((startup) => (
               <Paper component="article" key={startup.id} withBorder shadow="xs" radius="lg" p="lg">
                 <Stack gap="md" h="100%">
                   <Group justify="space-between" align="flex-start" wrap="nowrap">
@@ -228,6 +240,22 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
               </Paper>
             ))}
           </SimpleGrid>
+          <PaginationNav
+            page={result.data.page}
+            pageCount={result.data.pageCount}
+            total={result.data.total}
+            itemLabel={result.data.total === 1 ? "project" : "projects"}
+            previousHref={
+              result.data.page > 1
+                ? startupDirectoryHref(filters, result.data.page - 1)
+                : undefined
+            }
+            nextHref={
+              result.data.page < result.data.pageCount
+                ? startupDirectoryHref(filters, result.data.page + 1)
+                : undefined
+            }
+          />
         </section>
       )}
     </Stack>

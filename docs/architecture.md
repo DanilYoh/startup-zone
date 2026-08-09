@@ -205,6 +205,13 @@ webhook, external integration, file response, or public API.
   server code, UI states, and tests.
 - Applied migrations are immutable. Schema changes use additive migrations.
 - The browser receives only the data required for the current view.
+- Anonymous clients cannot read `profiles`. Public startup pages resolve founder
+  attribution through the deliberately narrow `public_founder_profiles` view,
+  which exposes only an id, display name, and location for founders with an
+  active startup.
+- Collection reads use server-validated page numbers, stable ordering, bounded
+  database ranges, and an exact count. They never rely on a silent terminal
+  `limit` or load an unbounded dashboard history.
 - Logs contain safe error codes and operational context, not secrets, tokens,
   raw credentials, or unnecessary personal data.
 - Production Supabase data is never accessed or changed without explicit,
@@ -241,6 +248,10 @@ Prefer a small complete workflow over several partial screens.
   and persistence using only a local or explicitly designated test environment.
 - Browser verification supplements automated checks for responsive layout,
   themes, keyboard operation, visible focus, and meaningful failure states.
+- Coverage reports include all executable files under `app`, `components`,
+  `features`, and `lib` (except generated database types), including untested
+  files at zero percent. The global threshold is a regression floor, not a
+  claim that database, Server Action, or end-to-end behavior is unit-tested.
 
 ## Evolution rules
 

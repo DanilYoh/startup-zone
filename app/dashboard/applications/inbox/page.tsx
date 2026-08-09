@@ -1,14 +1,23 @@
 import { LinkButton } from "@/components/link-button";
+import { PaginationNav } from "@/components/pagination-nav";
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
+import { parsePage } from "@/lib/pagination";
 import { Alert, Anchor, Badge, Paper, Stack, Text, Title } from "@mantine/core";
 import styles from "../../dashboard.module.css";
 
 const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
 const statusColors = { pending: "yellow", accepted: "teal", rejected: "red" } as const;
 
-export default async function FounderApplicationsPage() {
-  const result = await listFounderApplications();
+type FounderApplicationsPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function FounderApplicationsPage({
+  searchParams,
+}: FounderApplicationsPageProps) {
+  const page = parsePage((await searchParams).page);
+  const result = await listFounderApplications(page);
 
   if (result.status === "forbidden") {
     return (
@@ -43,15 +52,24 @@ export default async function FounderApplicationsPage() {
       {groups.size === 0 ? (
         <Paper withBorder radius="lg" p="xl">
           <Stack gap="md" align="flex-start">
-            <Title order={2} size="h4">No incoming applications</Title>
-            <Text c="dimmed">Applications to your active startups will appear here.</Text>
-            <LinkButton href="/dashboard">Back to dashboard</LinkButton>
+            <Title order={2} size="h4">
+              {result.total > 0 ? "No applications on this page" : "No incoming applications"}
+            </Title>
+            <Text c="dimmed">
+              {result.total > 0
+                ? "Return to the first page to continue reviewing incoming applications."
+                : "Applications to your active startups will appear here."}
+            </Text>
+            <LinkButton href={result.total > 0 ? "/dashboard/applications/inbox" : "/dashboard"}>
+              {result.total > 0 ? "First page" : "Back to dashboard"}
+            </LinkButton>
           </Stack>
         </Paper>
       ) : (
-        Array.from(groups.values()).map((group) => (
-          <section key={group.startup.id} aria-labelledby={`startup-${group.startup.id}`}>
-            <Stack gap="md">
+        <>
+          {Array.from(groups.values()).map((group) => (
+            <section key={group.startup.id} aria-labelledby={`startup-${group.startup.id}`}>
+              <Stack gap="md">
               <div>
                 <Title order={2} size="h3" id={`startup-${group.startup.id}`}>{group.startup.title}</Title>
                 <LinkButton href={`/startups/${group.startup.slug}`} variant="subtle" px={0}>
@@ -88,9 +106,26 @@ export default async function FounderApplicationsPage() {
                   </Stack>
                 </Paper>
               ))}
-            </Stack>
-          </section>
-        ))
+              </Stack>
+            </section>
+          ))}
+          <PaginationNav
+            page={result.page}
+            pageCount={result.pageCount}
+            total={result.total}
+            itemLabel={result.total === 1 ? "application" : "applications"}
+            previousHref={
+              result.page > 1
+                ? `/dashboard/applications/inbox?page=${result.page - 1}`
+                : undefined
+            }
+            nextHref={
+              result.page < result.pageCount
+                ? `/dashboard/applications/inbox?page=${result.page + 1}`
+                : undefined
+            }
+          />
+        </>
       )}
     </Stack>
   );

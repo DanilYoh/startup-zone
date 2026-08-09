@@ -35,6 +35,14 @@ describe("startupSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("rejects duplicate niches case-insensitively", () => {
+    const result = startupSchema.safeParse({
+      ...validStartup,
+      niche: ["ClimateTech", "climatetech"],
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects non-HTTP startup links", () => {
     for (const links of [
       { website_url: "javascript:alert(1)" },
