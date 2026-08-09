@@ -33,6 +33,16 @@ Before the first staging run, push `supabase/config.toml` to the test project so
 synthetic registrations use the same confirmation and redirect behavior as the
 local test stack. Never push the test Auth configuration to production.
 
+Production may require email confirmation even though the isolated local/test
+configuration confirms users immediately. Add the deployed origin as the Auth
+site URL and allow its full `/auth/confirm` URL in the redirect allowlist.
+Registration sets that callback as `emailRedirectTo`; the default hosted
+confirmation template returns
+a PKCE code that the callback exchanges for cookie-backed session credentials.
+The callback also accepts `token_hash` links for projects that already use the
+Supabase SSR custom template, so that template is optional rather than an
+undocumented deployment dependency.
+
 The service-role key is required only by test fixture setup. It must never be
 prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
 the public demo.

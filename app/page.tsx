@@ -120,7 +120,12 @@ export default function Home() {
                 >
                   Explore startups
                 </LinkButton>
-                <LinkButton href="/auth/sign-up" size="lg" variant="outline">
+                <LinkButton
+                  href="/auth/sign-up"
+                  size="lg"
+                  variant="outline"
+                  className={styles.darkSurfaceOutline}
+                >
                   Create a profile
                 </LinkButton>
               </div>

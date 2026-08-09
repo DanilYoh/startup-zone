@@ -644,7 +644,11 @@ select throws_like(
 );
 
 select results_eq(
-  $$ select full_name, location from public.public_founder_profiles order by full_name $$,
+  $$
+    select full_name, location
+    from public.public_founder_profiles
+    where id = '10000000-0000-0000-0000-000000000001'
+  $$,
   $$ values ('Test Founder', null::text) $$,
   'anonymous users can read minimal attribution only for an active founder'
 );

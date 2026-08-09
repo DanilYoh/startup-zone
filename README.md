@@ -8,7 +8,7 @@ Startup Zone is a focused marketplace MVP where founders publish projects and in
 
 Implemented:
 
-- Supabase authentication with explicit founder or investor onboarding;
+- Supabase authentication with explicit founder or investor onboarding and an SSR-safe email-confirmation callback;
 - protected, role-specific profile editing with immutable marketplace roles;
 - distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;

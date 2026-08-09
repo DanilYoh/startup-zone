@@ -14,14 +14,19 @@ export async function AuthButton() {
 
   return user ? (
     <Group gap="xs" wrap="nowrap">
-      <Text size="sm" c="dimmed" className={styles.email}>
+      <Text size="sm" className={styles.email}>
         {typeof user.email === "string" ? user.email : "Signed in"}
       </Text>
       <LogoutButton />
     </Group>
   ) : (
     <Group gap="xs" wrap="nowrap">
-      <LinkButton href="/auth/login" size="compact-sm" variant="outline">
+      <LinkButton
+        href="/auth/login"
+        size="compact-sm"
+        variant="outline"
+        className={styles.darkSurfaceOutline}
+      >
         Sign in
       </LinkButton>
       <LinkButton href="/auth/sign-up" size="compact-sm">
