@@ -1,9 +1,10 @@
 import { Paper, Stack, Text, Title } from "@mantine/core";
+import styles from "../auth-layout.module.css";
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
+    <div className={styles.page}>
+      <div className={styles.narrow}>
         <Stack gap="lg">
           <Paper withBorder shadow="sm" radius="lg" p="xl">
             <Stack gap="md">

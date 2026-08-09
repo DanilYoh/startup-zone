@@ -4,6 +4,7 @@ import { getOwnedStartupForEdit } from "@/features/startups/server/queries";
 import { Paper, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import styles from "../../../dashboard.module.css";
 
 async function EditStartupContent({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
@@ -16,7 +17,7 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
 
   if (result.status === "forbidden") {
     return (
-      <Paper withBorder radius="lg" p="xl" className="mx-auto w-full max-w-2xl">
+      <Paper withBorder radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Founder profile required</Title>
           <Text c="dimmed">Only founders can edit startups.</Text>
@@ -27,8 +28,8 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-5">
-      <LinkButton href="/dashboard" variant="subtle" className="w-fit">
+    <div className={styles.formPage}>
+      <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
         Back to dashboard
       </LinkButton>
       <StartupForm startup={result.startup} />
@@ -38,7 +39,7 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
 
 export default function EditStartupPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<Skeleton height="44rem" radius="lg" className="mx-auto w-full max-w-3xl" />}>
+    <Suspense fallback={<Skeleton height="44rem" radius="lg" className={styles.formSkeleton} />}>
       <EditStartupContent params={params} />
     </Suspense>
   );

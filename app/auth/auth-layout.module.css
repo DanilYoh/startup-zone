@@ -1,0 +1,27 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100svh;
+  padding: 1.5rem;
+}
+
+.narrow,
+.wide {
+  width: 100%;
+}
+
+.narrow {
+  max-width: 24rem;
+}
+
+.wide {
+  max-width: 28rem;
+}
+
+@media (min-width: 48rem) {
+  .page {
+    padding: 2.5rem;
+  }
+}

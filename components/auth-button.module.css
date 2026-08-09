@@ -1,0 +1,13 @@
+.email {
+  display: none;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 64rem) {
+  .email {
+    display: block;
+  }
+}

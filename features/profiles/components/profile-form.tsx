@@ -19,6 +19,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useActionState } from "react";
+import styles from "./profile-form.module.css";
 
 const initialState: ProfileActionState = { status: "idle" };
 
@@ -122,7 +123,7 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
               </Alert>
             )}
 
-            <Button type="submit" loading={pending} className="self-start">
+            <Button type="submit" loading={pending} className={styles.submit}>
               Save profile
             </Button>
           </Stack>

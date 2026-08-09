@@ -1,0 +1,10 @@
+.badge {
+  display: none;
+  font-weight: 400;
+}
+
+@media (min-width: 64rem) {
+  .badge {
+    display: block;
+  }
+}

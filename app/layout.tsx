@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
+import styles from "./layout.module.css";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -51,7 +52,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${styles.body}`}>
         <MantineProvider
           theme={theme}
           defaultColorScheme="auto"

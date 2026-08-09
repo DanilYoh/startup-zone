@@ -1,11 +1,11 @@
 import { Skeleton, Stack } from "@mantine/core";
+import styles from "../dashboard.module.css";
 
 export default function ProfileLoading() {
   return (
-    <Stack gap="lg" className="w-full" aria-label="Loading profile">
+    <Stack gap="lg" className={styles.fullWidth} aria-label="Loading profile">
       <Skeleton height={48} width="40%" />
       <Skeleton height={620} radius="lg" />
     </Stack>
   );
 }
-

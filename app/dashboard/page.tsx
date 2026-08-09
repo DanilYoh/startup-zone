@@ -16,6 +16,7 @@ import {
 import { CheckCircle2, Plus, Rocket, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import styles from "./dashboard.module.css";
 
 async function DashboardContent() {
   const supabase = await createClient();
@@ -40,12 +41,12 @@ async function DashboardContent() {
   const isFounder = profile?.role === "founder";
 
   return (
-    <div className="grid w-full gap-8">
+    <div className={styles.dashboardGrid}>
       <Paper component="section" withBorder shadow="xs" radius="lg" p={{ base: "md", sm: "xl" }}>
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
+        <div className={styles.heroContent}>
+          <div className={styles.heroIdentity}>
             <ThemeIcon size={44} radius="md" color="teal" variant="light">
-              <ShieldCheck className="size-5" aria-hidden="true" />
+              <ShieldCheck className={styles.icon} aria-hidden="true" />
             </ThemeIcon>
             <div>
               <Text size="sm" fw={500} c="teal">
@@ -73,17 +74,17 @@ async function DashboardContent() {
           )}
         </div>
 
-        <div className="mt-8 border-t pt-6">
+        <div className={styles.security}>
           <Title order={2} size="h4">Security boundary</Title>
-          <ul className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+          <ul className={styles.securityList}>
             {[
               "Server-side user verification",
               "Session refresh in Next.js Proxy",
               "Ownership derived from the signed-in user",
               "Database row-level security",
             ].map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
+              <li key={item} className={styles.securityItem}>
+                <CheckCircle2 className={styles.successIcon} aria-hidden="true" />
                 {item}
               </li>
             ))}
@@ -91,7 +92,7 @@ async function DashboardContent() {
         </div>
       </Paper>
 
-      <section aria-labelledby="your-startups-heading" className="grid gap-4">
+      <section aria-labelledby="your-startups-heading" className={styles.section}>
         <div>
           <Title order={2} id="your-startups-heading" size="h3">
             Your startups
@@ -161,7 +162,7 @@ async function DashboardContent() {
           <Paper withBorder radius="lg" p="xl">
             <Stack gap="md" align="flex-start">
               <ThemeIcon color="gray" variant="light" size={40} radius="md">
-                <Rocket className="size-5" aria-hidden="true" />
+                <Rocket className={styles.icon} aria-hidden="true" />
               </ThemeIcon>
               <div>
                 <Title order={3} size="h4">No startups yet</Title>
