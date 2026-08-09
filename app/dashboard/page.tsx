@@ -13,7 +13,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { CheckCircle2, Plus, Rocket, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Landmark, Plus, Rocket, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import styles from "./dashboard.module.css";
@@ -30,7 +30,7 @@ async function DashboardContent() {
     { data: profile, error: profileError },
     { data: startups, error: startupsError },
   ] = await Promise.all([
-    supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("role, full_name, headline").eq("id", user.id).maybeSingle(),
     supabase
       .from("startups")
       .select("id, title, slug, one_pager, stage, niche, is_active")
@@ -39,10 +39,26 @@ async function DashboardContent() {
   ]);
 
   const isFounder = profile?.role === "founder";
+  const isInvestor = profile?.role === "investor";
+  const roleCapabilities = isFounder
+    ? [
+        "Publish and manage founder-owned startups",
+        "Control when a startup is publicly discoverable",
+        "Review investor interest in one inbox",
+        "Make terminal accept or reject decisions",
+      ]
+    : isInvestor
+      ? [
+        "Describe a clear investment thesis",
+        "Set preferred stages and ticket range",
+        "Discover persisted founder projects",
+        "Track every investment interest request",
+        ]
+      : ["Choose an active founder or investor account to use the marketplace."];
 
   return (
     <div className={styles.dashboardGrid}>
-      <Paper component="section" withBorder shadow="xs" radius="lg" p={{ base: "md", sm: "xl" }}>
+      <Paper component="section" withBorder shadow="sm" radius="xl" p={{ base: "md", sm: "xl" }} className={styles.dashboardHero}>
         <div className={styles.heroContent}>
           <div className={styles.heroIdentity}>
             <ThemeIcon size={44} radius="md" color="teal" variant="light">
@@ -50,18 +66,20 @@ async function DashboardContent() {
             </ThemeIcon>
             <div>
               <Text size="sm" fw={500} c="teal">
-                Verified server session
+                {isFounder ? "Founder workspace" : isInvestor ? "Investor workspace" : "Marketplace account"}
               </Text>
               <Title order={1} size="h2" mt={4}>
-                {isFounder ? "Founder dashboard" : "Startup Zone dashboard"}
+                {profile?.full_name ? `Welcome back, ${profile.full_name}.` : "Welcome to Startup Zone."}
               </Title>
-              <Text mt="xs" c="dimmed">Signed in as {user.email ?? "a verified user"}.</Text>
+              <Text mt="xs" c="dimmed">
+                {profile?.headline ?? `Signed in as ${user.email ?? "a verified user"}.`}
+              </Text>
             </div>
           </div>
-          {isFounder && (
+          {isFounder ? (
             <Group gap="sm">
               <LinkButton href="/dashboard/applications/inbox" variant="outline" size="md">
-                Incoming applications
+                Investor interest
               </LinkButton>
               <LinkButton
                 href="/dashboard/startups/new"
@@ -71,18 +89,22 @@ async function DashboardContent() {
                 Publish startup
               </LinkButton>
             </Group>
-          )}
+          ) : isInvestor ? (
+            <Group gap="sm">
+              <LinkButton href="/dashboard/applications" variant="outline" size="md">
+                My interest
+              </LinkButton>
+              <LinkButton href="/startups" size="md">
+                Discover startups
+              </LinkButton>
+            </Group>
+          ) : null}
         </div>
 
         <div className={styles.security}>
-          <Title order={2} size="h4">Security boundary</Title>
+          <Title order={2} size="h4">What this role can do</Title>
           <ul className={styles.securityList}>
-            {[
-              "Server-side user verification",
-              "Session refresh in Next.js Proxy",
-              "Ownership derived from the signed-in user",
-              "Database row-level security",
-            ].map((item) => (
+            {roleCapabilities.map((item) => (
               <li key={item} className={styles.securityItem}>
                 <CheckCircle2 className={styles.successIcon} aria-hidden="true" />
                 {item}
@@ -95,10 +117,12 @@ async function DashboardContent() {
       <section aria-labelledby="your-startups-heading" className={styles.section}>
         <div>
           <Title order={2} id="your-startups-heading" size="h3">
-            Your startups
+            {isFounder ? "Your startups" : "Investor workspace"}
           </Title>
           <Text mt={4} size="sm" c="dimmed">
-            Projects published through your founder profile.
+            {isFounder
+              ? "Projects published through your founder profile."
+              : "Keep your investment profile current, discover projects, and track the conversations you start."}
           </Text>
         </div>
 
@@ -106,9 +130,38 @@ async function DashboardContent() {
           <Paper withBorder radius="lg" p="xl">
             <Text size="sm" c="dimmed">Your startups could not be loaded. Please refresh and try again.</Text>
           </Paper>
+        ) : isInvestor ? (
+          <Paper withBorder radius="xl" p={{ base: "lg", sm: "xl" }} className={styles.investorPanel}>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+              <Stack gap="md" align="flex-start">
+                <ThemeIcon color="blue" variant="light" size={44} radius="lg">
+                  <Landmark className={styles.icon} aria-hidden="true" />
+                </ThemeIcon>
+                <div>
+                  <Title order={3} size="h4">Sharpen your investor profile</Title>
+                  <Text mt={5} size="sm" c="dimmed">
+                    Make your organization, thesis, preferred stages, and ticket range explicit.
+                  </Text>
+                </div>
+                <LinkButton href="/dashboard/profile" variant="outline">Edit investor profile</LinkButton>
+              </Stack>
+              <Stack gap="md" align="flex-start">
+                <ThemeIcon color="lime" variant="light" size={44} radius="lg">
+                  <Rocket className={styles.icon} aria-hidden="true" />
+                </ThemeIcon>
+                <div>
+                  <Title order={3} size="h4">Find a qualified opportunity</Title>
+                  <Text mt={5} size="sm" c="dimmed">
+                    Browse real founder projects and send focused investment interest.
+                  </Text>
+                </div>
+                <LinkButton href="/startups">Browse active startups</LinkButton>
+              </Stack>
+            </SimpleGrid>
+          </Paper>
         ) : !isFounder ? (
           <Paper withBorder radius="lg" p="xl">
-            <Text size="sm" c="dimmed">A founder profile is required to publish and manage startups.</Text>
+            <Text size="sm" c="dimmed">An active founder or investor profile is required.</Text>
           </Paper>
         ) : startups?.length ? (
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">

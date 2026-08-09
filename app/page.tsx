@@ -1,343 +1,280 @@
 import { AuthButton } from "@/components/auth-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
 import { LinkButton } from "@/components/link-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { listActiveStartups } from "@/lib/supabase/startups";
-import { hasEnvVars } from "@/lib/utils";
-import { startupStageLabels } from "@/lib/validations";
-import { Badge, Button, Skeleton } from "@mantine/core";
+import { Button, Skeleton } from "@mantine/core";
 import {
   ArrowRight,
-  CheckCircle2,
-  Code2,
-  Database,
-  Rocket,
-  ShieldCheck,
-  Users,
+  Building2,
+  Check,
+  Compass,
+  Landmark,
+  LockKeyhole,
+  Radar,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import styles from "./page.module.css";
+import styles from "./home-redesign.module.css";
 
-const capabilities = [
-  {
-    icon: Users,
-    title: "Role-aware onboarding",
-    description:
-      "Join as a founder, specialist, or investor, then maintain a profile built for marketplace collaboration.",
-  },
-  {
-    icon: Rocket,
-    title: "Persisted startup management",
-    description:
-      "Founders publish, edit, deactivate, and republish real projects that immediately appear in public discovery.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Applications and decisions",
-    description:
-      "Specialists and investors contact founders, track status, and receive database-enforced terminal decisions.",
-  },
+const founderFields = [
+  "Identity and professional headline",
+  "Founder experience and domain credibility",
+  "Published startup, traction, and funding ask",
+  "Location and trusted professional links",
 ] as const;
 
-const stack = [
-  "Next.js 16",
-  "React 19",
-  "TypeScript",
-  "Supabase",
-  "PostgreSQL",
-  "Zod",
-  "Mantine UI",
-  "CSS Modules",
+const investorFields = [
+  "Identity, fund, or investment organization",
+  "A clear investment thesis",
+  "Preferred startup stages",
+  "Typical ticket range and trusted links",
+] as const;
+
+const workflow = [
+  {
+    number: "01",
+    title: "Founders publish the signal",
+    description:
+      "A structured startup page turns the story, stage, market, and funding intent into comparable information.",
+  },
+  {
+    number: "02",
+    title: "Investors qualify the fit",
+    description:
+      "Discovery filters and a role-specific profile make relevance visible before anyone starts a conversation.",
+  },
+  {
+    number: "03",
+    title: "Both sides decide deliberately",
+    description:
+      "Interest requests are persisted, founder-owned, and resolved through explicit database-enforced decisions.",
+  },
 ] as const;
 
 function Brand() {
   return (
-    <Link
-      href="/"
-      className={styles.brand}
-      aria-label="Startup Zone home"
-    >
-      <span className={styles.brandMark}>
-        SZ
-      </span>
+    <Link href="/" className={styles.brand} aria-label="Startup Zone home">
+      <span className={styles.brandMark}>SZ</span>
       <span>Startup Zone</span>
     </Link>
   );
 }
 
-async function FeaturedStartup() {
-  const result = await listActiveStartups({ page: 1 });
-
-  if (result.status !== "ready" || result.data.items.length === 0) {
-    return (
-      <div className={styles.featuredFrame}>
-        <div className={styles.featuredCard}>
-          <p className={styles.eyebrow}>Live marketplace</p>
-          <h2 className={styles.featuredTitle}>
-            {result.status === "ready" ? "Publish the first startup" : "Marketplace unavailable"}
-          </h2>
-          <p className={styles.featuredDescription}>
-            {result.status === "ready"
-              ? "Create a founder account and publish a project to make it visible to specialists and investors."
-              : "The marketplace data could not be loaded. Try the startup directory again in a moment."}
-          </p>
-          <LinkButton
-            href={result.status === "ready" ? "/auth/sign-up" : "/startups"}
-            variant="outline"
-            className={styles.featuredCta}
-          >
-            {result.status === "ready" ? "Create founder account" : "Open directory"}
-          </LinkButton>
-        </div>
-      </div>
-    );
-  }
-
-  const startup = result.data.items[0];
-
+function ProfileFields({ fields }: { fields: readonly string[] }) {
   return (
-    <div className={styles.featuredFrame}>
-      <div className={styles.featuredCard}>
-        <div className={styles.featuredHeader}>
-          <div>
-            <p className={styles.eyebrow}>Featured live project</p>
-            <h2 className={styles.featuredTitle}>{startup.title}</h2>
-          </div>
-          <Badge variant="light">{startupStageLabels[startup.stage]}</Badge>
-        </div>
-        <p className={styles.featuredDescription}>{startup.one_pager}</p>
-        <div className={styles.tagList}>
-          {startup.niche.map((tag) => (
-            <span key={tag} className={styles.tag}>
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className={styles.featuredFooter}>
-          <div>
-            <p className={styles.metaLabel}>Founder</p>
-            <p className={styles.founderName}>
-              {startup.founder?.full_name ?? "Startup Zone founder"}
-            </p>
-          </div>
-          <LinkButton href={`/startups/${startup.slug}`} variant="subtle">
-            View project
-          </LinkButton>
-        </div>
-      </div>
-    </div>
+    <ul className={styles.profileFields}>
+      {fields.map((field) => (
+        <li key={field}>
+          <Check size={15} aria-hidden="true" />
+          <span>{field}</span>
+        </li>
+      ))}
+    </ul>
   );
-}
-
-function FeaturedStartupSkeleton() {
-  return <Skeleton height={336} radius="xl" aria-label="Loading featured startup" />;
 }
 
 export default function Home() {
   return (
     <div className={styles.home}>
-      <a
-        href="#main-content"
-        className={styles.skipLink}
-      >
-        Skip to content
-      </a>
+      <a href="#main-content" className={styles.skipLink}>Skip to content</a>
 
       <header className={styles.header}>
-        <nav
-          className={styles.nav}
-          aria-label="Primary navigation"
-        >
+        <nav className={styles.nav} aria-label="Primary navigation">
           <Brand />
           <div className={styles.desktopNav}>
-            <Link className={styles.navLink} href="/startups">
-              Startups
-            </Link>
-            <a className={styles.navLink} href="#product">
-              Product
-            </a>
-            <a className={styles.navLink} href="#architecture">
-              Architecture
-            </a>
-            <a className={styles.navLink} href="#about">
-              About
-            </a>
+            <a href="#roles">For whom</a>
+            <a href="#workflow">How it works</a>
+            <Link href="/startups">Startups</Link>
+            <a href="#trust">Trust</a>
           </div>
           <div className={styles.navActions}>
             <ThemeSwitcher />
-            {!hasEnvVars ? (
-              <div className={styles.envWarning}>
-                <EnvVarWarning />
-              </div>
-            ) : (
-              <Suspense fallback={<Skeleton height={36} width={112} radius="md" />}>
-                <AuthButton />
-              </Suspense>
-            )}
+            <Suspense fallback={<Skeleton height={36} width={124} radius="xl" />}>
+              <AuthButton />
+            </Suspense>
           </div>
         </nav>
       </header>
 
       <main id="main-content">
         <section className={styles.hero}>
-          <div className={styles.heroGlow} />
+          <div className={styles.heroNoise} aria-hidden="true" />
           <div className={styles.heroGrid}>
-            <div>
-              <div className={styles.liveBadge}>
-                <CheckCircle2 className={styles.successIcon} aria-hidden="true" />
-                Live end-to-end marketplace demo
+            <div className={styles.heroCopy}>
+              <div className={styles.eyebrow}>
+                <Sparkles size={15} aria-hidden="true" />
+                A focused founder–investor marketplace
               </div>
-              <h1 className={styles.heroTitle}>
-                Find the right people to move a startup forward.
+              <h1>
+                Where ambitious founders meet <span>aligned capital.</span>
               </h1>
               <p className={styles.heroDescription}>
-                Founders publish real projects, specialists apply to join teams, and early-stage
-                investors send focused interest requests. Create an account to try the complete
-                role-aware workflow.
+                Startup Zone replaces noisy networking with two clear profiles, structured startup
+                data, and a direct path from discovery to a qualified investment conversation.
               </p>
               <div className={styles.heroActions}>
                 <LinkButton
                   href="/startups"
                   size="lg"
-                  rightSection={<ArrowRight size={16} aria-hidden="true" />}
+                  rightSection={<ArrowRight size={17} aria-hidden="true" />}
                 >
-                  Discover startups
+                  Explore startups
                 </LinkButton>
-                {hasEnvVars ? (
-                  <LinkButton href="/auth/sign-up" size="lg" variant="outline">
-                    Create an account
-                  </LinkButton>
-                ) : (
-                  <Button
-                    component="a"
-                    href="https://github.com/DanilYoh/startup-zone"
-                    target="_blank"
-                    rel="noreferrer"
-                    size="lg"
-                    variant="outline"
-                  >
-                    View source on GitHub
-                  </Button>
-                )}
+                <LinkButton href="/auth/sign-up" size="lg" variant="outline">
+                  Create a profile
+                </LinkButton>
+              </div>
+              <div className={styles.proofRow} aria-label="Product scope">
+                <div><strong>2</strong><span>purpose-built roles</span></div>
+                <div><strong>1</strong><span>decision workflow</span></div>
+                <div><strong>RLS</strong><span>at the data boundary</span></div>
               </div>
             </div>
 
-            <Suspense fallback={<FeaturedStartupSkeleton />}>
-              <FeaturedStartup />
-            </Suspense>
-          </div>
-        </section>
-
-        <section id="product" className={styles.section}>
-          <div className={styles.sectionIntro}>
-            <p className={styles.sectionKicker}>
-              Product thinking
-            </p>
-            <h2 className={styles.sectionTitle}>
-              A focused marketplace MVP you can use end to end.
-            </h2>
-            <p className={styles.sectionDescription}>
-              The public demo uses isolated synthetic data and exposes the same validated,
-              role-aware flows covered by the automated test suite: onboarding, profiles, startup
-              management, discovery, applications, and founder moderation.
-            </p>
-          </div>
-          <div className={styles.capabilityGrid}>
-            {capabilities.map(({ icon: Icon, title, description }) => (
-              <article key={title} className={styles.capabilityCard}>
-                <span className={styles.capabilityIconBox}>
-                  <Icon className={styles.icon} aria-hidden="true" />
-                </span>
-                <h3 className={styles.capabilityTitle}>{title}</h3>
-                <p className={styles.capabilityDescription}>{description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="architecture" className={styles.architectureSection}>
-          <div className={styles.architectureGrid}>
-            <div>
-              <div className={styles.architectureKicker}>
-                <Code2 className={styles.icon} aria-hidden="true" />
-                <p>Engineering decisions</p>
+            <div className={styles.signalBoard} aria-label="Founder and investor profile match">
+              <div className={`${styles.signalCard} ${styles.founderSignal}`}>
+                <div className={styles.signalHeader}>
+                  <span className={styles.signalIcon}><Building2 size={20} aria-hidden="true" /></span>
+                  <span className={styles.signalStatus}>Publishing</span>
+                </div>
+                <p className={styles.signalKicker}>Founder signal</p>
+                <h2>Make the opportunity legible.</h2>
+                <div className={styles.signalLines}>
+                  <span style={{ "--line-width": "92%" } as React.CSSProperties} />
+                  <span style={{ "--line-width": "68%" } as React.CSSProperties} />
+                  <span style={{ "--line-width": "81%" } as React.CSSProperties} />
+                </div>
+                <div className={styles.signalTags}><span>Stage</span><span>Traction</span><span>Ask</span></div>
               </div>
-              <h2 className={styles.architectureTitle}>
-                Modern React, with the backend discipline to ship.
-              </h2>
-              <p className={styles.architectureDescription}>
-                Server-first rendering keeps the client lean. PostgreSQL constraints and RLS keep
-                authorization close to the data. Automated checks make every change reviewable.
+
+              <div className={styles.matchRail} aria-hidden="true">
+                <span />
+                <div><Radar size={18} /></div>
+                <span />
+              </div>
+
+              <div className={`${styles.signalCard} ${styles.investorSignal}`}>
+                <div className={styles.signalHeader}>
+                  <span className={styles.signalIcon}><Landmark size={20} aria-hidden="true" /></span>
+                  <span className={styles.signalStatus}>Qualifying</span>
+                </div>
+                <p className={styles.signalKicker}>Investor fit</p>
+                <h2>Invest where you have conviction.</h2>
+                <div className={styles.fitGrid}>
+                  <div><span>Thesis</span><strong>Aligned</strong></div>
+                  <div><span>Stage</span><strong>Seed</strong></div>
+                  <div><span>Ticket</span><strong>In range</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="roles" className={styles.rolesSection}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.sectionKicker}>One marketplace, two intentional identities</p>
+            <h2>Profiles should help the other side make a decision.</h2>
+            <p>
+              Generic social profiles create noise. Startup Zone asks each role for the information
+              that establishes credibility and qualifies fit.
+            </p>
+          </div>
+
+          <div className={styles.roleGrid}>
+            <article className={`${styles.roleCard} ${styles.founderCard}`}>
+              <div className={styles.roleCardTop}>
+                <span className={styles.roleNumber}>01</span>
+                <Building2 size={30} aria-hidden="true" />
+              </div>
+              <p className={styles.roleType}>Founder profile</p>
+              <h3>Credibility around the person. Evidence around the startup.</h3>
+              <p className={styles.roleDescription}>
+                A founder profile stays concise because product, market, stage, links, and funding
+                belong to the persisted startup page.
               </p>
-              <div className={styles.technologyList}>
-                {stack.map((technology) => (
-                  <span key={technology} className={styles.technologyTag}>
-                    {technology}
-                  </span>
-                ))}
+              <ProfileFields fields={founderFields} />
+              <LinkButton href="/auth/sign-up" variant="subtle" px={0} rightSection={<ArrowRight size={15} />}>
+                Join as a founder
+              </LinkButton>
+            </article>
+
+            <article className={`${styles.roleCard} ${styles.investorCard}`}>
+              <div className={styles.roleCardTop}>
+                <span className={styles.roleNumber}>02</span>
+                <Landmark size={30} aria-hidden="true" />
               </div>
+              <p className={styles.roleType}>Investor profile</p>
+              <h3>A visible mandate, so founders can qualify you too.</h3>
+              <p className={styles.roleDescription}>
+                An investor profile makes focus and decision range explicit instead of hiding them
+                behind a generic biography.
+              </p>
+              <ProfileFields fields={investorFields} />
+              <LinkButton href="/auth/sign-up" variant="subtle" px={0} rightSection={<ArrowRight size={15} />}>
+                Join as an investor
+              </LinkButton>
+            </article>
+          </div>
+        </section>
+
+        <section id="workflow" className={styles.workflowSection}>
+          <div className={styles.workflowInner}>
+            <div className={styles.workflowIntro}>
+              <p className={styles.sectionKicker}>From signal to conversation</p>
+              <h2>Less browsing. Better qualification.</h2>
+              <p>
+                Every step is reachable in the product and backed by real persisted data—not a set
+                of decorative demo cards.
+              </p>
+              <LinkButton href="/startups" variant="outline">Open the live directory</LinkButton>
             </div>
-            <div className={styles.architectureFlow}>
-              <div className={styles.flowStep}>
-                <Code2 className={styles.flowIcon} aria-hidden="true" />
-                <span>Next.js App Router + React Server Components</span>
-              </div>
-              <div className={styles.flowConnector} aria-hidden="true" />
-              <div className={styles.flowStep}>
-                <ShieldCheck className={styles.flowIcon} aria-hidden="true" />
-                <span>Server Actions + Zod validation + Supabase Auth</span>
-              </div>
-              <div className={styles.flowConnector} aria-hidden="true" />
-              <div className={styles.flowStep}>
-                <Database className={styles.flowIcon} aria-hidden="true" />
-                <span>PostgreSQL + migrations + row-level security</span>
-              </div>
+            <div className={styles.workflowList}>
+              {workflow.map((step) => (
+                <article key={step.number} className={styles.workflowStep}>
+                  <span>{step.number}</span>
+                  <div><h3>{step.title}</h3><p>{step.description}</p></div>
+                </article>
+              ))}
             </div>
           </div>
         </section>
 
-        <section id="about" className={styles.aboutSection}>
-          <div className={styles.aboutCard}>
-            <p className={styles.aboutKicker}>Open source</p>
-            <div className={styles.aboutContent}>
-              <div className={styles.aboutCopy}>
-                <h2 className={styles.aboutTitle}>
-                  Review the decisions, not just the screenshots.
-                </h2>
-                <p className={styles.aboutDescription}>
-                  The repository includes local setup, database migrations, quality gates, and an
-                  architecture overview for an honest technical review.
-                </p>
-              </div>
-              <Button
-                component="a"
-                href="https://github.com/DanilYoh/startup-zone"
-                target="_blank"
-                rel="noreferrer"
-                size="lg"
-                variant="white"
-                rightSection={<ArrowRight size={16} aria-hidden="true" />}
-              >
-                Open repository
-              </Button>
+        <section id="trust" className={styles.trustSection}>
+          <div className={styles.trustCard}>
+            <div>
+              <p className={styles.sectionKicker}>Trust is a product feature</p>
+              <h2>Fast at the edge. Strict at the boundary.</h2>
+              <p>
+                Public discovery is server-rendered with bounded queries. Sensitive actions verify
+                identity on the server and remain independently constrained by PostgreSQL and RLS.
+              </p>
             </div>
+            <div className={styles.trustGrid}>
+              <div><Compass size={22} /><strong>Focused discovery</strong><span>Search, stage, niche, and bounded pagination.</span></div>
+              <div><LockKeyhole size={22} /><strong>Role-aware access</strong><span>Ownership and permissions enforced twice.</span></div>
+              <div><Sparkles size={22} /><strong>Honest demo states</strong><span>Loading, empty, errors, and real persistence.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.finalCta}>
+          <div>
+            <p className={styles.sectionKicker}>Ready when the fit is real</p>
+            <h2>Build the profile that starts a better conversation.</h2>
+          </div>
+          <div className={styles.finalActions}>
+            <LinkButton href="/auth/sign-up" size="lg" rightSection={<ArrowRight size={17} />}>Create profile</LinkButton>
+            <Button component="a" href="https://github.com/DanilYoh/startup-zone" target="_blank" rel="noreferrer" size="lg" variant="subtle">
+              View source
+            </Button>
           </div>
         </section>
       </main>
 
       <footer className={styles.footer}>
-        <div className={styles.footerInner}>
-          <p>Startup Zone · A working marketplace MVP.</p>
-          <a
-            className={styles.footerLink}
-            href="https://github.com/DanilYoh"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub · DanilYoh
-          </a>
-        </div>
+        <Brand />
+        <p>Founder–investor marketplace MVP · Built for deliberate decisions.</p>
+        <a href="https://github.com/DanilYoh" target="_blank" rel="noreferrer">GitHub · DanilYoh</a>
       </footer>
     </div>
   );

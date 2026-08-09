@@ -52,8 +52,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             {startup ? "Edit startup" : "Publish a startup"}
           </Title>
           <Text c="dimmed" size="sm" mt={4}>
-            Add the core information founders, specialists, and investors need to understand the
-            project.
+            Add the core information investors need to understand and qualify the project.
           </Text>
         </div>
         <form action={formAction} className={styles.form}>

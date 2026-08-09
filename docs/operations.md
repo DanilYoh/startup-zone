@@ -65,8 +65,9 @@ A project that already recorded later August migrations from a clean database
 will see the newly restored bridge as an older, missing migration. First apply
 it to the isolated test project with `npx supabase migration up --linked
 --include-all`, verify the schema and critical flows, and only then repeat the
-approved production rollout. The bridge detects the later `specialist` enum and
-does not replace newer onboarding or RLS policies when applied out of order.
+approved production rollout. The bridge detects the historical `specialist`
+enum label and does not replace newer onboarding or RLS policies when applied
+out of order. Active onboarding still permits only founders and investors.
 Never repair migration history merely to hide a missing schema change.
 
 ## Release gate
@@ -84,8 +85,8 @@ npm run test:e2e
 ```
 
 Apply additive migrations to the designated test project before production.
-Verify signup for all three roles, profile editing, startup publication and
-deactivation, application submission, and founder moderation. Production
+Verify signup for both roles, role-specific profile editing, startup publication
+and deactivation, investor interest submission, and founder moderation. Production
 migration or deployment requires explicit approval and a recorded rollback
 decision.
 

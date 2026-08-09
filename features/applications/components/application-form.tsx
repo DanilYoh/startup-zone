@@ -12,10 +12,8 @@ const initialState: ApplicationActionState = { status: "idle" };
 
 export function ApplicationForm({
   startupId,
-  role,
 }: {
   startupId: number;
-  role: "specialist" | "investor";
 }) {
   const [state, formAction, pending] = useActionState(createApplication, initialState);
 
@@ -29,12 +27,8 @@ export function ApplicationForm({
       <Stack gap="md" align="flex-start">
         <Textarea
           name="message"
-          label={role === "specialist" ? "Message to the founder" : "Investment interest"}
-          description={
-            role === "specialist"
-              ? "Explain how your experience can help this team."
-              : "Describe your interest and the contact you would like to request."
-          }
+          label="Investment interest"
+          description="Explain the fit with your thesis and the conversation you would like to request."
           minRows={5}
           autosize
           required
@@ -45,7 +39,7 @@ export function ApplicationForm({
         />
         {state.message && <Alert color="red" role="alert">{state.message}</Alert>}
         <Button type="submit" loading={pending}>
-          {role === "specialist" ? "Send application" : "Send interest"}
+          Send interest
         </Button>
       </Stack>
     </form>

@@ -12,11 +12,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project
 
-Startup Zone is a secure marketplace MVP for three roles:
+Startup Zone is a secure marketplace MVP for two roles:
 
-- founders publish startups and manage applications;
-- specialists discover projects and apply to join teams;
-- investors find relevant startups and contact them.
+- founders publish startups and manage investor interest;
+- investors find relevant startups and contact founders.
 
 Build features as vertical slices that include real data access, a reachable user interface, server-side validation, authorization, failure states, and tests. Do not present static cards, isolated backend functions, or planned flows as completed product functionality.
 

@@ -11,6 +11,13 @@ project, organized into product-focused vertical slices. This keeps the MVP
 simple to operate while giving profiles, startups, and applications explicit
 module boundaries.
 
+The active marketplace has exactly two product roles: founders and investors.
+Founders publish startups and decide incoming investment interest. Investors
+describe their mandate, discover persisted startups, and send interest
+requests. The historical `specialist` database enum label is retained only so
+already-applied databases do not require destructive record rewriting; new
+onboarding, inserts, authorization policies, queries, and UI flows reject it.
+
 The current repository is being moved toward the target structure
 incrementally. Existing code does not need to be relocated in a standalone
 refactor; move it when the related feature is changed and the move helps deliver
@@ -207,8 +214,8 @@ webhook, external integration, file response, or public API.
 - The browser receives only the data required for the current view.
 - Anonymous clients cannot read `profiles`. Public startup pages resolve founder
   attribution through the deliberately narrow `public_founder_profiles` view,
-  which exposes only an id, display name, and location for founders with an
-  active startup.
+  which exposes only an id, display name, professional headline, founder
+  experience, and location for founders with an active startup.
 - Collection reads use server-validated page numbers, stable ordering, bounded
   database ranges, and an exact count. They never rely on a silent terminal
   `limit` or load an unbounded dashboard history.
@@ -216,6 +223,13 @@ webhook, external integration, file response, or public API.
   raw credentials, or unnecessary personal data.
 - Production Supabase data is never accessed or changed without explicit,
   task-specific approval.
+
+Role-specific profile fields keep identity separate from decision context.
+Founder credibility belongs to the founder profile while product, market,
+stage, links, and funding intent belong to the startup record. Investor
+organization, thesis, preferred stages, and ticket range belong to the investor
+profile. The complete field rationale is documented in
+[`profile-structure.md`](profile-structure.md).
 
 ## Feature delivery standard
 

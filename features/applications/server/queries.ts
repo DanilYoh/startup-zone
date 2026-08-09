@@ -33,13 +33,12 @@ export async function getApplicationContext(startupId: number, founderId: string
     return { status: "error" as const };
   }
 
-  if (profile?.role !== "specialist" && profile?.role !== "investor") {
+  if (profile?.role !== "investor") {
     return { status: "unsupported_role" as const };
   }
 
   return {
     status: "ready" as const,
-    role: profile.role,
     existing,
   };
 }
@@ -56,7 +55,8 @@ export async function listMyApplications(page: number) {
   const { count, error: countError } = await supabase
     .from("applications")
     .select("id", { count: "exact", head: true })
-    .eq("applicant_id", user.id);
+    .eq("applicant_id", user.id)
+    .eq("type", "investor");
 
   if (countError) {
     await logRequestError("application.list_mine_failed", { code: countError.code });
@@ -80,6 +80,7 @@ export async function listMyApplications(page: number) {
       "id, type, message, status, created_at, startup:startups!applications_startup_id_fkey(id, title, slug, is_active)",
     )
     .eq("applicant_id", user.id)
+    .eq("type", "investor")
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(from, to);
@@ -122,7 +123,8 @@ export async function listFounderApplications(page: number) {
   const { from, to } = pageRange(page, APPLICATION_PAGE_SIZE);
   const { count, error: countError } = await supabase
     .from("applications")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("type", "investor");
 
   if (countError) {
     await logRequestError("application.inbox_read_failed", { code: countError.code });
@@ -143,8 +145,9 @@ export async function listFounderApplications(page: number) {
   const { data, error } = await supabase
     .from("applications")
     .select(
-      "id, type, message, status, created_at, applicant:profiles!applications_applicant_id_fkey(full_name, bio, location, linkedin_url), startup:startups!applications_startup_id_fkey(id, title, slug)",
+      "id, type, message, status, created_at, applicant:profiles!applications_applicant_id_fkey(full_name, headline, bio, location, linkedin_url, investor_organization, investment_thesis, preferred_stages, ticket_min, ticket_max, website_url), startup:startups!applications_startup_id_fkey(id, title, slug)",
     )
+    .eq("type", "investor")
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(from, to);

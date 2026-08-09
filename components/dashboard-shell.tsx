@@ -1,55 +1,42 @@
-import { AuthButton } from "@/components/auth-button";
+import { LogoutButton } from "@/components/logout-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Group, Skeleton } from "@mantine/core";
+import { LayoutDashboard, Rocket, UserRound } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
 import styles from "./dashboard-shell.module.css";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <nav className={styles.nav}>
-          <Group gap="lg">
-            <Link href="/" className={styles.brand}>
-              Startup Zone
+        <nav className={styles.nav} aria-label="Dashboard navigation">
+          <Link href="/" className={styles.brand} aria-label="Startup Zone home">
+            <span className={styles.brandMark}>SZ</span>
+            <span>Startup Zone</span>
+          </Link>
+          <div className={styles.desktopLinks}>
+            <Link href="/dashboard" className={styles.navLink}>
+              <LayoutDashboard size={16} aria-hidden="true" /> Overview
             </Link>
-            <Group gap="md" className={styles.desktopLinks}>
-              <Link href="/dashboard" className={styles.navLink}>
-                Dashboard
-              </Link>
-              <Link href="/dashboard/profile" className={styles.navLink}>
-                Profile
-              </Link>
-              <Link href="/dashboard/applications" className={styles.navLink}>
-                Applications
-              </Link>
-              <Link href="/dashboard/applications/inbox" className={styles.navLink}>
-                Incoming
-              </Link>
-            </Group>
-          </Group>
+            <Link href="/dashboard/profile" className={styles.navLink}>
+              <UserRound size={16} aria-hidden="true" /> Profile
+            </Link>
+            <Link href="/startups" className={styles.navLink}>
+              <Rocket size={16} aria-hidden="true" /> Marketplace
+            </Link>
+          </div>
           <div className={styles.actions}>
             <ThemeSwitcher />
-            <Suspense fallback={<Skeleton height={36} width={112} radius="md" />}>
-              <AuthButton />
-            </Suspense>
+            <LogoutButton />
           </div>
-          <div
-            aria-label="Dashboard sections"
-            className={styles.mobileLinks}
-          >
+          <div aria-label="Dashboard sections" className={styles.mobileLinks}>
             <Link href="/dashboard" className={`${styles.navLink} ${styles.mobileLink}`}>
-              Dashboard
+              <LayoutDashboard size={16} aria-hidden="true" /> Overview
             </Link>
             <Link href="/dashboard/profile" className={`${styles.navLink} ${styles.mobileLink}`}>
-              Profile
+              <UserRound size={16} aria-hidden="true" /> Profile
             </Link>
-            <Link href="/dashboard/applications" className={`${styles.navLink} ${styles.mobileLink}`}>
-              Applications
-            </Link>
-            <Link href="/dashboard/applications/inbox" className={`${styles.navLink} ${styles.mobileLink}`}>
-              Incoming
+            <Link href="/startups" className={`${styles.navLink} ${styles.mobileLink}`}>
+              <Rocket size={16} aria-hidden="true" /> Marketplace
             </Link>
           </div>
         </nav>

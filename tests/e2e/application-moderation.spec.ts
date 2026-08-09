@@ -19,13 +19,13 @@ const admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
 test("a founder accepts a pending application to their startup", async ({ page }) => {
   const suffix = randomUUID();
   const founderEmail = `moderation-founder-${suffix}@example.test`;
-  const specialistEmail = `moderation-specialist-${suffix}@example.test`;
+  const investorEmail = `moderation-investor-${suffix}@example.test`;
   const password = `Test-${suffix}-password`;
   const title = `Moderation Startup ${suffix.slice(0, 8)}`;
   const slug = `moderation-startup-${suffix.slice(0, 8)}`;
-  const message = "I can lead product delivery and help this team ship a focused marketplace release.";
+  const message = "This marketplace fits my seed thesis and I would like to discuss the current round.";
   let founderId: string | undefined;
-  let specialistId: string | undefined;
+  let investorId: string | undefined;
   let applicationId: number | undefined;
 
   try {
@@ -39,24 +39,24 @@ test("a founder accepts a pending application to their startup", async ({ page }
     founderId = founder.user?.id;
     if (!founderId) throw new Error("Founder fixture was not created");
 
-    const { data: specialist, error: specialistError } = await admin.auth.admin.createUser({
-      email: specialistEmail,
+    const { data: investor, error: investorError } = await admin.auth.admin.createUser({
+      email: investorEmail,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Product Specialist", role: "specialist" },
+      user_metadata: { full_name: "Seed Investor", role: "investor" },
     });
-    expect(specialistError).toBeNull();
-    specialistId = specialist.user?.id;
-    if (!specialistId) throw new Error("Specialist fixture was not created");
+    expect(investorError).toBeNull();
+    investorId = investor.user?.id;
+    if (!investorId) throw new Error("Investor fixture was not created");
 
     const { error: profileError } = await admin
       .from("profiles")
       .update({
-        bio: "Product specialist focused on early-stage marketplace delivery.",
+        bio: "Seed investor focused on capital-efficient marketplace businesses.",
         location: "Yekaterinburg",
-        linkedin_url: "https://www.linkedin.com/in/product-specialist",
+        linkedin_url: "https://www.linkedin.com/in/seed-investor",
       })
-      .eq("id", specialistId);
+      .eq("id", investorId);
     expect(profileError).toBeNull();
 
     const { data: startup, error: startupError } = await admin
@@ -65,7 +65,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
         founder_id: founderId,
         title,
         slug,
-        one_pager: "A startup with a pending specialist application.",
+        one_pager: "A startup with a pending investor interest request.",
         description:
           "A detailed startup description created to verify that founders can safely moderate pending applications.",
         stage: "mvp",
@@ -80,8 +80,8 @@ test("a founder accepts a pending application to their startup", async ({ page }
       .from("applications")
       .insert({
         startup_id: startup.id,
-        applicant_id: specialistId,
-        type: "team",
+        applicant_id: investorId,
+        type: "investor",
         message,
       })
       .select("id")
@@ -98,7 +98,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
 
     await page.goto("/dashboard/applications/inbox");
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 3, name: "Product Specialist" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 3, name: "Seed Investor" })).toBeVisible();
     await expect(page.getByText(message, { exact: true })).toBeVisible();
     await expect(page.getByText("Yekaterinburg", { exact: false })).toBeVisible();
 
@@ -115,7 +115,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
     expect(persistedError).toBeNull();
     expect(persisted).toEqual({ status: "accepted", message });
   } finally {
-    if (specialistId) await admin.auth.admin.deleteUser(specialistId);
+    if (investorId) await admin.auth.admin.deleteUser(investorId);
     if (founderId) await admin.auth.admin.deleteUser(founderId);
   }
 });

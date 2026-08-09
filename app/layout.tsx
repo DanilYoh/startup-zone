@@ -17,16 +17,16 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: {
-    default: "Startup Zone — Build the right founding team",
+    default: "Startup Zone — Founder–investor marketplace",
     template: "%s · Startup Zone",
   },
   description:
-    "A full-stack marketplace connecting startup founders, specialists, and early-stage investors.",
+    "A focused marketplace where founders publish startups and aligned investors request a conversation.",
   keywords: ["startups", "founders", "investors", "Next.js", "Supabase"],
   authors: [{ name: "DanilYoh", url: "https://github.com/DanilYoh" }],
   openGraph: {
     title: "Startup Zone",
-    description: "Find the right people to move a startup forward.",
+    description: "Where ambitious founders meet aligned capital.",
     type: "website",
   },
 };
@@ -38,8 +38,9 @@ const geistSans = Geist({
 });
 
 const theme = createTheme({
-  primaryColor: "indigo",
-  defaultRadius: "md",
+  primaryColor: "blue",
+  primaryShade: { light: 7, dark: 5 },
+  defaultRadius: "lg",
   fontFamily: "var(--font-geist-sans), sans-serif",
   headings: {
     fontFamily: "var(--font-geist-sans), sans-serif",

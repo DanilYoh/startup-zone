@@ -11,7 +11,7 @@ export default async function ProfilePage() {
       <div>
         <Title order={1}>Profile</Title>
         <Text c="dimmed" mt={6}>
-          Keep your marketplace identity accurate and useful to other participants.
+          Keep the information founders and investors use to qualify a conversation accurate.
         </Text>
       </div>
 
@@ -21,6 +21,8 @@ export default async function ProfilePage() {
         <Alert color="red" variant="light" role="alert" title="Profile unavailable">
           {result.status === "missing"
             ? "Your authenticated account does not have a marketplace profile. Sign out and contact support."
+            : result.status === "retired"
+              ? "This account does not have an active founder or investor role. Create a new marketplace account or contact support."
             : "Your profile could not be loaded. Refresh the page and try again."}
         </Alert>
       )}

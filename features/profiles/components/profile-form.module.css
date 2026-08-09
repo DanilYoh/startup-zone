@@ -1,3 +1,73 @@
+.card {
+  overflow: hidden;
+}
+
+.profileHero {
+  display: grid;
+  margin: -1rem -1rem 0;
+  padding: 1.25rem;
+  gap: 1.25rem;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mantine-primary-color-filled) 12%, transparent), transparent 60%),
+    var(--mantine-color-default-hover);
+}
+
+.roleLabel,
+.blueprintLabel {
+  color: var(--mantine-primary-color-filled);
+}
+
+.roleLabel {
+  margin-bottom: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.blueprint {
+  padding: 1rem;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  background: color-mix(in srgb, var(--mantine-color-body) 78%, transparent);
+}
+
+.formSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.stageFieldset {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+}
+
+.stageFieldset legend {
+  padding-inline: 0.35rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+}
+
+.stageGrid {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .submit {
   align-self: flex-start;
+}
+
+@media (min-width: 40rem) {
+  .profileHero {
+    margin: -2rem -2rem 0;
+    padding: 2rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr);
+    align-items: center;
+  }
+
+  .stageGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

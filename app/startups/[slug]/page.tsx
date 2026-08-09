@@ -146,6 +146,11 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
               </ThemeIcon>
               <div>
                 <Text fw={600}>{startup.founder?.full_name ?? "Startup Zone founder"}</Text>
+                {startup.founder?.headline && (
+                  <Text size="sm" c="dimmed" mt={2}>
+                    {startup.founder.headline}
+                  </Text>
+                )}
                 {startup.founder?.location && (
                   <Group gap={5} mt={4} wrap="nowrap">
                     <MapPin size={14} aria-hidden="true" />
@@ -156,6 +161,11 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                 )}
               </div>
             </Group>
+            {startup.founder?.founder_experience && (
+              <Text size="sm" mt="md" lh={1.6} className={styles.preWrap}>
+                {startup.founder.founder_experience}
+              </Text>
+            )}
           </Paper>
 
           {(startup.funding_ask !== null || startup.equity_offered !== null) && (
@@ -224,7 +234,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
         </Stack>
       </SimpleGrid>
 
-      <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
+      <Paper withBorder radius="xl" p={{ base: "lg", sm: "xl" }}>
         <ApplicationPanel startupId={startup.id} founderId={startup.founder_id} />
       </Paper>
     </Stack>
