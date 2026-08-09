@@ -51,7 +51,14 @@ export const startupSchema = z.object({
     .min(50, "Use at least 50 characters")
     .max(5_000, "Keep the description under 5,000 characters"),
   stage: z.enum(startupStages),
-  niche: z.array(z.string().trim().min(1).max(40)).min(1).max(8),
+  niche: z
+    .array(z.string().trim().min(1).max(40))
+    .min(1)
+    .max(8)
+    .refine(
+      (values) => new Set(values.map((value) => value.toLocaleLowerCase("en-US"))).size === values.length,
+      "Use each niche only once",
+    ),
   funding_ask: z.number().positive().max(1_000_000_000).optional(),
   equity_offered: z.number().min(0).max(100).optional(),
   deck_url: optionalUrl.optional(),

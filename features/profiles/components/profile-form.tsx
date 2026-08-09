@@ -5,7 +5,7 @@ import {
   type ProfileActionState,
 } from "@/features/profiles/server/actions";
 import type { ProfileInput } from "@/features/profiles/schemas";
-import type { UserRole } from "@/lib/supabase/types";
+import type { UserRole } from "@/lib/domain-types";
 import {
   Alert,
   Avatar,

@@ -14,8 +14,11 @@ publishable key. Never configure the service-role key in Vercel or another
 public application runtime.
 
 CI starts a fresh local Supabase stack, resets it from every migration with
-`npx supabase db reset --local --no-seed`, runs pgTAP, builds the production
-bundle, and runs Playwright. A managed test project may be used for manual
+`npx supabase db reset --local --no-seed`. It also resets specifically to the
+immutable April migration, loads a legacy fixture, applies every pending
+migration, and verifies that data and validated constraints survive the
+upgrade. CI then compares generated TypeScript database types with the checked-in
+file, runs pgTAP, builds the production bundle, and runs Playwright. A managed test project may be used for manual
 release validation, but its URL, publishable key, and service-role key must be
 stored in the CI secret manager. Never reuse production credentials or data.
 
@@ -38,13 +41,33 @@ Populate the isolated demo/test project with repeatable synthetic marketplace
 data from a trusted operator machine:
 
 ```bash
+APP_ENVIRONMENT=demo \
+ALLOW_DEMO_SEED=true \
+DEMO_SEED_PROJECT_REF=your-test-project-ref \
 npm run demo:seed
 ```
 
 The command reads `NEXT_PUBLIC_SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY`, creates a non-interactive synthetic founder, and
-upserts the documented demo startups. Run it only against a verified
-non-production project.
+upserts the documented demo startups. It refuses to start unless the environment
+is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
+configured project ref exactly matches the Supabase URL. It rejects production
+even when the other flags are present.
+
+## Migration upgrade procedure
+
+The April migration is immutable. The immediately following bridge migration
+backfills missing legacy values, adds the schema objects that later hardening
+migrations depend on, and validates its constraints before continuing. CI tests
+both this real upgrade path and a clean installation.
+
+A project that already recorded later August migrations from a clean database
+will see the newly restored bridge as an older, missing migration. First apply
+it to the isolated test project with `npx supabase migration up --linked
+--include-all`, verify the schema and critical flows, and only then repeat the
+approved production rollout. The bridge detects the later `specialist` enum and
+does not replace newer onboarding or RLS policies when applied out of order.
+Never repair migration history merely to hide a missing schema change.
 
 ## Release gate
 
@@ -69,15 +92,20 @@ decision.
 ## Logging and unexpected errors
 
 `instrumentation.ts` records process startup and unexpected request failures as
-single-line JSON. Feature mutations and reads emit stable event names, safe
-database/Auth error codes, and operational fields such as route and method.
+single-line JSON. Proxy assigns or propagates a bounded `x-request-id`, feature
+read/write failures include it, and each log entry has a unique event id plus
+environment and release metadata. Feature mutations and reads emit stable event
+names, safe database/Auth error codes, and operational fields such as route and method.
 Logs must not contain names, email addresses, profile text, application
 messages, tokens, secrets, or raw database/Auth errors.
 
-Forward the runtime's stdout and stderr to the chosen log platform. Alert on a
-sustained increase in `request.unexpected_error`, authorization read failures,
-and write failures. Retention and access controls must follow the deployment
-provider's data policy.
+This is a structured-logging baseline, not complete production monitoring.
+Before calling a deployment production-ready, forward stdout/stderr to a chosen
+backend, verify ingestion, add metrics and alerts, and add approved client-error
+collection. None of those external capabilities is implemented in this
+repository. Alert on a sustained increase in `request.unexpected_error`,
+authorization read failures, and write failures. Retention and access controls
+must follow the deployment provider's data policy.
 
 ## Abuse controls and audit
 

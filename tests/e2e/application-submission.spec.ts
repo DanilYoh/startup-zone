@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
-import type { ApplicationType, Database, UserRole } from "../../lib/supabase/types";
+import type { ApplicationType, UserRole } from "../../lib/domain-types";
+import type { Database } from "../../lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -15,8 +15,12 @@ describe("server logger", () => {
     expect(JSON.parse(String(output.mock.calls[0][0]))).toMatchObject({
       level: "info",
       event: "server.started",
+      service: "startup-zone-web",
       runtime: "nodejs",
     });
+    expect(JSON.parse(String(output.mock.calls[0][0])).eventId).toMatch(
+      /^[0-9a-f-]{36}$/,
+    );
     expect(String(output.mock.calls[0][0])).not.toContain("ignored");
   });
 

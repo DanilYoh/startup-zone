@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { logServerError } from "@/lib/logger";
+import { logRequestError } from "@/lib/logger";
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/types";
 import { parseStartupForm } from "@/lib/startup-form";
 import type { StartupInput } from "@/lib/validations";
@@ -36,7 +36,7 @@ async function authorizeFounder() {
     .maybeSingle();
 
   if (error) {
-    logServerError("startup.authorization_failed", { code: error.code });
+    await logRequestError("startup.authorization_failed", { code: error.code });
     return { status: "error" as const, supabase, user };
   }
 
@@ -118,7 +118,7 @@ export async function updateStartup(
     .maybeSingle();
 
   if (readError) {
-    logServerError("startup.update_read_failed", { code: readError.code });
+    await logRequestError("startup.update_read_failed", { code: readError.code });
     return { status: "error", message: "Could not load the startup. Please try again." };
   }
 
@@ -174,7 +174,7 @@ export async function updateStartupStatus(
     .maybeSingle();
 
   if (error) {
-    logServerError("startup.status_write_failed", { code: error.code });
+    await logRequestError("startup.status_write_failed", { code: error.code });
     return { status: "error", message: "Could not update the startup status. Try again." };
   }
 
@@ -192,7 +192,7 @@ export async function updateStartupStatus(
   };
 }
 
-function startupWriteError(code: string): StartupActionState {
+async function startupWriteError(code: string): Promise<StartupActionState> {
   if (code === "23505") {
     return {
       status: "error",
@@ -201,6 +201,6 @@ function startupWriteError(code: string): StartupActionState {
     };
   }
 
-  logServerError("startup.write_failed", { code });
+  await logRequestError("startup.write_failed", { code });
   return { status: "error", message: "Could not save the startup. Please try again." };
 }

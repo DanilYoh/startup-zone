@@ -4,168 +4,370 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
-
-export type UserRole = "founder" | "specialist" | "investor";
-export type StartupStage = "idea" | "mvp" | "pre_seed" | "seed" | "series_a" | "later";
-export type ApplicationType = "team" | "investor";
-export type ApplicationStatus = "pending" | "accepted" | "rejected";
+  | Json[]
 
 export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          role: UserRole;
-          full_name: string | null;
-          avatar_url: string | null;
-          bio: string | null;
-          location: string | null;
-          linkedin_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          role?: UserRole;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          bio?: string | null;
-          location?: string | null;
-          linkedin_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
-        Relationships: [];
-      };
-      startups: {
-        Row: {
-          id: number;
-          founder_id: string;
-          title: string;
-          slug: string;
-          one_pager: string;
-          description: string;
-          stage: StartupStage;
-          niche: string[];
-          funding_ask: number | null;
-          equity_offered: number | null;
-          deck_url: string | null;
-          website_url: string | null;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: number;
-          founder_id: string;
-          title: string;
-          slug: string;
-          one_pager: string;
-          description: string;
-          stage: StartupStage;
-          niche?: string[];
-          funding_ask?: number | null;
-          equity_offered?: number | null;
-          deck_url?: string | null;
-          website_url?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["startups"]["Insert"]>;
-        Relationships: [
-          {
-            foreignKeyName: "startups_founder_id_fkey";
-            columns: ["founder_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      applications: {
-        Row: {
-          id: number;
-          startup_id: number;
-          applicant_id: string;
-          type: ApplicationType;
-          message: string;
-          status: ApplicationStatus;
-          created_at: string;
-        };
-        Insert: {
-          id?: number;
-          startup_id: number;
-          applicant_id: string;
-          type: ApplicationType;
-          message: string;
-          status?: ApplicationStatus;
-          created_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["applications"]["Insert"]>;
-        Relationships: [
-          {
-            foreignKeyName: "applications_applicant_id_fkey";
-            columns: ["applicant_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "applications_startup_id_fkey";
-            columns: ["startup_id"];
-            isOneToOne: false;
-            referencedRelation: "startups";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       application_status_audit: {
         Row: {
-          id: number;
-          application_id: number | null;
-          startup_id: number;
-          actor_id: string | null;
-          previous_status: "pending";
-          new_status: "accepted" | "rejected";
-          changed_at: string;
-        };
+          actor_id: string | null
+          application_id: number | null
+          changed_at: string
+          id: number
+          new_status: string
+          previous_status: string
+          startup_id: number
+        }
         Insert: {
-          id?: number;
-          application_id?: number | null;
-          startup_id: number;
-          actor_id?: string | null;
-          previous_status: "pending";
-          new_status: "accepted" | "rejected";
-          changed_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["application_status_audit"]["Insert"]>;
+          actor_id?: string | null
+          application_id?: number | null
+          changed_at?: string
+          id?: number
+          new_status: string
+          previous_status: string
+          startup_id: number
+        }
+        Update: {
+          actor_id?: string | null
+          application_id?: number | null
+          changed_at?: string
+          id?: number
+          new_status?: string
+          previous_status?: string
+          startup_id?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "application_status_audit_application_id_fkey";
-            columns: ["application_id"];
-            isOneToOne: false;
-            referencedRelation: "applications";
-            referencedColumns: ["id"];
+            foreignKeyName: "application_status_audit_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: { user_role: UserRole };
-    CompositeTypes: Record<string, never>;
-  };
-};
+        ]
+      }
+      applications: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          id: number
+          message: string
+          startup_id: number
+          status: Database["public"]["Enums"]["application_status"]
+          type: Database["public"]["Enums"]["application_type"]
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          id?: number
+          message: string
+          startup_id: number
+          status?: Database["public"]["Enums"]["application_status"]
+          type: Database["public"]["Enums"]["application_type"]
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          id?: number
+          message?: string
+          startup_id?: number
+          status?: Database["public"]["Enums"]["application_status"]
+          type?: Database["public"]["Enums"]["application_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          linkedin_url: string | null
+          location: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          linkedin_url?: string | null
+          location?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          linkedin_url?: string | null
+          location?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      startups: {
+        Row: {
+          created_at: string
+          deck_url: string | null
+          description: string
+          equity_offered: number | null
+          founder_id: string
+          funding_ask: number | null
+          id: number
+          is_active: boolean
+          niche: string[]
+          one_pager: string
+          slug: string
+          stage: Database["public"]["Enums"]["startup_stage"]
+          title: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          deck_url?: string | null
+          description: string
+          equity_offered?: number | null
+          founder_id: string
+          funding_ask?: number | null
+          id?: number
+          is_active?: boolean
+          niche: string[]
+          one_pager: string
+          slug: string
+          stage: Database["public"]["Enums"]["startup_stage"]
+          title: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          deck_url?: string | null
+          description?: string
+          equity_offered?: number | null
+          founder_id?: string
+          funding_ask?: number | null
+          id?: number
+          is_active?: boolean
+          niche?: string[]
+          one_pager?: string
+          slug?: string
+          stage?: Database["public"]["Enums"]["startup_stage"]
+          title?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startups_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "startups_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      public_founder_profiles: {
+        Row: {
+          full_name: string | null
+          id: string | null
+          location: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          id?: string | null
+          location?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          id?: string | null
+          location?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      can_read_profile: {
+        Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      valid_startup_niches: { Args: { value: string[] }; Returns: boolean }
+    }
+    Enums: {
+      application_status: "pending" | "accepted" | "rejected"
+      application_type: "team" | "investor"
+      startup_stage: "idea" | "mvp" | "pre_seed" | "seed" | "series_a" | "later"
+      user_role: "founder" | "specialist" | "investor"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
 
-export type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Insert"];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Update"];
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      application_status: ["pending", "accepted", "rejected"],
+      application_type: ["team", "investor"],
+      startup_stage: ["idea", "mvp", "pre_seed", "seed", "series_a", "later"],
+      user_role: ["founder", "specialist", "investor"],
+    },
+  },
+} as const
