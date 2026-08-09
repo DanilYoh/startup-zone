@@ -67,9 +67,9 @@ function Brand() {
 }
 
 async function FeaturedStartup() {
-  const result = await listActiveStartups({});
+  const result = await listActiveStartups({ page: 1 });
 
-  if (result.status !== "ready" || result.data.length === 0) {
+  if (result.status !== "ready" || result.data.items.length === 0) {
     return (
       <div className={styles.featuredFrame}>
         <div className={styles.featuredCard}>
@@ -94,7 +94,7 @@ async function FeaturedStartup() {
     );
   }
 
-  const startup = result.data[0];
+  const startup = result.data.items[0];
 
   return (
     <div className={styles.featuredFrame}>

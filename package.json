@@ -24,7 +24,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:rls": "supabase test db",
+    "test:rls": "supabase test db supabase/tests/database",
+    "types:check": "node scripts/check-database-types.mjs",
     "test:e2e": "playwright test",
     "demo:seed": "node scripts/seed-demo.mjs",
     "check": "npm run lint && npm run typecheck && npm run test"

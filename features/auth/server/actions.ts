@@ -6,7 +6,7 @@ import {
   type SignInInput,
   type SignUpInput,
 } from "@/features/auth/schemas";
-import { logServerError } from "@/lib/logger";
+import { logRequestError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { headers } from "next/headers";
@@ -73,7 +73,7 @@ export async function signUp(
   });
 
   if (error) {
-    logServerError("auth.signup_failed", {
+    await logRequestError("auth.signup_failed", {
       code: error.code,
       status: error.status,
     });
@@ -112,7 +112,7 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(validated.data);
 
   if (error) {
-    logServerError("auth.signin_failed", { code: error.code, status: error.status });
+    await logRequestError("auth.signin_failed", { code: error.code, status: error.status });
     return {
       status: "error",
       message:

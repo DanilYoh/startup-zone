@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { passwordSchema } from "../../features/auth/schemas";
-import type { UserRole, Database } from "../../lib/supabase/types";
+import type { UserRole } from "../../lib/domain-types";
+import type { Database } from "../../lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
