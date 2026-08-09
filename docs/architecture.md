@@ -216,6 +216,10 @@ webhook, external integration, file response, or public API.
   attribution through the deliberately narrow `public_founder_profiles` view,
   which exposes only an id, display name, professional headline, founder
   experience, and location for founders with an active startup.
+- Private email and contact links live in `profile_contacts`, outside the wider
+  profile-read policy. RLS permits the owner to manage that record and reveals
+  an explicitly enabled contact to the other participant only after an
+  investor-interest request reaches the terminal `accepted` state.
 - Collection reads use server-validated page numbers, stable ordering, bounded
   database ranges, and an exact count. They never rely on a silent terminal
   `limit` or load an unbounded dashboard history.

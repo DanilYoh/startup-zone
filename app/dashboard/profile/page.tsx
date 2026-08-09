@@ -1,4 +1,5 @@
 import { ProfileForm } from "@/features/profiles/components/profile-form";
+import { ProfileContactForm } from "@/features/profiles/components/profile-contact-form";
 import { getCurrentProfile } from "@/features/profiles/server/queries";
 import { Alert, Stack, Text, Title } from "@mantine/core";
 import styles from "../dashboard.module.css";
@@ -16,7 +17,10 @@ export default async function ProfilePage() {
       </div>
 
       {result.status === "ready" ? (
-        <ProfileForm email={result.email} profile={result.profile} />
+        <>
+          <ProfileForm email={result.email} profile={result.profile} />
+          <ProfileContactForm accountEmail={result.email} contact={result.contact} />
+        </>
       ) : (
         <Alert color="red" variant="light" role="alert" title="Profile unavailable">
           {result.status === "missing"

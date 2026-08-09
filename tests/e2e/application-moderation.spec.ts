@@ -49,6 +49,26 @@ test("a founder accepts a pending application to their startup", async ({ page }
     investorId = investor.user?.id;
     if (!investorId) throw new Error("Investor fixture was not created");
 
+    const { error: founderContactError } = await admin
+      .from("profile_contacts")
+      .update({
+        contact_email: founderEmail,
+        contact_url: "https://t.me/moderation_founder",
+        sharing_enabled: true,
+      })
+      .eq("profile_id", founderId);
+    expect(founderContactError).toBeNull();
+
+    const { error: investorContactError } = await admin
+      .from("profile_contacts")
+      .update({
+        contact_email: investorEmail,
+        contact_url: "https://t.me/moderation_investor",
+        sharing_enabled: true,
+      })
+      .eq("profile_id", investorId);
+    expect(investorContactError).toBeNull();
+
     const { error: profileError } = await admin
       .from("profiles")
       .update({
@@ -105,6 +125,15 @@ test("a founder accepts a pending application to their startup", async ({ page }
     await page.getByRole("button", { name: "Accept" }).click();
     await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Reject" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Continue the conversation" })).toBeVisible();
+    await expect(page.getByRole("link", { name: investorEmail })).toHaveAttribute(
+      "href",
+      `mailto:${investorEmail}`,
+    );
+    await expect(page.getByRole("link", { name: "Open contact link" })).toHaveAttribute(
+      "href",
+      "https://t.me/moderation_investor",
+    );
 
     const { data: persisted, error: persistedError } = await admin
       .from("applications")
@@ -114,6 +143,24 @@ test("a founder accepts a pending application to their startup", async ({ page }
 
     expect(persistedError).toBeNull();
     expect(persisted).toEqual({ status: "accepted", message });
+
+    await page.context().clearCookies();
+    await page.goto("/auth/login");
+    await page.getByLabel("Email").fill(investorEmail);
+    await page.locator("#password").fill(password);
+    await page.getByRole("button", { name: "Login" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    await page.goto("/dashboard/applications");
+    await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: founderEmail })).toHaveAttribute(
+      "href",
+      `mailto:${founderEmail}`,
+    );
+    await expect(page.getByRole("link", { name: "Open contact link" })).toHaveAttribute(
+      "href",
+      "https://t.me/moderation_founder",
+    );
   } finally {
     if (investorId) await admin.auth.admin.deleteUser(investorId);
     if (founderId) await admin.auth.admin.deleteUser(founderId);

@@ -1,6 +1,6 @@
 begin;
 
-select plan(49);
+select plan(63);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -35,6 +35,12 @@ values
     'investor@example.test',
     '{"role":"investor","full_name":"Test Investor"}'
   );
+
+select results_eq(
+  $$ select count(*) from public.profile_contacts $$,
+  $$ values (5::bigint) $$,
+  'onboarding creates one private contact record for every profile'
+);
 
 select results_eq(
   $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000001' $$,
@@ -151,6 +157,42 @@ where slug = 'existing-startup';
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select lives_ok(
+  $$
+    update public.profile_contacts
+    set
+      contact_email = 'founder-contact@example.test',
+      contact_url = 'https://t.me/test_founder',
+      sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  'a founder can enable sharing for their own private contact'
+);
+
+select results_eq(
+  $$
+    with updated as (
+      update public.profile_contacts
+      set contact_email = 'spoofed@example.test'
+      where profile_id = '10000000-0000-0000-0000-000000000004'
+      returning profile_id
+    )
+    select count(*) from updated
+  $$,
+  $$ values (0::bigint) $$,
+  'a user cannot update another profile private contact'
+);
+
+select throws_like(
+  $$
+    update public.profile_contacts
+    set contact_url = 'javascript:alert(1)'
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  '%profile_contacts_url_check%',
+  'private contact links are restricted to HTTP and HTTPS'
+);
 
 select lives_ok(
   $$
@@ -305,6 +347,12 @@ select lives_ok(
   'an investor can update every allowed common and role-specific profile field'
 );
 
+update public.profile_contacts
+set
+  contact_email = 'rejected-investor@example.test',
+  sharing_enabled = true
+where profile_id = '10000000-0000-0000-0000-000000000002';
+
 select throws_like(
   $$
     update public.profiles
@@ -365,6 +413,16 @@ select lives_ok(
     where slug = 'existing-startup'
   $$,
   'an investor can send interest to an active startup owned by another user'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'a pending investor cannot read the founder private contact'
 );
 
 select throws_like(
@@ -474,6 +532,46 @@ select throws_like(
 
 reset role;
 set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select lives_ok(
+  $$
+    update public.profile_contacts
+    set
+      contact_email = 'accepted-investor@example.test',
+      contact_url = 'https://t.me/accepted_investor',
+      sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  'an investor can enable sharing for their own private contact'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'an applicant cannot read the founder private contact before acceptance'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000005', true);
+
+select throws_like(
+  $$
+    update public.profile_contacts
+    set sharing_enabled = true
+    where profile_id = '10000000-0000-0000-0000-000000000005'
+  $$,
+  '%profile_contacts_enabled_value_check%',
+  'contact exchange cannot be enabled without an email or contact link'
+);
+
+reset role;
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select throws_like(
@@ -529,6 +627,26 @@ select lives_ok(
   'a founder can reject a pending application to their startup'
 );
 
+select results_eq(
+  $$
+    select contact_email, contact_url
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('accepted-investor@example.test', 'https://t.me/accepted_investor') $$,
+  'a founder can read an accepted investor private contact'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000002'
+  $$,
+  $$ values (0::bigint) $$,
+  'a founder cannot read a rejected investor private contact'
+);
+
 select throws_like(
   $$
     update public.applications
@@ -574,6 +692,51 @@ select throws_like(
   $$,
   '%permission denied%',
   'a founder cannot rewrite applicant-owned application content'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select results_eq(
+  $$
+    select contact_email, contact_url
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values ('founder-contact@example.test', 'https://t.me/test_founder') $$,
+  'an accepted investor can read the founder private contact'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id = '10000000-0000-0000-0000-000000000001'
+  $$,
+  $$ values (0::bigint) $$,
+  'a rejected investor cannot read the founder private contact'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.profile_contacts
+    where profile_id in (
+      '10000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000003'
+    )
+  $$,
+  $$ values (0::bigint) $$,
+  'an unrelated founder cannot read accepted-match private contacts'
 );
 
 reset role;
@@ -636,6 +799,12 @@ select columns_are(
 );
 
 set local role anon;
+
+select throws_like(
+  $$ select * from public.profile_contacts $$,
+  '%permission denied%',
+  'anonymous users cannot read private profile contacts'
+);
 
 select throws_like(
   $$ select * from public.profiles $$,

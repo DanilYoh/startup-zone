@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { AcceptedContactCard } from "@/features/applications/components/accepted-contact-card";
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
 import { parsePage } from "@/lib/pagination";
@@ -55,6 +56,19 @@ export default async function FounderApplicationsPage({
         <Title order={1}>Investor interest</Title>
         <Text c="dimmed" mt={6}>Review each investor request once and make a clear decision.</Text>
       </div>
+
+      {result.contactStatus === "ready" && !result.ownContactReady && (
+        <Alert color="yellow" variant="light" title="Enable accepted contact exchange">
+          <Stack gap="sm" align="flex-start">
+            <Text size="sm">
+              Add a private contact so accepted investors can continue the conversation with you.
+            </Text>
+            <LinkButton href="/dashboard/profile" variant="subtle" px={0}>
+              Configure private contact
+            </LinkButton>
+          </Stack>
+        </Alert>
+      )}
 
       {groups.size === 0 ? (
         <Paper withBorder radius="lg" p="xl">
@@ -140,6 +154,13 @@ export default async function FounderApplicationsPage({
                     </Paper>
                     {application.status === "pending" && (
                       <ApplicationDecisionForm applicationId={application.id} />
+                    )}
+                    {application.status === "accepted" && (
+                      <AcceptedContactCard
+                        contact={result.contacts[application.applicant.id]}
+                        contactStatus={result.contactStatus}
+                        counterpartLabel="investor"
+                      />
                     )}
                   </Stack>
                 </Paper>

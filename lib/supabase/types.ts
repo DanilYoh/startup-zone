@@ -99,6 +99,48 @@ export type Database = {
           },
         ]
       }
+      profile_contacts: {
+        Row: {
+          contact_email: string | null
+          contact_url: string | null
+          created_at: string
+          profile_id: string
+          sharing_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          profile_id: string
+          sharing_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          profile_id?: string
+          sharing_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -257,6 +299,10 @@ export type Database = {
     }
     Functions: {
       can_read_profile: {
+        Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      can_read_profile_contact: {
         Args: { target_profile_id: string }
         Returns: boolean
       }

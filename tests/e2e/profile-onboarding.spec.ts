@@ -63,6 +63,10 @@ for (const { role, label } of roles) {
     let userId: string | undefined;
 
     try {
+      if (role === "founder") {
+        await page.setViewportSize({ width: 390, height: 844 });
+      }
+
       await page.goto("/auth/sign-up");
       await page.getByLabel("Full name").fill(initialName);
       await page.getByLabel("Email").fill(email);
@@ -113,6 +117,15 @@ for (const { role, label } of roles) {
 
       await expect(page.getByRole("status")).toHaveText("Profile saved.");
 
+      const contactUrl = `https://t.me/${role}_${suffix.replaceAll("-", "").slice(0, 20)}`;
+      await page.getByLabel("Contact email").fill(email);
+      await page.getByLabel("Contact link").fill(contactUrl);
+      await page
+        .getByRole("checkbox", { name: "Share these details after I accept", exact: false })
+        .check();
+      await page.getByRole("button", { name: "Save contact settings" }).click();
+      await expect(page.getByText("Accepted contact exchange enabled.", { exact: true })).toBeVisible();
+
       const { data: profile, error: profileError } = await admin
         .from("profiles")
         .select(
@@ -144,6 +157,28 @@ for (const { role, label } of roles) {
         ticket_max: role === "investor" ? 500_000 : null,
         website_url: role === "investor" ? "https://northstar.example.test" : null,
       });
+
+      const { data: contact, error: contactError } = await admin
+        .from("profile_contacts")
+        .select("contact_email, contact_url, sharing_enabled")
+        .eq("profile_id", userId)
+        .single();
+
+      expect(contactError).toBeNull();
+      expect(contact).toEqual({
+        contact_email: email,
+        contact_url: contactUrl,
+        sharing_enabled: true,
+      });
+
+      if (role === "founder") {
+        const viewport = await page.evaluate(() => ({
+          clientWidth: document.documentElement.clientWidth,
+          scrollWidth: document.documentElement.scrollWidth,
+        }));
+        expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+        await expect(page.getByRole("heading", { name: "Accepted contact exchange" })).toBeVisible();
+      }
     } finally {
       if (userId) await admin.auth.admin.deleteUser(userId);
     }

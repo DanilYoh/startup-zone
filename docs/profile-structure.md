@@ -20,6 +20,14 @@ Both roles have the same compact identity foundation:
 Email is an account credential, displayed only to its owner in profile editing.
 The marketplace role is assigned during registration and cannot be changed.
 
+Each user also controls a separate private contact record. A contact email and
+optional HTTP(S) contact link remain unavailable to anonymous visitors, profile
+browsers, pending requests, rejected requests, and unrelated authenticated
+users. When sharing is enabled, the database reveals those details only to the
+other participant in an accepted investor-interest request. Disabling sharing
+prevents future reads, but cannot revoke a contact that a recipient already
+saved after an earlier authorized view.
+
 ## Founder profile
 
 A founder profile establishes the credibility of the person behind a project:
@@ -59,6 +67,8 @@ search or qualification behavior, rather than as unused profile decoration.
   interest request to one of the founder's startups.
 - Only investors can create interest requests; only the owning founder can make
   the terminal accept or reject decision.
+- Accepted founders and investors can read the other participant's explicitly
+  enabled private contact details; every other application state remains closed.
 
 The database retains a historical `specialist` enum label to avoid destructive
 rewrites of already-applied databases. It is not an active product role: new

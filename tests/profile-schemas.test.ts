@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { profileSchema } from "../features/profiles/schemas";
+import { profileContactSchema, profileSchema } from "../features/profiles/schemas";
 
 const emptyRoleFields = {
   headline: "",
@@ -109,5 +109,52 @@ describe("profileSchema", () => {
         ticket_max: "100000",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("profileContactSchema", () => {
+  it("normalizes an enabled private contact", () => {
+    const result = profileContactSchema.safeParse({
+      contact_email: "  Founder@Example.Test ",
+      contact_url: "https://t.me/startup_founder",
+      sharing_enabled: true,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        contact_email: "founder@example.test",
+        contact_url: "https://t.me/startup_founder",
+        sharing_enabled: true,
+      });
+    }
+  });
+
+  it("requires a safe contact before sharing is enabled", () => {
+    expect(
+      profileContactSchema.safeParse({
+        contact_email: "",
+        contact_url: "",
+        sharing_enabled: true,
+      }).success,
+    ).toBe(false);
+
+    expect(
+      profileContactSchema.safeParse({
+        contact_email: "not-an-email",
+        contact_url: "javascript:alert(1)",
+        sharing_enabled: true,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("allows details to be stored while future sharing is disabled", () => {
+    expect(
+      profileContactSchema.safeParse({
+        contact_email: "",
+        contact_url: "",
+        sharing_enabled: false,
+      }).success,
+    ).toBe(true);
   });
 });

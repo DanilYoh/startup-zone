@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { AcceptedContactCard } from "@/features/applications/components/accepted-contact-card";
 import { listMyApplications } from "@/features/applications/server/queries";
 import { parsePage } from "@/lib/pagination";
 import { Alert, Badge, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
@@ -21,6 +22,19 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
         <Title order={1}>My investment interest</Title>
         <Text c="dimmed" mt={6}>Track every focused conversation request you send to a founder.</Text>
       </div>
+
+      {result.status === "ready" && result.contactStatus === "ready" && !result.ownContactReady && (
+        <Alert color="yellow" variant="light" title="Enable accepted contact exchange">
+          <Stack gap="sm" align="flex-start">
+            <Text size="sm">
+              Add a private contact so founders can reach you when they accept your interest.
+            </Text>
+            <LinkButton href="/dashboard/profile" variant="subtle" px={0}>
+              Configure private contact
+            </LinkButton>
+          </Stack>
+        </Alert>
+      )}
 
       {result.status === "error" ? (
         <Alert color="red" role="alert">Your interest requests could not be loaded. Refresh and try again.</Alert>
@@ -54,6 +68,13 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
                     </Text>
                   </div>
                   <Text className={styles.preWrap}>{application.message}</Text>
+                  {application.status === "accepted" && (
+                    <AcceptedContactCard
+                      contact={result.contacts[application.startup.founder_id]}
+                      contactStatus={result.contactStatus}
+                      counterpartLabel="founder"
+                    />
+                  )}
                   {application.startup.is_active ? (
                     <LinkButton href={`/startups/${application.startup.slug}`} variant="subtle" px={0}>
                       View startup

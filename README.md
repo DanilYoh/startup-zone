@@ -13,7 +13,7 @@ Implemented:
 - distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;
 - investor interest requests with status tracking;
-- founder moderation with database-enforced terminal decisions;
+- founder moderation with database-enforced terminal decisions and consent-based private contact exchange after acceptance;
 - filterable, paginated public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - request-correlated structured server logs, unexpected request capture, application rate limiting, and decision auditing;

@@ -96,9 +96,9 @@ npm run test:e2e
 
 Apply additive migrations to the designated test project before production.
 Verify signup for both roles, role-specific profile editing, startup publication
-and deactivation, investor interest submission, and founder moderation. Production
-migration or deployment requires explicit approval and a recorded rollback
-decision.
+and deactivation, investor interest submission, founder moderation, and the
+accepted private-contact exchange from both dashboards. Production migration or
+deployment requires explicit approval and a recorded rollback decision.
 
 ## Logging and unexpected errors
 

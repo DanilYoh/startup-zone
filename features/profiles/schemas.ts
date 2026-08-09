@@ -46,6 +46,16 @@ const optionalLinkedInUrl = z
   )
   .transform((value) => value || null);
 
+const optionalEmail = z
+  .string()
+  .trim()
+  .max(254, "Keep the email under 254 characters")
+  .refine(
+    (value) => value === "" || z.email().safeParse(value).success,
+    "Enter a valid email address",
+  )
+  .transform((value) => value.toLowerCase() || null);
+
 export const profileSchema = z.object({
   full_name: z.string().trim().min(2, "Use at least 2 characters").max(80),
   headline: optionalText(120, "Keep the headline under 120 characters"),
@@ -90,6 +100,24 @@ function normalizeCurrencyInput(value: unknown) {
 
 export type ProfileInput = z.infer<typeof profileSchema>;
 
+export const profileContactSchema = z
+  .object({
+    contact_email: optionalEmail,
+    contact_url: optionalHttpUrl,
+    sharing_enabled: z.boolean(),
+  })
+  .superRefine((contact, context) => {
+    if (contact.sharing_enabled && !contact.contact_email && !contact.contact_url) {
+      context.addIssue({
+        code: "custom",
+        message: "Add an email or contact link before enabling contact exchange",
+        path: ["contact_email"],
+      });
+    }
+  });
+
+export type ProfileContactInput = z.infer<typeof profileContactSchema>;
+
 function singleText(formData: FormData, name: string) {
   const values = formData.getAll(name);
   if (values.length === 0) return "";
@@ -113,5 +141,20 @@ export function parseProfileForm(formData: FormData) {
     ticket_min: singleText(formData, "ticket_min"),
     ticket_max: singleText(formData, "ticket_max"),
     website_url: singleText(formData, "website_url"),
+  });
+}
+
+export function parseProfileContactForm(formData: FormData) {
+  const sharingValues = formData.getAll("sharing_enabled");
+
+  return profileContactSchema.safeParse({
+    contact_email: singleText(formData, "contact_email"),
+    contact_url: singleText(formData, "contact_url"),
+    sharing_enabled:
+      sharingValues.length === 0
+        ? false
+        : sharingValues.length === 1 && sharingValues[0] === "on"
+          ? true
+          : null,
   });
 }
