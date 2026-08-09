@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { useActionState } from "react";
+import styles from "./auth-form.module.css";
 
 const initialState: SignInActionState = { status: "idle" };
 
@@ -27,7 +28,7 @@ export function LoginForm({
 
   return (
     <div className={className} {...props}>
-      <Paper withBorder shadow="sm" radius="lg" p="xl">
+      <Paper withBorder radius="md" p="xl" className={styles.authCard}>
         <Stack gap="lg">
           <div>
             <Title order={1} size="h2">Login</Title>

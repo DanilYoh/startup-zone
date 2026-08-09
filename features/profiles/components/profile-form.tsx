@@ -63,7 +63,7 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
   const fieldError = (field: keyof ProfileInput) => state.errors?.[field]?.[0];
 
   return (
-    <Paper withBorder shadow="sm" radius="xl" p={{ base: "md", sm: "xl" }} className={styles.card}>
+    <Paper withBorder radius="md" p={{ base: "md", sm: "xl" }} className={styles.card}>
       <Stack gap="xl">
         <div className={styles.profileHero}>
           <Group align="center" wrap="nowrap">

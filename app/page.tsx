@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import styles from "./home-redesign.module.css";
+import styles from "./home-supabase.module.css";
 
 const founderFields = [
   "Identity and professional headline",

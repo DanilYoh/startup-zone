@@ -38,9 +38,23 @@ const geistSans = Geist({
 });
 
 const theme = createTheme({
-  primaryColor: "blue",
-  primaryShade: { light: 7, dark: 5 },
-  defaultRadius: "lg",
+  colors: {
+    brand: [
+      "#ecfdf5",
+      "#d1fae5",
+      "#a7f3d0",
+      "#6ee7b7",
+      "#4ade9f",
+      "#3ecf8e",
+      "#2fb67c",
+      "#1c8f61",
+      "#16744f",
+      "#10583d",
+    ],
+  },
+  primaryColor: "brand",
+  primaryShade: { light: 8, dark: 5 },
+  defaultRadius: "sm",
   fontFamily: "var(--font-geist-sans), sans-serif",
   headings: {
     fontFamily: "var(--font-geist-sans), sans-serif",
@@ -51,12 +65,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme="dark" />
       </head>
       <body className={`${geistSans.variable} ${styles.body}`}>
         <MantineProvider
           theme={theme}
-          defaultColorScheme="auto"
+          defaultColorScheme="dark"
           deduplicateInlineStyles
         >
           {children}

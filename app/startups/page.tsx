@@ -27,7 +27,7 @@ import { ArrowRight, MapPin, Rocket, Search, SearchX, ServerOff } from "lucide-r
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import styles from "./startups.module.css";
+import styles from "./startups-supabase.module.css";
 
 export const metadata: Metadata = {
   title: "Discover startups",
@@ -88,7 +88,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
 
   return (
     <Stack gap="xl">
-      <Paper component="form" action="/startups" withBorder radius="lg" p="lg">
+      <Paper component="form" action="/startups" withBorder radius="md" p="lg" className={styles.filterPanel}>
         <div className={styles.filterGrid}>
           <TextInput
             name="q"
@@ -177,7 +177,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
 
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
             {result.data.items.map((startup) => (
-              <Paper component="article" key={startup.id} withBorder shadow="xs" radius="lg" p="lg">
+              <Paper component="article" key={startup.id} withBorder radius="md" p="lg" className={styles.startupCard}>
                 <Stack gap="md" h="100%">
                   <Group justify="space-between" align="flex-start" wrap="nowrap">
                     <div>

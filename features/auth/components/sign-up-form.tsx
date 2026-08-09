@@ -34,7 +34,7 @@ export function SignUpForm({
 
   return (
     <div className={className} {...props}>
-      <Paper withBorder shadow="md" radius="xl" p={{ base: "lg", sm: "xl" }} className={styles.authCard}>
+      <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className={styles.authCard}>
         <Stack gap="lg">
           <div>
             <Text className={styles.eyebrow}>Two sides. One focused marketplace.</Text>

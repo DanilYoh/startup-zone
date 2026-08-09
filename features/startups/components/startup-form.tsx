@@ -45,7 +45,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
   const fieldError = (field: keyof StartupInput) => state.errors?.[field]?.[0];
 
   return (
-    <Paper withBorder shadow="sm" radius="lg" p={{ base: "md", sm: "xl" }}>
+    <Paper withBorder radius="md" p={{ base: "md", sm: "xl" }}>
       <Stack gap="xl">
         <div>
           <Title order={1} size="h2">
