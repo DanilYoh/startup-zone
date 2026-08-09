@@ -2,8 +2,24 @@
   display: none;
   max-width: 12rem;
   overflow: hidden;
+  color: #c8ceca;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.darkSurfaceOutline {
+  border-color: #9ba39e;
+  color: #f3f5f4;
+}
+
+.darkSurfaceOutline:hover {
+  border-color: #c8ceca;
+  background: rgb(255 255 255 / 9%);
+  color: #ffffff;
+}
+
+.darkSurfaceOutline:focus-visible {
+  outline-color: #65e6aa;
 }
 
 @media (min-width: 64rem) {

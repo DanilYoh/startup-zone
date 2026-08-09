@@ -150,6 +150,21 @@
   gap: 0.65rem;
 }
 
+.darkSurfaceOutline {
+  border-color: #9ba39e;
+  color: #f3f5f4;
+}
+
+.darkSurfaceOutline:hover {
+  border-color: #c8ceca;
+  background: rgb(255 255 255 / 9%);
+  color: #ffffff;
+}
+
+.darkSurfaceOutline:focus-visible {
+  outline-color: #65e6aa;
+}
+
 .proofRow {
   display: grid;
   margin-top: 3rem;

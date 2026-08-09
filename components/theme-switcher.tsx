@@ -10,6 +10,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { Check, Laptop, Moon, Sun, SunMoon } from "lucide-react";
+import styles from "./theme-switcher.module.css";
 
 const themes: ReadonlyArray<{
   value: MantineColorScheme;
@@ -27,7 +28,12 @@ const ThemeSwitcher = () => {
   return (
     <Menu position="bottom-end" shadow="md" width={160}>
       <MenuTarget>
-        <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Choose color theme">
+        <ActionIcon
+          variant="subtle"
+          size="lg"
+          className={styles.darkSurfaceControl}
+          aria-label="Choose color theme"
+        >
           <SunMoon size={18} aria-hidden="true" />
         </ActionIcon>
       </MenuTarget>

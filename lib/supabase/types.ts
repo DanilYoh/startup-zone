@@ -104,8 +104,8 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
-          full_name: string | null
           founder_experience: string | null
+          full_name: string | null
           headline: string | null
           id: string
           investment_thesis: string | null
@@ -123,8 +123,8 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
-          full_name?: string | null
           founder_experience?: string | null
+          full_name?: string | null
           headline?: string | null
           id: string
           investment_thesis?: string | null
@@ -142,8 +142,8 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
-          full_name?: string | null
           founder_experience?: string | null
+          full_name?: string | null
           headline?: string | null
           id?: string
           investment_thesis?: string | null

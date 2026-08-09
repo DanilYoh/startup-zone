@@ -68,7 +68,7 @@ export async function signUp(
         full_name: validated.data.full_name,
         role: validated.data.role,
       },
-      emailRedirectTo: `${origin}/dashboard/profile`,
+      emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/dashboard/profile")}`,
     },
   });
 

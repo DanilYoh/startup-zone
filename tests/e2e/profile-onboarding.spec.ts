@@ -104,8 +104,8 @@ for (const { role, label } of roles) {
         await page.getByLabel("Investment thesis").fill(
           "Backing capital-efficient B2B software at pre-seed and seed.",
         );
-        await page.getByRole("checkbox", { name: "Pre-seed" }).check();
-        await page.getByRole("checkbox", { name: "Seed" }).check();
+        await page.getByRole("checkbox", { name: "Pre-seed", exact: true }).check();
+        await page.getByRole("checkbox", { name: "Seed", exact: true }).check();
         await page.getByLabel("Minimum ticket (USD)").fill("100000");
         await page.getByLabel("Maximum ticket (USD)").fill("500000");
       }

@@ -215,7 +215,9 @@ enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
+# Local and automated test registrations are confirmed immediately. Hosted production
+# should enable confirmations; sign-up sends users through the repository-owned
+# /auth/confirm callback, which supports the default PKCE link and token-hash templates.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
