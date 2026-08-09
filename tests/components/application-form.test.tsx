@@ -17,38 +17,38 @@ beforeEach(() => {
 });
 
 describe("ApplicationForm", () => {
-  it("submits a specialist application and replaces the form with confirmation", async () => {
+  it("submits investor interest and replaces the form with confirmation", async () => {
     createApplicationMock.mockResolvedValue({
       status: "success",
       message: "Your application was sent to the founder.",
     });
     const user = userEvent.setup();
 
-    render(<ApplicationForm startupId={42} role="specialist" />);
+    render(<ApplicationForm startupId={42} />);
 
-    const message = screen.getByRole("textbox", { name: "Message to the founder" });
-    await user.type(message, "I can help the team ship its first production release.");
-    await user.click(screen.getByRole("button", { name: "Send application" }));
+    const message = screen.getByRole("textbox", { name: "Investment interest" });
+    await user.type(message, "This company fits my seed thesis and I would like to meet the founder.");
+    await user.click(screen.getByRole("button", { name: "Send interest" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Your application was sent to the founder.",
     );
-    expect(screen.queryByRole("textbox", { name: "Message to the founder" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Investment interest" })).not.toBeInTheDocument();
     expect(createApplicationMock).toHaveBeenCalledOnce();
 
     const submitted = createApplicationMock.mock.calls[0]?.[1];
     expect(submitted).toBeInstanceOf(FormData);
     expect(submitted.get("startup_id")).toBe("42");
     expect(submitted.get("message")).toBe(
-      "I can help the team ship its first production release.",
+      "This company fits my seed thesis and I would like to meet the founder.",
     );
   });
 
-  it("uses investor-specific labels and actions", () => {
-    render(<ApplicationForm startupId={7} role="investor" />);
+  it("explains the information an investor should send", () => {
+    render(<ApplicationForm startupId={7} />);
 
     expect(screen.getByRole("textbox", { name: "Investment interest" })).toHaveAccessibleDescription(
-      "Describe your interest and the contact you would like to request.",
+      "Explain the fit with your thesis and the conversation you would like to request.",
     );
     expect(screen.getByRole("button", { name: "Send interest" })).toBeEnabled();
   });

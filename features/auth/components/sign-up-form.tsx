@@ -1,14 +1,19 @@
 "use client";
 
 import { signUp, type SignUpActionState } from "@/features/auth/server/actions";
-import { marketplaceRoleLabels, marketplaceRoles, type SignUpInput } from "@/features/auth/schemas";
+import {
+  marketplaceRoleDescriptions,
+  marketplaceRoleLabels,
+  marketplaceRoles,
+  type SignUpInput,
+} from "@/features/auth/schemas";
 import {
   Alert,
   Anchor,
   Button,
-  NativeSelect,
   Paper,
   PasswordInput,
+  Radio,
   Stack,
   Text,
   TextInput,
@@ -16,6 +21,7 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { useActionState } from "react";
+import styles from "./auth-form.module.css";
 
 const initialState: SignUpActionState = { status: "idle" };
 
@@ -28,12 +34,13 @@ export function SignUpForm({
 
   return (
     <div className={className} {...props}>
-      <Paper withBorder shadow="sm" radius="lg" p="xl">
+      <Paper withBorder shadow="md" radius="xl" p={{ base: "lg", sm: "xl" }} className={styles.authCard}>
         <Stack gap="lg">
           <div>
-            <Title order={1} size="h2">Create your account</Title>
+            <Text className={styles.eyebrow}>Two sides. One focused marketplace.</Text>
+            <Title order={1} size="h2" mt={6}>Create your account</Title>
             <Text c="dimmed" size="sm" mt={4}>
-              Choose the role that matches how you will use Startup Zone.
+              Choose how you participate. Your role is locked so marketplace trust stays clear.
             </Text>
           </div>
           <form action={formAction}>
@@ -56,18 +63,25 @@ export function SignUpForm({
                 required
                 error={fieldError("email")}
               />
-              <NativeSelect
-                id="role"
+              <Radio.Group
                 name="role"
-                label="Role"
-                description="Your role is assigned during registration and cannot be changed later."
-                data={marketplaceRoles.map((role) => ({
-                  value: role,
-                  label: marketplaceRoleLabels[role],
-                }))}
+                label="Marketplace role"
+                defaultValue="founder"
                 required
                 error={fieldError("role")}
-              />
+              >
+                <div className={styles.roleGrid}>
+                  {marketplaceRoles.map((role) => (
+                    <label key={role} className={styles.roleOption}>
+                      <Radio value={role} aria-label={marketplaceRoleLabels[role]} />
+                      <span>
+                        <Text fw={700}>{marketplaceRoleLabels[role]}</Text>
+                        <Text size="xs" c="dimmed" mt={2}>{marketplaceRoleDescriptions[role]}</Text>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </Radio.Group>
               <PasswordInput
                 id="password"
                 name="password"

@@ -267,14 +267,14 @@ export default function StartupsPage({ searchParams }: StartupsPageProps) {
     <div className={styles.pageContainer}>
       <div className={styles.heroIntro}>
         <Badge variant="light" size="lg">
-          Founder marketplace
+          Founder–investor marketplace
         </Badge>
         <Title order={1} mt="md" className={styles.textBalance} fz={{ base: 40, sm: 52 }} lh={1.08}>
-          Discover startups building what comes next.
+          Find startups that fit your conviction.
         </Title>
         <Text mt="lg" size="lg" c="dimmed" lh={1.7}>
-          Browse active projects published by founders. Filter the persisted marketplace by name,
-          stage, or niche, then open a project for the full context.
+          Browse active founder projects, qualify the stage and niche, then open the full persisted
+          startup profile before sending investment interest.
         </Text>
       </div>
 

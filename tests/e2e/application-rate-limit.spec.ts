@@ -38,7 +38,7 @@ test("concurrent application submissions share the per-applicant hourly limit", 
       email: `rate-applicant-${suffix}@example.test`,
       password,
       email_confirm: true,
-      user_metadata: { full_name: "Rate Limit Applicant", role: "specialist" },
+      user_metadata: { full_name: "Rate Limit Investor", role: "investor" },
     });
     expect(applicantError).toBeNull();
     const createdApplicantId = applicant.user?.id;
@@ -68,7 +68,7 @@ test("concurrent application submissions share the per-applicant hourly limit", 
         admin.from("applications").insert({
           startup_id: id,
           applicant_id: createdApplicantId,
-          type: "team",
+          type: "investor",
           message: "A valid concurrent application message for this startup.",
         }),
       ),

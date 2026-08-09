@@ -25,7 +25,7 @@ const demoStartups = [
     one_pager:
       "An AI operations copilot that helps logistics teams resolve delivery exceptions before they become customer problems.",
     description:
-      "FlowPilot connects shipment events, support signals, and operational playbooks in one workspace. It highlights high-risk exceptions, explains the likely cause, and proposes the next action for an operations manager to approve. The team is validating the product with regional logistics providers and is looking for specialists who can strengthen data integrations and workflow design.",
+      "FlowPilot connects shipment events, support signals, and operational playbooks in one workspace. It highlights high-risk exceptions, explains the likely cause, and proposes the next action for an operations manager to approve. The team is validating the product with regional logistics providers and is raising capital to deepen data integrations and workflow automation.",
     stage: "mvp",
     niche: ["AI", "B2B SaaS", "Logistics"],
     funding_ask: 350000,
@@ -47,9 +47,9 @@ const demoStartups = [
     title: "CareBridge",
     slug: "carebridge-remote-care",
     one_pager:
-      "A coordinated remote-care marketplace connecting small clinics with verified specialists for structured follow-up programs.",
+      "A coordinated remote-care platform helping small clinics run structured follow-up programs with verified care partners.",
     description:
-      "CareBridge helps independent clinics extend care beyond appointments without building a large internal coordination team. Clinics assemble follow-up programs, invite verified specialists, and track patient-facing milestones in a shared workflow. The current release is focused on operational validation, marketplace trust, and partnerships with regional clinic networks.",
+      "CareBridge helps independent clinics extend care beyond appointments without building a large internal coordination team. Clinics assemble follow-up programs, invite verified care partners, and track patient-facing milestones in a shared workflow. The current release is focused on operational validation, marketplace trust, and partnerships with regional clinic networks.",
     stage: "seed",
     niche: ["HealthTech", "Marketplace", "Future of Work"],
     funding_ask: 900000,
@@ -93,7 +93,10 @@ const { error: profileError } = await admin
   .from("profiles")
   .update({
     full_name: "Startup Zone Demo Team",
+    headline: "Founders building workflow products",
     bio: "A synthetic founder profile used exclusively for the public Startup Zone demo.",
+    founder_experience:
+      "A synthetic track record used to demonstrate the founder profile structure without exposing personal data.",
     location: "Yekaterinburg, Russia",
   })
   .eq("id", founder.id);

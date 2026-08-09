@@ -17,6 +17,14 @@
   gap: 2rem;
 }
 
+.dashboardHero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--sz-accent) 32%, transparent), transparent 24rem),
+    var(--mantine-color-body);
+}
+
 .heroContent {
   display: flex;
   flex-direction: column;
@@ -38,6 +46,10 @@
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.investorPanel {
+  background: color-mix(in srgb, var(--mantine-primary-color-light) 38%, var(--mantine-color-body));
 }
 
 .securityList {

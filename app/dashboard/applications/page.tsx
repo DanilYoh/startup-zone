@@ -18,21 +18,21 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
   return (
     <Stack gap="xl" className={styles.fullWidth}>
       <div>
-        <Title order={1}>My applications</Title>
-        <Text c="dimmed" mt={6}>Track specialist applications and investor interest requests.</Text>
+        <Title order={1}>My investment interest</Title>
+        <Text c="dimmed" mt={6}>Track every focused conversation request you send to a founder.</Text>
       </div>
 
       {result.status === "error" ? (
-        <Alert color="red" role="alert">Your applications could not be loaded. Refresh and try again.</Alert>
+        <Alert color="red" role="alert">Your interest requests could not be loaded. Refresh and try again.</Alert>
       ) : result.data.length === 0 ? (
         <Paper withBorder radius="lg" p="xl">
           <Stack gap="md" align="flex-start">
             <Title order={2} size="h4">
-              {result.total > 0 ? "No applications on this page" : "No applications yet"}
+              {result.total > 0 ? "No requests on this page" : "No investment interest yet"}
             </Title>
             <Text c="dimmed">
               {result.total > 0
-                ? "Return to the first page to continue reviewing your applications."
+                ? "Return to the first page to continue reviewing your interest requests."
                 : "Browse active startups and send a focused message to a founder."}
             </Text>
             <LinkButton href={result.total > 0 ? "/dashboard/applications" : "/startups"}>
@@ -50,7 +50,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
                   <div>
                     <Title order={2} size="h4">{application.startup.title}</Title>
                     <Text size="sm" c="dimmed" mt={4}>
-                      {application.type === "team" ? "Specialist application" : "Investor interest"}
+                      Investor interest
                     </Text>
                   </div>
                   <Text className={styles.preWrap}>{application.message}</Text>
@@ -69,7 +69,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
             page={result.page}
             pageCount={result.pageCount}
             total={result.total}
-            itemLabel={result.total === 1 ? "application" : "applications"}
+            itemLabel={result.total === 1 ? "request" : "requests"}
             previousHref={
               result.page > 1 ? `/dashboard/applications?page=${result.page - 1}` : undefined
             }

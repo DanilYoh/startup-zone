@@ -14,7 +14,9 @@ export async function getCurrentProfile() {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("role, full_name, bio, location, avatar_url, linkedin_url")
+    .select(
+      "role, full_name, headline, bio, location, avatar_url, linkedin_url, founder_experience, investor_organization, investment_thesis, preferred_stages, ticket_min, ticket_max, website_url",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
@@ -24,10 +26,14 @@ export async function getCurrentProfile() {
   }
 
   if (!profile) return { status: "missing" as const, email: user.email ?? null };
+  const role = profile.role;
+  if (role !== "founder" && role !== "investor") {
+    return { status: "retired" as const, email: user.email ?? null };
+  }
 
   return {
     status: "ready" as const,
     email: user.email ?? null,
-    profile,
+    profile: { ...profile, role },
   };
 }

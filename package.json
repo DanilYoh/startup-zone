@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A production-minded Next.js foundation for a founder, specialist, and investor marketplace.",
+  "description": "A production-minded marketplace connecting startup founders and investors.",
   "repository": {
     "type": "git",
     "url": "https://github.com/DanilYoh/startup-zone.git"

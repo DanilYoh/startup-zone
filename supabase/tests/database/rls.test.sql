@@ -17,13 +17,13 @@ values
   ),
   (
     '10000000-0000-0000-0000-000000000002',
-    'specialist@example.test',
-    '{"role":"specialist","full_name":"Test Specialist"}'
+    'primary-investor@example.test',
+    '{"role":"investor","full_name":"Primary Investor"}'
   ),
   (
     '10000000-0000-0000-0000-000000000003',
     'applicant@example.test',
-    '{"role":"specialist","full_name":"Test Applicant"}'
+    '{"role":"investor","full_name":"Test Applicant"}'
   ),
   (
     '10000000-0000-0000-0000-000000000004',
@@ -42,10 +42,17 @@ select results_eq(
   'founder onboarding assigns the requested founder role'
 );
 
-select results_eq(
-  $$ select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000002' $$,
-  $$ values ('specialist') $$,
-  'specialist onboarding assigns the requested specialist role'
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000007',
+      'retired-role@example.test',
+      '{"role":"specialist","full_name":"Retired Role"}'
+    )
+  $$,
+  '%A founder or investor role is required%',
+  'onboarding rejects the retired specialist role'
 );
 
 select results_eq(
@@ -63,14 +70,14 @@ select throws_like(
       '{"role":"admin","full_name":"Invalid Role"}'
     )
   $$,
-  '%A valid marketplace role is required%',
-  'onboarding rejects roles outside the marketplace enum'
+  '%A founder or investor role is required%',
+  'onboarding rejects roles outside the active marketplace'
 );
 
 select throws_like(
   $$
     update public.profiles
-    set role = 'investor'
+    set role = 'founder'
     where id = '10000000-0000-0000-0000-000000000002'
   $$,
   '%Profile role cannot be changed after onboarding%',
@@ -137,8 +144,8 @@ insert into public.applications (startup_id, applicant_id, type, message)
 select
   id,
   '10000000-0000-0000-0000-000000000003',
-  'team',
-  'I can help build the first product release.'
+  'investor',
+  'This startup fits my thesis and I would like to discuss the current round.'
 from public.startups
 where slug = 'existing-startup';
 
@@ -281,14 +288,21 @@ select lives_ok(
   $$
     update public.profiles
     set
-      full_name = 'Updated Specialist',
-      bio = 'Product and growth specialist.',
+      full_name = 'Updated Investor',
+      headline = 'Partner at Northstar Ventures',
+      bio = 'Seed investor focused on vertical software.',
       location = 'Yekaterinburg',
-      avatar_url = 'https://images.example.test/specialist.png',
-      linkedin_url = 'https://www.linkedin.com/in/updated-specialist'
+      avatar_url = 'https://images.example.test/investor.png',
+      linkedin_url = 'https://www.linkedin.com/in/updated-investor',
+      investor_organization = 'Northstar Ventures',
+      investment_thesis = 'Backing capital-efficient B2B software.',
+      preferred_stages = array['pre_seed', 'seed']::public.startup_stage[],
+      ticket_min = 100000,
+      ticket_max = 500000,
+      website_url = 'https://northstar.example.test'
     where id = '10000000-0000-0000-0000-000000000002'
   $$,
-  'a specialist can update every allowed field on their own profile'
+  'an investor can update every allowed common and role-specific profile field'
 );
 
 select throws_like(
@@ -318,7 +332,7 @@ select throws_like(
     where id = '10000000-0000-0000-0000-000000000002'
   $$,
   '%permission denied%',
-  'a specialist cannot promote their own profile to founder'
+  'an investor cannot promote their own profile to founder'
 );
 
 select throws_like(
@@ -327,16 +341,16 @@ select throws_like(
       founder_id, title, slug, one_pager, description, stage, niche
     ) values (
       '10000000-0000-0000-0000-000000000002',
-      'Specialist startup',
-      'specialist-startup',
-      'A specialist-owned startup summary.',
-      'A detailed specialist-owned startup description that passes every database constraint.',
+      'Investor startup',
+      'investor-startup',
+      'An investor-owned startup summary.',
+      'A detailed investor-owned startup description that passes every database constraint.',
       'idea',
       array['Marketplace']
     )
   $$,
   '%row-level security%',
-  'a specialist cannot create a startup despite using their own id'
+  'an investor cannot create a startup despite using their own id'
 );
 
 select lives_ok(
@@ -345,12 +359,12 @@ select lives_ok(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team',
-      'I would like to help the team.'
+      'investor',
+      'This startup fits my thesis and I would like to request a founder conversation.'
     from public.startups
     where slug = 'existing-startup'
   $$,
-  'a specialist can apply to an active startup owned by another user'
+  'an investor can send interest to an active startup owned by another user'
 );
 
 select throws_like(
@@ -359,7 +373,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team'
+      'investor'
     from public.startups
     where slug = 'rate-startup-20'
   $$,
@@ -373,7 +387,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team',
+      'investor',
       'Too short'
     from public.startups
     where slug = 'rate-startup-20'
@@ -388,7 +402,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000003',
-      'team',
+      'investor',
       'I should not be able to submit an application for another user.'
     from public.startups
     where slug = 'existing-startup'
@@ -403,7 +417,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team',
+      'investor',
       'This duplicate should be rejected by the database constraint.'
     from public.startups
     where slug = 'existing-startup'
@@ -418,7 +432,7 @@ select lives_ok(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team',
+      'investor',
       'A valid rate-limit fixture application for this active startup.'
     from public.startups
     where slug like 'rate-startup-%'
@@ -433,7 +447,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000002',
-      'team',
+      'investor',
       'This application exceeds the hourly database submission limit.'
     from public.startups
     where slug = 'rate-startup-20'
@@ -486,7 +500,7 @@ select throws_like(
     select
       id,
       '10000000-0000-0000-0000-000000000001',
-      'team',
+      'investor',
       'I should not be able to apply to my own startup.'
     from public.startups
     where slug = 'existing-startup'
@@ -617,8 +631,8 @@ reset role;
 select columns_are(
   'public',
   'public_founder_profiles',
-  array['id', 'full_name', 'location'],
-  'the public founder view exposes only the documented minimal columns'
+  array['id', 'full_name', 'location', 'headline', 'founder_experience'],
+  'the public founder view exposes only the documented professional columns'
 );
 
 set local role anon;
@@ -646,7 +660,7 @@ select results_eq(
     where id = '10000000-0000-0000-0000-000000000003'
   $$,
   $$ values (0::bigint) $$,
-  'an authenticated specialist cannot browse another specialist profile'
+  'an authenticated investor cannot browse another investor profile'
 );
 
 reset role;

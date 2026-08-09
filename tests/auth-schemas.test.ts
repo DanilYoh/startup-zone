@@ -9,7 +9,7 @@ import {
 } from "../features/auth/schemas";
 
 describe("signUpSchema", () => {
-  it.each(["founder", "specialist", "investor"] as const)(
+  it.each(["founder", "investor"] as const)(
     "accepts the %s marketplace role",
     (role) => {
       expect(
@@ -23,6 +23,18 @@ describe("signUpSchema", () => {
       ).toBe(true);
     },
   );
+
+  it("rejects the retired specialist role", () => {
+    expect(
+      signUpSchema.safeParse({
+        full_name: "Taylor Jordan",
+        email: "taylor@example.test",
+        role: "specialist",
+        password: "safe-password",
+        repeat_password: "safe-password",
+      }).success,
+    ).toBe(false);
+  });
 
   it("rejects unknown roles", () => {
     const result = signUpSchema.safeParse({
