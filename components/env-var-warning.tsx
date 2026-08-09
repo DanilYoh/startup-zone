@@ -3,12 +3,12 @@ import styles from "./env-var-warning.module.css";
 
 export function EnvVarWarning() {
   return (
-    <Group gap="xs" wrap="nowrap" title="Add the variables from .env.example to enable authentication">
+    <Group gap="xs" wrap="nowrap" title="Добавьте переменные из .env.example, чтобы включить аутентификацию">
       <Badge variant="outline" color="gray" className={styles.badge}>
-        Demo mode
+        Деморежим
       </Badge>
       <Button size="compact-sm" variant="outline" disabled>
-        Sign in
+        Войти
       </Button>
     </Group>
   );

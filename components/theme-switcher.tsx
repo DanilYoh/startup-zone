@@ -17,9 +17,9 @@ const themes: ReadonlyArray<{
   label: string;
   icon: typeof Sun;
 }> = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "auto", label: "System", icon: Laptop },
+  { value: "light", label: "Светлая", icon: Sun },
+  { value: "dark", label: "Тёмная", icon: Moon },
+  { value: "auto", label: "Системная", icon: Laptop },
 ];
 
 const ThemeSwitcher = () => {
@@ -32,7 +32,7 @@ const ThemeSwitcher = () => {
           variant="subtle"
           size="lg"
           className={styles.darkSurfaceControl}
-          aria-label="Choose color theme"
+          aria-label="Выбрать цветовую тему"
         >
           <SunMoon size={18} aria-hidden="true" />
         </ActionIcon>

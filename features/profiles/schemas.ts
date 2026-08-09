@@ -33,44 +33,44 @@ const optionalText = (maximum: number, message: string) =>
 const optionalHttpUrl = z
   .string()
   .trim()
-  .max(2_048, "Keep the URL under 2,048 characters")
-  .refine((value) => value === "" || isHttpUrl(value), "Use an HTTP(S) URL")
+  .max(2_048, "Введите не более 2 048 символов")
+  .refine((value) => value === "" || isHttpUrl(value), "Укажите ссылку с протоколом HTTP(S)")
   .transform((value) => value || null);
 
 const optionalLinkedInUrl = z
   .string()
   .trim()
-  .max(2_048, "Keep the URL under 2,048 characters")
+  .max(2_048, "Введите не более 2 048 символов")
   .refine(
     (value) => value === "" || isLinkedInUrl(value),
-    "Use an HTTPS linkedin.com URL",
+    "Укажите HTTPS-ссылку на linkedin.com",
   )
   .transform((value) => value || null);
 
 const optionalEmail = z
   .string()
   .trim()
-  .max(254, "Keep the email under 254 characters")
+  .max(254, "Введите не более 254 символов")
   .refine(
     (value) => value === "" || z.email().safeParse(value).success,
-    "Enter a valid email address",
+    "Введите корректный адрес электронной почты",
   )
   .transform((value) => value.toLowerCase() || null);
 
 export const profileSchema = z.object({
-  full_name: z.string().trim().min(2, "Use at least 2 characters").max(80),
-  headline: optionalText(120, "Keep the headline under 120 characters"),
-  bio: optionalText(1_000, "Keep the description under 1,000 characters"),
-  location: optionalText(120, "Keep the location under 120 characters"),
+  full_name: z.string().trim().min(2, "Введите не менее 2 символов").max(80, "Введите не более 80 символов"),
+  headline: optionalText(120, "Введите не более 120 символов"),
+  bio: optionalText(1_000, "Введите не более 1 000 символов"),
+  location: optionalText(120, "Введите не более 120 символов"),
   avatar_url: optionalHttpUrl,
   linkedin_url: optionalLinkedInUrl,
-  founder_experience: optionalText(1_200, "Keep founder experience under 1,200 characters"),
-  investor_organization: optionalText(120, "Keep the organization under 120 characters"),
-  investment_thesis: optionalText(1_500, "Keep the investment thesis under 1,500 characters"),
+  founder_experience: optionalText(1_200, "Введите не более 1 200 символов"),
+  investor_organization: optionalText(120, "Введите не более 120 символов"),
+  investment_thesis: optionalText(1_500, "Введите не более 1 500 символов"),
   preferred_stages: z
     .array(z.enum(startupStages))
-    .max(6, "Choose no more than six stages")
-    .refine((stages) => new Set(stages).size === stages.length, "Choose each stage only once"),
+    .max(6, "Выберите не более шести стадий")
+    .refine((stages) => new Set(stages).size === stages.length, "Каждую стадию можно выбрать только один раз"),
   ticket_min: z.preprocess(
     normalizeCurrencyInput,
     z.number().int().positive().max(1_000_000_000).nullable(),
@@ -88,7 +88,7 @@ export const profileSchema = z.object({
   ) {
     context.addIssue({
       code: "custom",
-      message: "Maximum ticket must be greater than or equal to the minimum",
+      message: "Максимальный чек должен быть не меньше минимального",
       path: ["ticket_max"],
     });
   }
@@ -111,7 +111,7 @@ export const profileContactSchema = z
     if (contact.sharing_enabled && !contact.contact_email && !contact.contact_url) {
       context.addIssue({
         code: "custom",
-        message: "Add an email or contact link before enabling contact exchange",
+        message: "Добавьте электронную почту или ссылку перед включением обмена контактами",
         path: ["contact_email"],
       });
     }

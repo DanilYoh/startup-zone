@@ -40,7 +40,7 @@ export async function updateProfile(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -53,11 +53,11 @@ export async function updateProfile(
 
   if (profileError) {
     await logRequestError("profile.authorization_failed", { code: profileError.code });
-    return { status: "error", message: "Could not verify your profile. Please try again." };
+    return { status: "error", message: "Не удалось проверить профиль. Повторите попытку." };
   }
 
   if (currentProfile?.role !== "founder" && currentProfile?.role !== "investor") {
-    return { status: "error", message: "This account no longer has an active marketplace role." };
+    return { status: "error", message: "У этой учётной записи больше нет активной роли на площадке." };
   }
 
   const update: TablesUpdate<"profiles"> = {
@@ -91,14 +91,14 @@ export async function updateProfile(
     await logRequestError("profile.update_failed", { code: error.code });
     return {
       status: "error",
-      message: "Could not save your profile. Please try again.",
+      message: "Не удалось сохранить профиль. Повторите попытку.",
     };
   }
 
   if (!profile) {
     return {
       status: "error",
-      message: "Your profile could not be found. Sign out and contact support if this continues.",
+      message: "Профиль не найден. Если ошибка повторяется, выйдите из аккаунта и обратитесь в поддержку.",
     };
   }
 
@@ -107,7 +107,7 @@ export async function updateProfile(
 
   return {
     status: "success",
-    message: "Profile saved.",
+    message: "Профиль сохранён.",
   };
 }
 
@@ -126,7 +126,7 @@ export async function updateProfileContact(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted contact fields and try again.",
+      message: "Проверьте выделенные поля контактов и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -139,11 +139,11 @@ export async function updateProfileContact(
 
   if (profileError) {
     await logRequestError("profile.contact_authorization_failed", { code: profileError.code });
-    return { status: "error", message: "Could not verify your profile. Please try again." };
+    return { status: "error", message: "Не удалось проверить профиль. Повторите попытку." };
   }
 
   if (currentProfile?.role !== "founder" && currentProfile?.role !== "investor") {
-    return { status: "error", message: "This account no longer has an active marketplace role." };
+    return { status: "error", message: "У этой учётной записи больше нет активной роли на площадке." };
   }
 
   const { data: contact, error } = await supabase
@@ -161,14 +161,14 @@ export async function updateProfileContact(
     await logRequestError("profile.contact_update_failed", { code: error.code });
     return {
       status: "error",
-      message: "Could not save your private contact. Please try again.",
+      message: "Не удалось сохранить приватный контакт. Повторите попытку.",
     };
   }
 
   if (!contact) {
     return {
       status: "error",
-      message: "Your private contact record could not be found. Contact support if this continues.",
+      message: "Запись с приватным контактом не найдена. Если ошибка повторяется, обратитесь в поддержку.",
     };
   }
 
@@ -179,7 +179,7 @@ export async function updateProfileContact(
   return {
     status: "success",
     message: validated.data.sharing_enabled
-      ? "Accepted contact exchange enabled."
-      : "Private contact saved without sharing.",
+      ? "Обмен контактами после принятия заявки включён."
+      : "Приватный контакт сохранён без передачи другим участникам.",
   };
 }

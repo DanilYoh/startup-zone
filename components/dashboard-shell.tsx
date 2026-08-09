@@ -9,14 +9,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.topbar}>
-          <Link href="/" className={styles.brand} aria-label="Startup Zone home">
+          <Link href="/" className={styles.brand} aria-label="Главная Startup Zone">
             <span className={styles.brandMark}>SZ</span>
             <span>Startup Zone</span>
           </Link>
           <div className={styles.projectContext}>
             <span className={styles.divider} aria-hidden="true" />
             <span className={styles.environmentDot} aria-hidden="true" />
-            <span>Marketplace workspace</span>
+            <span>Личный кабинет</span>
           </div>
           <div className={styles.actions}>
             <ThemeSwitcher />
@@ -27,22 +27,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <div className={styles.workspace}>
         <aside className={styles.sidebar}>
-          <nav aria-label="Dashboard navigation" className={styles.sideNav}>
-            <p className={styles.navLabel}>Workspace</p>
+          <nav aria-label="Навигация по личному кабинету" className={styles.sideNav}>
+            <p className={styles.navLabel}>Рабочая область</p>
             <Link href="/dashboard" className={styles.navLink}>
-              <LayoutDashboard size={16} aria-hidden="true" /> Overview
+              <LayoutDashboard size={16} aria-hidden="true" /> Обзор
             </Link>
-            <p className={styles.navLabel}>Marketplace</p>
+            <p className={styles.navLabel}>Площадка</p>
             <Link href="/startups" className={styles.navLink}>
-              <Rocket size={16} aria-hidden="true" /> Discover startups
+              <Rocket size={16} aria-hidden="true" /> Каталог стартапов
             </Link>
-            <p className={styles.navLabel}>Account</p>
+            <p className={styles.navLabel}>Аккаунт</p>
             <Link href="/dashboard/profile" className={styles.navLink}>
-              <UserRound size={16} aria-hidden="true" /> Profile
+              <UserRound size={16} aria-hidden="true" /> Профиль
             </Link>
           </nav>
           <Link href="/" className={styles.backLink}>
-            Public site <ArrowUpRight size={14} aria-hidden="true" />
+            Публичный сайт <ArrowUpRight size={14} aria-hidden="true" />
           </Link>
         </aside>
 

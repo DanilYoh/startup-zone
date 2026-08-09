@@ -61,19 +61,19 @@ test("an investor submits and tracks investment interest", async ({ page }) => {
     expect(startupError).toBeNull();
 
     await page.goto("/auth/login");
-    await page.getByLabel("Email").fill(investorEmail);
+    await page.getByLabel("Электронная почта").fill(investorEmail);
     await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("button", { name: "Войти" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
 
     await page.goto(`/startups/${slug}`);
-    await page.getByLabel("Investment interest").fill(message);
-    await page.getByRole("button", { name: "Send interest" }).click();
-    await expect(page.getByText("You already sent this interest request.", { exact: true })).toBeVisible();
-    await expect(page.getByText("Pending", { exact: true })).toBeVisible();
+    await page.getByLabel("Сообщение основателю").fill(message);
+    await page.getByRole("button", { name: "Отправить заявку" }).click();
+    await expect(page.getByText("Вы уже отправили заявку по этому проекту.", { exact: true })).toBeVisible();
+    await expect(page.getByText("На рассмотрении", { exact: true })).toBeVisible();
 
     await page.goto("/dashboard/applications");
-    await expect(page.getByRole("heading", { level: 1, name: "My investment interest" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Мои инвестиционные заявки" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
     await expect(page.getByText(message, { exact: true })).toBeVisible();
 

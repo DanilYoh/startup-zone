@@ -3,36 +3,36 @@ import { z } from "zod";
 export const marketplaceRoles = ["founder", "investor"] as const;
 
 export const marketplaceRoleLabels: Record<(typeof marketplaceRoles)[number], string> = {
-  founder: "Founder",
-  investor: "Investor",
+  founder: "Основатель",
+  investor: "Инвестор",
 };
 
 export const marketplaceRoleDescriptions: Record<(typeof marketplaceRoles)[number], string> = {
-  founder: "Publish a startup, manage its story, and review investor interest.",
-  investor: "Build an investment profile, discover startups, and request a conversation.",
+  founder: "Публикуйте стартап и рассматривайте интерес инвесторов.",
+  investor: "Создайте инвестиционный профиль, находите стартапы и отправляйте заявки.",
 };
 
 export const authEmailSchema = z
   .string()
   .trim()
-  .email("Enter a valid email address")
+  .email("Введите корректный адрес электронной почты")
   .max(254);
 
 export const passwordSchema = z
   .string()
-  .min(8, "Use at least 8 characters")
-  .max(72, "Use at most 72 characters");
+  .min(8, "Используйте не менее 8 символов")
+  .max(72, "Используйте не более 72 символов");
 
 export const signUpSchema = z
   .object({
-    full_name: z.string().trim().min(2, "Use at least 2 characters").max(80),
+    full_name: z.string().trim().min(2, "Введите не менее 2 символов").max(80),
     email: authEmailSchema,
-    role: z.enum(marketplaceRoles, { error: "Choose a marketplace role" }),
+    role: z.enum(marketplaceRoles, { error: "Выберите роль на площадке" }),
     password: passwordSchema,
     repeat_password: z.string(),
   })
   .refine((value) => value.password === value.repeat_password, {
-    message: "Passwords do not match",
+    message: "Пароли не совпадают",
     path: ["repeat_password"],
   });
 
@@ -40,7 +40,7 @@ export type SignUpInput = z.infer<typeof signUpSchema>;
 
 export const signInSchema = z.object({
   email: authEmailSchema,
-  password: z.string().min(1, "Enter your password").max(72),
+  password: z.string().min(1, "Введите пароль").max(72),
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;

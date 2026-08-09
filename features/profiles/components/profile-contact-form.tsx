@@ -29,10 +29,10 @@ export function ProfileContactForm({ accountEmail, contact }: ProfileContactForm
       <form action={formAction}>
         <Stack gap="lg">
           <div>
-            <Title order={2} size="h3">Accepted contact exchange</Title>
+            <Title order={2} size="h3">Контакты после принятия заявки</Title>
             <Text size="sm" c="dimmed" mt={5} maw={720}>
-              These details stay private. The marketplace reveals them only to the founder or
-              investor on the other side of an accepted interest request.
+              Эти данные остаются приватными. Площадка покажет их только основателю или инвестору
+              с другой стороны принятой инвестиционной заявки.
             </Text>
           </div>
 
@@ -41,8 +41,8 @@ export function ProfileContactForm({ accountEmail, contact }: ProfileContactForm
               id="profile-contact-email"
               name="contact_email"
               type="email"
-              label="Contact email"
-              description="Use the address where you want accepted matches to reach you."
+              label="Электронная почта для связи"
+              description="Укажите адрес, по которому с вами смогут связаться после принятия заявки."
               defaultValue={contact.contact_email ?? accountEmail ?? ""}
               autoComplete="email"
               maxLength={254}
@@ -52,8 +52,8 @@ export function ProfileContactForm({ accountEmail, contact }: ProfileContactForm
               id="profile-contact-url"
               name="contact_url"
               type="url"
-              label="Contact link"
-              description="Optional Telegram, VK, scheduling, or other HTTPS link."
+              label="Ссылка для связи"
+              description="Необязательная HTTPS-ссылка на Telegram, VK или календарь."
               placeholder="https://t.me/your-handle"
               defaultValue={contact.contact_url ?? ""}
               maxLength={2_048}
@@ -63,8 +63,8 @@ export function ProfileContactForm({ accountEmail, contact }: ProfileContactForm
 
           <Checkbox
             name="sharing_enabled"
-            label="Share these details after I accept an interest request or my interest request is accepted."
-            description="You can disable future sharing at any time. Existing recipients may already have saved details previously shown to them."
+            label="Показывать эти данные после того, как я приму заявку или мою заявку примут."
+            description="Будущий доступ можно отключить. Получатели могли сохранить уже показанные им данные."
             defaultChecked={contact.sharing_enabled}
           />
           {fieldError("sharing_enabled") && (
@@ -82,7 +82,7 @@ export function ProfileContactForm({ accountEmail, contact }: ProfileContactForm
           )}
 
           <Button type="submit" loading={pending} className={styles.submit}>
-            Save contact settings
+            Сохранить настройки контактов
           </Button>
         </Stack>
       </form>

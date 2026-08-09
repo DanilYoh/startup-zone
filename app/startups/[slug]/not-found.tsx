@@ -8,12 +8,12 @@ export default function StartupNotFound() {
       <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h2">
-            Startup not found
+            Стартап не найден
           </Title>
           <Text c="dimmed">
-            This project does not exist or is no longer active in the public directory.
+            Проект не существует или больше не опубликован в каталоге.
           </Text>
-          <LinkButton href="/startups">Browse active startups</LinkButton>
+          <LinkButton href="/startups">Смотреть активные стартапы</LinkButton>
         </Stack>
       </Paper>
     </div>

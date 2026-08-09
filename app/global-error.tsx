@@ -2,7 +2,7 @@
 
 export default function GlobalError({ reset }: { reset: () => void }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body>
         <main
           style={{
@@ -13,10 +13,10 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             fontFamily: "system-ui, sans-serif",
           }}
         >
-          <h1>Startup Zone is temporarily unavailable</h1>
-          <p>Try loading the application again. No form data was submitted by this error page.</p>
+          <h1>Startup Zone временно недоступен</h1>
+          <p>Попробуйте загрузить приложение ещё раз. Эта страница не отправляла данные форм.</p>
           <button type="button" onClick={reset} style={{ padding: "0.6rem 1rem" }}>
-            Try again
+            Повторить
           </button>
         </main>
       </body>

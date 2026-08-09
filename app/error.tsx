@@ -19,12 +19,12 @@ export default function AppError({
   return (
     <main className={styles.page}>
       <Stack gap="lg" className={styles.content}>
-        <Title order={1}>Something went wrong</Title>
-        <Alert color="red" title="This page could not be loaded">
-          Try the request again. If the problem continues, return to the dashboard.
+        <Title order={1}>Что-то пошло не так</Title>
+        <Alert color="red" title="Не удалось загрузить страницу">
+          Повторите запрос. Если ошибка сохраняется, вернитесь в личный кабинет.
         </Alert>
         <div>
-          <Button onClick={reset}>Try again</Button>
+          <Button onClick={reset}>Повторить</Button>
         </div>
       </Stack>
     </main>

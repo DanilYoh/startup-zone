@@ -38,11 +38,11 @@ describe("password recovery forms", () => {
     const user = userEvent.setup();
 
     render(<ForgotPasswordForm />);
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "user@example.test");
-    await user.click(screen.getByRole("button", { name: "Send reset email" }));
+    await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "user@example.test");
+    await user.click(screen.getByRole("button", { name: "Отправить ссылку" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not send reset instructions. Please try again later.",
+      "Не удалось отправить инструкцию по восстановлению. Повторите попытку позже.",
     );
     expect(screen.getByRole("alert")).not.toHaveTextContent("Raw Auth user lookup details");
   });
@@ -51,12 +51,12 @@ describe("password recovery forms", () => {
     const user = userEvent.setup();
 
     render(<UpdatePasswordForm />);
-    await user.type(screen.getByLabelText(/^New password/), "Abc123");
-    const form = screen.getByRole("button", { name: "Save new password" }).closest("form");
+    await user.type(screen.getByLabelText(/^Новый пароль/), "Abc123");
+    const form = screen.getByRole("button", { name: "Сохранить пароль" }).closest("form");
     if (!form) throw new Error("Update password form was not rendered");
     fireEvent.submit(form);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Use at least 8 characters");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Используйте не менее 8 символов");
     expect(updateUserMock).not.toHaveBeenCalled();
   });
 
@@ -67,11 +67,11 @@ describe("password recovery forms", () => {
     const user = userEvent.setup();
 
     render(<UpdatePasswordForm />);
-    await user.type(screen.getByLabelText(/^New password/), "Abcd1234");
-    await user.click(screen.getByRole("button", { name: "Save new password" }));
+    await user.type(screen.getByLabelText(/^Новый пароль/), "Abcd1234");
+    await user.click(screen.getByRole("button", { name: "Сохранить пароль" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not update your password. Request a new reset link and try again.",
+      "Не удалось обновить пароль. Запросите новую ссылку для восстановления.",
     );
     expect(screen.getByRole("alert")).not.toHaveTextContent(
       "Raw Auth recovery session details",

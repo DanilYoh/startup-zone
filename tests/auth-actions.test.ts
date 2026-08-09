@@ -107,7 +107,7 @@ describe("auth Server Actions", () => {
 
     const state = await signUp(initialSignUpState, validSignUpForm());
 
-    expect(state.message).toBe("Too many sign-up attempts. Wait a moment and try again.");
+    expect(state.message).toBe("Слишком много попыток регистрации. Подождите и попробуйте снова.");
     expect(logRequestErrorMock).toHaveBeenCalledWith("auth.signup_failed", {
       code: "over_request_rate_limit",
       status: 429,
@@ -133,7 +133,7 @@ describe("auth Server Actions", () => {
 
     const state = await signIn(initialSignInState, validSignInForm());
 
-    expect(state.message).toBe("Email or password is incorrect.");
+    expect(state.message).toBe("Неверная электронная почта или пароль.");
     expect(state.message).not.toContain("invalid_credentials");
   });
 });

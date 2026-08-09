@@ -21,21 +21,21 @@ export function PaginationNav({
   if (pageCount <= 1) return null;
 
   return (
-    <Group component="nav" aria-label="Pagination" justify="space-between" mt="xl">
+    <Group component="nav" aria-label="Пагинация" justify="space-between" mt="xl">
       <div>
         {previousHref && (
           <LinkButton href={previousHref} variant="outline">
-            Previous
+            Назад
           </LinkButton>
         )}
       </div>
       <Text size="sm" c="dimmed" ta="center">
-        Page {page} of {pageCount} · {total} {itemLabel}
+        Страница {page} из {pageCount} · {total} {itemLabel}
       </Text>
       <div>
         {nextHref && (
           <LinkButton href={nextHref} variant="outline">
-            Next
+            Далее
           </LinkButton>
         )}
       </div>

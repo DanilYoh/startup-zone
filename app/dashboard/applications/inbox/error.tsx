@@ -5,10 +5,10 @@ import styles from "../../dashboard.module.css";
 
 export default function InboxError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Investor interest unavailable" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Заявки инвесторов временно недоступны" role="alert" className={styles.fullWidth}>
       <Stack gap="md">
-        Something unexpected happened while loading investor interest.
-        <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Try again</Button>
+        При загрузке заявок инвесторов произошла ошибка.
+        <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Повторить</Button>
       </Stack>
     </Alert>
   );

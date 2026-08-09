@@ -5,8 +5,8 @@ export const applicationSchema = z.object({
   message: z
     .string()
     .trim()
-    .min(20, "Use at least 20 characters")
-    .max(2_000, "Keep the message under 2,000 characters"),
+    .min(20, "Введите не менее 20 символов")
+    .max(2_000, "Введите не более 2 000 символов"),
 });
 
 export type ApplicationInput = z.infer<typeof applicationSchema>;

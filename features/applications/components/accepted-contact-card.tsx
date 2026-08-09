@@ -12,10 +12,12 @@ export function AcceptedContactCard({
   contactStatus,
   counterpartLabel,
 }: AcceptedContactCardProps) {
+  const counterpart = counterpartLabel === "founder" ? "основатель" : "инвестор";
+
   if (contactStatus === "error") {
     return (
-      <Alert color="red" variant="light" role="alert" title="Contact details unavailable">
-        Refresh the page and try again. The accepted request remains safely recorded.
+      <Alert color="red" variant="light" role="alert" title="Контакты временно недоступны">
+        Обновите страницу и повторите попытку. Принятая заявка остаётся сохранённой.
       </Alert>
     );
   }
@@ -23,9 +25,10 @@ export function AcceptedContactCard({
   if (!contact) {
     return (
       <Paper withBorder radius="md" p="md">
-        <Title order={4} size="h5">Waiting for private contact</Title>
+        <Title order={4} size="h5">Ожидаем контактные данные</Title>
         <Text size="sm" c="dimmed" mt={5}>
-          The {counterpartLabel} has not enabled accepted contact exchange yet.
+          {counterpart[0].toUpperCase() + counterpart.slice(1)} пока не включил обмен контактами
+          после принятия заявки.
         </Text>
       </Paper>
     );
@@ -35,9 +38,9 @@ export function AcceptedContactCard({
     <Paper withBorder radius="md" p="md">
       <Stack gap="xs" align="flex-start">
         <div>
-          <Title order={4} size="h5">Continue the conversation</Title>
+          <Title order={4} size="h5">Продолжите общение напрямую</Title>
           <Text size="sm" c="dimmed" mt={4}>
-            Shared privately because this interest request was accepted.
+            Эти данные доступны только потому, что инвестиционная заявка была принята.
           </Text>
         </div>
         {contact.contact_email && (
@@ -45,7 +48,7 @@ export function AcceptedContactCard({
         )}
         {contact.contact_url && (
           <Anchor href={contact.contact_url} target="_blank" rel="noreferrer">
-            Open contact link
+            Открыть ссылку для связи
           </Anchor>
         )}
       </Stack>

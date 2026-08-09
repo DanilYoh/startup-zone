@@ -5,7 +5,7 @@ import { Button, Popover, Text } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const logoutErrorMessage = "Could not log out. Check your connection and try again.";
+const logoutErrorMessage = "Не удалось выйти. Проверьте соединение и повторите попытку.";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export function LogoutButton() {
     <Popover opened={Boolean(error)} position="bottom-end" withArrow shadow="md" width={260}>
       <Popover.Target>
         <Button size="compact-sm" variant="default" loading={pending} onClick={logout}>
-          Logout
+          Выйти
         </Button>
       </Popover.Target>
       <Popover.Dropdown>

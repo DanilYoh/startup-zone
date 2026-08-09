@@ -27,8 +27,8 @@ export function ApplicationForm({
       <Stack gap="md" align="flex-start">
         <Textarea
           name="message"
-          label="Investment interest"
-          description="Explain the fit with your thesis and the conversation you would like to request."
+          label="Сообщение основателю"
+          description="Объясните, почему проект соответствует вашей стратегии и что вы хотите обсудить."
           minRows={5}
           autosize
           required
@@ -39,7 +39,7 @@ export function ApplicationForm({
         />
         {state.message && <Alert color="red" role="alert">{state.message}</Alert>}
         <Button type="submit" loading={pending}>
-          Send interest
+          Отправить заявку
         </Button>
       </Stack>
     </form>

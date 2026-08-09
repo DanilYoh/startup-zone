@@ -37,10 +37,10 @@ export function SignUpForm({
       <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className={styles.authCard}>
         <Stack gap="lg">
           <div>
-            <Text className={styles.eyebrow}>Two sides. One focused marketplace.</Text>
-            <Title order={1} size="h2" mt={6}>Create your account</Title>
+            <Text className={styles.eyebrow}>Две стороны. Одна целевая площадка.</Text>
+            <Title order={1} size="h2" mt={6}>Создайте аккаунт</Title>
             <Text c="dimmed" size="sm" mt={4}>
-              Choose how you participate. Your role is locked so marketplace trust stays clear.
+              Выберите роль. После регистрации её нельзя изменить — это помогает сохранять доверие.
             </Text>
           </div>
           <form action={formAction}>
@@ -48,7 +48,7 @@ export function SignUpForm({
               <TextInput
                 id="full-name"
                 name="full_name"
-                label="Full name"
+                label="Имя и фамилия"
                 autoComplete="name"
                 required
                 error={fieldError("full_name")}
@@ -57,7 +57,7 @@ export function SignUpForm({
                 id="email"
                 name="email"
                 type="email"
-                label="Email"
+                label="Электронная почта"
                 placeholder="m@example.com"
                 autoComplete="email"
                 required
@@ -65,7 +65,7 @@ export function SignUpForm({
               />
               <Radio.Group
                 name="role"
-                label="Marketplace role"
+                label="Роль на площадке"
                 defaultValue="founder"
                 required
                 error={fieldError("role")}
@@ -85,8 +85,9 @@ export function SignUpForm({
               <PasswordInput
                 id="password"
                 name="password"
-                label="Password"
+                label="Пароль"
                 autoComplete="new-password"
+                visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                 required
                 minLength={8}
                 maxLength={72}
@@ -95,8 +96,9 @@ export function SignUpForm({
               <PasswordInput
                 id="repeat-password"
                 name="repeat_password"
-                label="Repeat password"
+                label="Повторите пароль"
                 autoComplete="new-password"
+                visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                 required
                 minLength={8}
                 maxLength={72}
@@ -108,12 +110,12 @@ export function SignUpForm({
                 </Alert>
               )}
               <Button type="submit" fullWidth loading={pending}>
-                Create account
+                Создать аккаунт
               </Button>
             </Stack>
             <Text mt="md" ta="center" size="sm">
-              Already have an account?{" "}
-              <Anchor component={Link} href="/auth/login">Login</Anchor>
+              Уже есть аккаунт?{" "}
+              <Anchor component={Link} href="/auth/login">Войти</Anchor>
             </Text>
           </form>
         </Stack>

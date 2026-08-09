@@ -24,18 +24,18 @@ describe("authentication forms", () => {
   it("submits credentials and presents a stable sign-in error", async () => {
     signInMock.mockResolvedValue({
       status: "error",
-      message: "Email or password is incorrect.",
+      message: "Неверная электронная почта или пароль.",
     });
     const user = userEvent.setup();
 
     render(<LoginForm />);
 
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "founder@example.test");
-    await user.type(screen.getByLabelText(/^Password/), "correct-horse-battery-staple");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "founder@example.test");
+    await user.type(screen.getByLabelText(/^Пароль/), "correct-horse-battery-staple");
+    await user.click(screen.getByRole("button", { name: "Войти" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Email or password is incorrect.",
+      "Неверная электронная почта или пароль.",
     );
     expect(signInMock).toHaveBeenCalledOnce();
 
@@ -48,24 +48,24 @@ describe("authentication forms", () => {
   it("submits the selected marketplace role and exposes field errors", async () => {
     signUpMock.mockResolvedValue({
       status: "error",
-      message: "Review the highlighted fields and try again.",
-      errors: { repeat_password: ["Passwords do not match"] },
+      message: "Проверьте выделенные поля и повторите попытку.",
+      errors: { repeat_password: ["Пароли не совпадают"] },
     });
     const user = userEvent.setup();
 
     render(<SignUpForm />);
 
-    await user.type(screen.getByRole("textbox", { name: "Full name" }), "Sam Investor");
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "investor@example.test");
-    await user.click(screen.getByRole("radio", { name: "Investor" }));
-    await user.type(screen.getByLabelText(/^Password/), "investor-password");
-    await user.type(screen.getByLabelText(/^Repeat password/), "different-password");
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    await user.type(screen.getByRole("textbox", { name: "Имя и фамилия" }), "Sam Investor");
+    await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "investor@example.test");
+    await user.click(screen.getByRole("radio", { name: "Инвестор" }));
+    await user.type(screen.getByLabelText(/^Пароль/), "investor-password");
+    await user.type(screen.getByLabelText(/^Повторите пароль/), "different-password");
+    await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Review the highlighted fields and try again.",
+      "Проверьте выделенные поля и повторите попытку.",
     );
-    expect(screen.getByText("Passwords do not match")).toBeVisible();
+    expect(screen.getByText("Пароли не совпадают")).toBeVisible();
     expect(signUpMock).toHaveBeenCalledOnce();
 
     const submitted = signUpMock.mock.calls[0]?.[1];

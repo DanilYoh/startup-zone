@@ -1,18 +1,18 @@
 export const authErrorMessages = {
   invalid_confirmation_link:
-    "This confirmation link is invalid or incomplete. Request a new link and try again.",
+    "Ссылка подтверждения недействительна или неполна. Запросите новую ссылку.",
   confirmation_failed:
-    "This confirmation link is invalid or has expired. Request a new link and try again.",
+    "Ссылка подтверждения недействительна или устарела. Запросите новую ссылку.",
   password_reset_request_failed:
-    "Could not send reset instructions. Please try again later.",
+    "Не удалось отправить инструкцию по восстановлению. Повторите попытку позже.",
   password_update_failed:
-    "Could not update your password. Request a new reset link and try again.",
+    "Не удалось обновить пароль. Запросите новую ссылку для восстановления.",
 } as const;
 
 export type AuthErrorCode = keyof typeof authErrorMessages;
 
 const fallbackAuthErrorMessage =
-  "Authentication could not be completed. Please try again.";
+  "Не удалось завершить аутентификацию. Повторите попытку.";
 
 export function getAuthErrorMessage(code: unknown) {
   const value = Array.isArray(code) ? code[0] : code;

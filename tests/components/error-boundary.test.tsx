@@ -14,11 +14,11 @@ describe("AppError", () => {
 
     render(<AppError error={error} reset={reset} />);
 
-    expect(screen.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
-    expect(screen.getByRole("alert")).toHaveTextContent("This page could not be loaded");
+    expect(screen.getByRole("heading", { name: "Что-то пошло не так" })).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent("Не удалось загрузить страницу");
     expect(screen.queryByText("private database failure")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Try again" }));
+    await user.click(screen.getByRole("button", { name: "Повторить" }));
     expect(reset).toHaveBeenCalledOnce();
   });
 });

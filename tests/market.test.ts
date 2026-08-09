@@ -3,6 +3,7 @@ import {
   MARKET_CURRENCY,
   MARKET_LOCALE,
   parseMarketNumber,
+  russianPlural,
 } from "@/lib/market";
 import { describe, expect, it } from "vitest";
 
@@ -17,5 +18,13 @@ describe("Russian market defaults", () => {
     expect(parseMarketNumber("250 000")).toBe(250_000);
     expect(parseMarketNumber("250\u00a0000")).toBe(250_000);
     expect(parseMarketNumber("250,000")).toBe(250_000);
+  });
+
+  it("uses the correct Russian plural form", () => {
+    expect(russianPlural(1, "заявка", "заявки", "заявок")).toBe("заявка");
+    expect(russianPlural(2, "заявка", "заявки", "заявок")).toBe("заявки");
+    expect(russianPlural(5, "заявка", "заявки", "заявок")).toBe("заявок");
+    expect(russianPlural(11, "заявка", "заявки", "заявок")).toBe("заявок");
+    expect(russianPlural(21, "заявка", "заявки", "заявок")).toBe("заявка");
   });
 });

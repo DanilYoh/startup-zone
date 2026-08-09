@@ -3,10 +3,11 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { AcceptedContactCard } from "@/features/applications/components/accepted-contact-card";
 import { listMyApplications } from "@/features/applications/server/queries";
 import { parsePage } from "@/lib/pagination";
+import { russianPlural } from "@/lib/market";
 import { Alert, Badge, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import styles from "../dashboard.module.css";
 
-const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
+const statusLabels = { pending: "На рассмотрении", accepted: "Принята", rejected: "Отклонена" } as const;
 
 type MyApplicationsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -19,38 +20,38 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
   return (
     <Stack gap="xl" className={styles.fullWidth}>
       <div>
-        <Title order={1}>My investment interest</Title>
-        <Text c="dimmed" mt={6}>Track every focused conversation request you send to a founder.</Text>
+        <Title order={1}>Мои инвестиционные заявки</Title>
+        <Text c="dimmed" mt={6}>Следите за статусом каждого обращения к основателям.</Text>
       </div>
 
       {result.status === "ready" && result.contactStatus === "ready" && !result.ownContactReady && (
-        <Alert color="yellow" variant="light" title="Enable accepted contact exchange">
+        <Alert color="yellow" variant="light" title="Включите обмен контактами">
           <Stack gap="sm" align="flex-start">
             <Text size="sm">
-              Add a private contact so founders can reach you when they accept your interest.
+              Добавьте приватный контакт, чтобы основатель мог связаться с вами после принятия заявки.
             </Text>
             <LinkButton href="/dashboard/profile" variant="subtle" px={0}>
-              Configure private contact
+              Настроить контакт
             </LinkButton>
           </Stack>
         </Alert>
       )}
 
       {result.status === "error" ? (
-        <Alert color="red" role="alert">Your interest requests could not be loaded. Refresh and try again.</Alert>
+        <Alert color="red" role="alert">Не удалось загрузить заявки. Обновите страницу.</Alert>
       ) : result.data.length === 0 ? (
         <Paper withBorder radius="lg" p="xl">
           <Stack gap="md" align="flex-start">
             <Title order={2} size="h4">
-              {result.total > 0 ? "No requests on this page" : "No investment interest yet"}
+              {result.total > 0 ? "На этой странице нет заявок" : "Вы ещё не отправляли заявки"}
             </Title>
             <Text c="dimmed">
               {result.total > 0
-                ? "Return to the first page to continue reviewing your interest requests."
-                : "Browse active startups and send a focused message to a founder."}
+                ? "Вернитесь на первую страницу, чтобы продолжить просмотр заявок."
+                : "Найдите подходящий стартап и отправьте основателю содержательное сообщение."}
             </Text>
             <LinkButton href={result.total > 0 ? "/dashboard/applications" : "/startups"}>
-              {result.total > 0 ? "First page" : "Discover startups"}
+              {result.total > 0 ? "На первую страницу" : "Найти стартапы"}
             </LinkButton>
           </Stack>
         </Paper>
@@ -64,7 +65,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
                   <div>
                     <Title order={2} size="h4">{application.startup.title}</Title>
                     <Text size="sm" c="dimmed" mt={4}>
-                      Investor interest
+                      Инвестиционная заявка
                     </Text>
                   </div>
                   <Text className={styles.preWrap}>{application.message}</Text>
@@ -77,10 +78,10 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
                   )}
                   {application.startup.is_active ? (
                     <LinkButton href={`/startups/${application.startup.slug}`} variant="subtle" px={0}>
-                      View startup
+                      Открыть стартап
                     </LinkButton>
                   ) : (
-                    <Text size="sm" c="dimmed">This startup is currently inactive.</Text>
+                    <Text size="sm" c="dimmed">Стартап сейчас неактивен.</Text>
                   )}
                 </Stack>
               </Paper>
@@ -90,7 +91,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
             page={result.page}
             pageCount={result.pageCount}
             total={result.total}
-            itemLabel={result.total === 1 ? "request" : "requests"}
+            itemLabel={russianPlural(result.total, "заявка", "заявки", "заявок")}
             previousHref={
               result.page > 1 ? `/dashboard/applications?page=${result.page - 1}` : undefined
             }

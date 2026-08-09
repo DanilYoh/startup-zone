@@ -42,7 +42,7 @@ export async function signUp(
   if (!hasEnvVars) {
     return {
       status: "error",
-      message: "Account creation is unavailable in the unconfigured public demo.",
+      message: "Регистрация недоступна: публичная демоверсия не подключена к базе данных.",
     };
   }
 
@@ -51,7 +51,7 @@ export async function signUp(
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -82,8 +82,8 @@ export async function signUp(
       status: "error",
       message:
         error.status === 429
-          ? "Too many sign-up attempts. Wait a moment and try again."
-          : "Could not create the account. Check the details or try again later.",
+          ? "Слишком много попыток регистрации. Подождите и попробуйте снова."
+          : "Не удалось создать аккаунт. Проверьте данные или попробуйте позже.",
     };
   }
 
@@ -96,14 +96,14 @@ export async function signIn(
   formData: FormData,
 ): Promise<SignInActionState> {
   if (!hasEnvVars) {
-    return { status: "error", message: "Sign in is unavailable in the unconfigured public demo." };
+    return { status: "error", message: "Вход недоступен: публичная демоверсия не подключена к базе данных." };
   }
 
   const validated = parseSignInForm(formData);
   if (!validated.success) {
     return {
       status: "error",
-      message: "Review the highlighted fields and try again.",
+      message: "Проверьте выделенные поля и повторите попытку.",
       errors: validated.error.flatten().fieldErrors,
     };
   }
@@ -117,8 +117,8 @@ export async function signIn(
       status: "error",
       message:
         error.status === 429
-          ? "Too many sign-in attempts. Wait a moment and try again."
-          : "Email or password is incorrect.",
+          ? "Слишком много попыток входа. Подождите и попробуйте снова."
+          : "Неверная электронная почта или пароль.",
     };
   }
 

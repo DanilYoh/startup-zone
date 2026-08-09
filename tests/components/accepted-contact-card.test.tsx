@@ -22,7 +22,7 @@ describe("AcceptedContactCard", () => {
       "href",
       "mailto:founder@example.test",
     );
-    expect(screen.getByRole("link", { name: "Open contact link" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
       "href",
       "https://t.me/founder",
     );
@@ -33,7 +33,7 @@ describe("AcceptedContactCard", () => {
       <AcceptedContactCard contactStatus="ready" counterpartLabel="investor" />,
     );
 
-    expect(screen.getByText("The investor has not enabled accepted contact exchange yet.")).toBeVisible();
+    expect(screen.getByText("Инвестор пока не включил обмен контактами после принятия заявки.")).toBeVisible();
   });
 
   it("keeps the accepted request visible when contact loading fails", () => {
@@ -42,7 +42,7 @@ describe("AcceptedContactCard", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "The accepted request remains safely recorded.",
+      "Принятая заявка остаётся сохранённой.",
     );
   });
 });

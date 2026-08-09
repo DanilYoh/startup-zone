@@ -42,19 +42,19 @@ async function DashboardContent() {
   const isInvestor = profile?.role === "investor";
   const roleCapabilities = isFounder
     ? [
-        "Publish and manage founder-owned startups",
-        "Control when a startup is publicly discoverable",
-        "Review investor interest in one inbox",
-        "Make terminal accept or reject decisions",
+        "Публиковать и редактировать свои стартапы",
+        "Управлять видимостью стартапа в каталоге",
+        "Рассматривать заявки инвесторов в одном разделе",
+        "Принимать или отклонять заявки окончательно",
       ]
     : isInvestor
       ? [
-        "Describe a clear investment thesis",
-        "Set preferred stages and ticket range",
-        "Discover persisted founder projects",
-        "Track every investment interest request",
+        "Описывать инвестиционную стратегию",
+        "Указывать стадии и диапазон чека",
+        "Находить опубликованные проекты основателей",
+        "Отслеживать каждую инвестиционную заявку",
         ]
-      : ["Choose an active founder or investor account to use the marketplace."];
+      : ["Для работы на площадке нужен активный аккаунт основателя или инвестора."];
 
   return (
     <div className={styles.dashboardGrid}>
@@ -66,43 +66,43 @@ async function DashboardContent() {
             </ThemeIcon>
             <div>
               <Text className={styles.workspaceLabel}>
-                {isFounder ? "Founder workspace" : isInvestor ? "Investor workspace" : "Marketplace account"}
+                {isFounder ? "Кабинет основателя" : isInvestor ? "Кабинет инвестора" : "Аккаунт площадки"}
               </Text>
               <Title order={1} size="h2" mt={3}>
-                {profile?.full_name ? `Welcome back, ${profile.full_name}.` : "Welcome to Startup Zone."}
+                {profile?.full_name ? `С возвращением, ${profile.full_name}.` : "Добро пожаловать в Startup Zone."}
               </Title>
               <Text mt="xs" c="dimmed">
-                {profile?.headline ?? `Signed in as ${user.email ?? "a verified user"}.`}
+                {profile?.headline ?? `Выполнен вход: ${user.email ?? "подтверждённый пользователь"}.`}
               </Text>
             </div>
           </div>
           {isFounder ? (
             <Group gap="sm">
               <LinkButton href="/dashboard/applications/inbox" variant="default" size="sm">
-                Investor interest
+                Заявки инвесторов
               </LinkButton>
               <LinkButton
                 href="/dashboard/startups/new"
                 size="sm"
                 leftSection={<Plus size={18} aria-hidden="true" />}
               >
-                Publish startup
+                Опубликовать стартап
               </LinkButton>
             </Group>
           ) : isInvestor ? (
             <Group gap="sm">
               <LinkButton href="/dashboard/applications" variant="default" size="sm">
-                My interest
+                Мои заявки
               </LinkButton>
               <LinkButton href="/startups" size="sm">
-                Discover startups
+                Каталог стартапов
               </LinkButton>
             </Group>
           ) : null}
         </div>
 
         <div className={styles.security}>
-          <Title order={2} size="h4">What this role can do</Title>
+          <Title order={2} size="h4">Возможности роли</Title>
           <ul className={styles.securityList}>
             {roleCapabilities.map((item) => (
               <li key={item} className={styles.securityItem}>
@@ -117,18 +117,18 @@ async function DashboardContent() {
       <section aria-labelledby="your-startups-heading" className={styles.section}>
         <div>
           <Title order={2} id="your-startups-heading" size="h3">
-            {isFounder ? "Your startups" : "Investor workspace"}
+            {isFounder ? "Ваши стартапы" : "Рабочая область инвестора"}
           </Title>
           <Text mt={4} size="sm" c="dimmed">
             {isFounder
-              ? "Projects published through your founder profile."
-              : "Keep your investment profile current, discover projects, and track the conversations you start."}
+              ? "Проекты, опубликованные через ваш профиль основателя."
+              : "Обновляйте инвестиционный профиль, находите проекты и отслеживайте начатые разговоры."}
           </Text>
         </div>
 
         {profileError || startupsError ? (
           <Paper withBorder radius="lg" p="xl">
-            <Text size="sm" c="dimmed">Your startups could not be loaded. Please refresh and try again.</Text>
+            <Text size="sm" c="dimmed">Не удалось загрузить стартапы. Обновите страницу.</Text>
           </Paper>
         ) : isInvestor ? (
           <Paper withBorder radius="md" p={0} className={styles.investorPanel}>
@@ -138,30 +138,30 @@ async function DashboardContent() {
                   <Landmark className={styles.icon} aria-hidden="true" />
                 </ThemeIcon>
                 <div>
-                  <Title order={3} size="h4">Sharpen your investor profile</Title>
+                  <Title order={3} size="h4">Уточните профиль инвестора</Title>
                   <Text mt={5} size="sm" c="dimmed">
-                    Make your organization, thesis, preferred stages, and ticket range explicit.
+                    Укажите организацию, стратегию, предпочтительные стадии и диапазон чека.
                   </Text>
                 </div>
-                <LinkButton href="/dashboard/profile" variant="default" size="sm">Edit investor profile</LinkButton>
+                <LinkButton href="/dashboard/profile" variant="default" size="sm">Редактировать профиль</LinkButton>
               </Stack>
               <Stack gap="md" align="flex-start" className={styles.workspaceCard}>
                 <ThemeIcon color="brand" variant="light" size={36} radius="sm">
                   <Rocket className={styles.icon} aria-hidden="true" />
                 </ThemeIcon>
                 <div>
-                  <Title order={3} size="h4">Find a qualified opportunity</Title>
+                  <Title order={3} size="h4">Найдите подходящий проект</Title>
                   <Text mt={5} size="sm" c="dimmed">
-                    Browse real founder projects and send focused investment interest.
+                    Изучайте реальные проекты и отправляйте предметные инвестиционные заявки.
                   </Text>
                 </div>
-                <LinkButton href="/startups" size="sm">Browse active startups</LinkButton>
+                <LinkButton href="/startups" size="sm">Смотреть активные стартапы</LinkButton>
               </Stack>
             </SimpleGrid>
           </Paper>
         ) : !isFounder ? (
           <Paper withBorder radius="lg" p="xl">
-            <Text size="sm" c="dimmed">An active founder or investor profile is required.</Text>
+            <Text size="sm" c="dimmed">Нужен активный профиль основателя или инвестора.</Text>
           </Paper>
         ) : startups?.length ? (
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
@@ -182,7 +182,7 @@ async function DashboardContent() {
                       <Text mt={4} size="sm" c="dimmed">/{startup.slug}</Text>
                     </div>
                     <Badge color={startup.is_active ? "indigo" : "gray"} variant="light">
-                      {startup.is_active ? "Active" : "Inactive"}
+                      {startup.is_active ? "Активен" : "Неактивен"}
                     </Badge>
                   </Group>
                   <Text size="sm" c="dimmed">{startup.one_pager}</Text>
@@ -198,12 +198,12 @@ async function DashboardContent() {
                   </Group>
                   <Group gap="sm" align="flex-start">
                     <LinkButton href={`/dashboard/startups/${startup.id}/edit`} size="compact-sm">
-                      Edit
+                      Редактировать
                     </LinkButton>
                     <StartupStatusForm id={startup.id} isActive={startup.is_active} />
                     {startup.is_active && (
                       <LinkButton href={`/startups/${startup.slug}`} variant="subtle" size="compact-sm">
-                        View public page
+                        Открыть публичную страницу
                       </LinkButton>
                     )}
                   </Group>
@@ -218,14 +218,14 @@ async function DashboardContent() {
                 <Rocket className={styles.icon} aria-hidden="true" />
               </ThemeIcon>
               <div>
-                <Title order={3} size="h4">No startups yet</Title>
+                <Title order={3} size="h4">Стартапов пока нет</Title>
                 <Text mt={4} size="sm" c="dimmed">
-                  Publish the first project to make it available through the persisted marketplace data.
+                  Опубликуйте первый проект, чтобы он появился в каталоге площадки.
                 </Text>
               </div>
               {isFounder && (
                 <LinkButton href="/dashboard/startups/new">
-                  Publish your first startup
+                  Опубликовать первый стартап
                 </LinkButton>
               )}
             </Stack>

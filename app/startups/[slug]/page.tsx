@@ -25,11 +25,11 @@ type StartupDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "long" });
+const dateFormatter = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long" });
 
 function DetailSkeleton() {
   return (
-    <Stack gap="lg" aria-label="Loading startup">
+    <Stack gap="lg" aria-label="Загрузка стартапа">
       <Skeleton height={42} width="65%" />
       <Skeleton height={88} radius="md" />
       <Skeleton height={320} radius="lg" />
@@ -52,14 +52,14 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
           </ThemeIcon>
           <div>
             <Title order={1} size="h2">
-              Startup data is unavailable in demo mode
+              Данные стартапа недоступны в деморежиме
             </Title>
             <Text mt="xs" c="dimmed">
-              Connect a local or test Supabase environment to open persisted founder projects.
+              Подключите локальное или тестовое окружение Supabase, чтобы открыть сохранённый проект.
             </Text>
           </div>
           <LinkButton href="/startups" variant="outline">
-            Back to directory
+            Назад в каталог
           </LinkButton>
         </Stack>
       </Paper>
@@ -68,8 +68,8 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
 
   if (result.status === "error") {
     return (
-      <Alert color="red" variant="light" title="This startup could not be loaded" role="alert">
-        Return to the directory or refresh the page and try again.
+      <Alert color="red" variant="light" title="Не удалось загрузить стартап" role="alert">
+        Вернитесь в каталог или обновите страницу.
       </Alert>
     );
   }
@@ -86,7 +86,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
             variant="subtle"
             leftSection={<ArrowLeft size={16} aria-hidden="true" />}
           >
-            All startups
+            Все стартапы
           </LinkButton>
         </Group>
 
@@ -95,7 +95,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
             {startupStageLabels[startup.stage]}
           </Badge>
           <Text size="sm" c="dimmed">
-            Published {dateFormatter.format(new Date(startup.created_at))}
+            Опубликовано {dateFormatter.format(new Date(startup.created_at))}
           </Text>
         </Group>
 
@@ -123,7 +123,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
           className={styles.detailMain}
         >
           <Title order={2} size="h3">
-            About the project
+            О проекте
           </Title>
           <Text mt="lg" lh={1.8} className={styles.preWrap}>
             {startup.description}
@@ -133,14 +133,14 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
         <Stack gap="lg">
           <Paper withBorder radius="lg" p="lg">
             <Title order={2} size="h4">
-              Founder
+              Основатель
             </Title>
             <Group mt="md" gap="sm" align="flex-start" wrap="nowrap">
               <ThemeIcon variant="light" color="gray" size={38} radius="md">
                 <UserRound size={18} aria-hidden="true" />
               </ThemeIcon>
               <div>
-                <Text fw={600}>{startup.founder?.full_name ?? "Startup Zone founder"}</Text>
+                <Text fw={600}>{startup.founder?.full_name ?? "Основатель Startup Zone"}</Text>
                 {startup.founder?.headline && (
                   <Text size="sm" c="dimmed" mt={2}>
                     {startup.founder.headline}
@@ -166,13 +166,13 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
           {(startup.funding_ask !== null || startup.equity_offered !== null) && (
             <Paper withBorder radius="lg" p="lg">
               <Title order={2} size="h4">
-                Funding
+                Раунд
               </Title>
               <Stack mt="md" gap="sm">
                 {startup.funding_ask !== null && (
                   <div>
                     <Text size="xs" tt="uppercase" c="dimmed" fw={600}>
-                      Funding ask
+                      Требуемая сумма
                     </Text>
                     <Text mt={3} fw={600}>
                       {formatMarketCurrency(startup.funding_ask)}
@@ -182,7 +182,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                 {startup.equity_offered !== null && (
                   <div>
                     <Text size="xs" tt="uppercase" c="dimmed" fw={600}>
-                      Equity offered
+                      Предлагаемая доля
                     </Text>
                     <Text mt={3} fw={600}>
                       {startup.equity_offered}%
@@ -196,7 +196,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
           {(startup.website_url || startup.deck_url) && (
             <Paper withBorder radius="lg" p="lg">
               <Title order={2} size="h4">
-                Project links
+                Ссылки проекта
               </Title>
               <Stack mt="md" gap="sm">
                 {startup.website_url && (
@@ -208,7 +208,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                     variant="outline"
                     rightSection={<ExternalLink size={15} aria-hidden="true" />}
                   >
-                    Visit website
+                    Открыть сайт
                   </Button>
                 )}
                 {startup.deck_url && (
@@ -220,7 +220,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                     variant="outline"
                     leftSection={<FileText size={15} aria-hidden="true" />}
                   >
-                    Open pitch deck
+                    Открыть презентацию
                   </Button>
                 )}
               </Stack>
