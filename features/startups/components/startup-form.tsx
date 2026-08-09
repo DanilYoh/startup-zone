@@ -45,15 +45,14 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
   const fieldError = (field: keyof StartupInput) => state.errors?.[field]?.[0];
 
   return (
-    <Paper withBorder shadow="sm" radius="lg" p={{ base: "md", sm: "xl" }}>
+    <Paper withBorder radius="md" p={{ base: "md", sm: "xl" }}>
       <Stack gap="xl">
         <div>
           <Title order={1} size="h2">
             {startup ? "Edit startup" : "Publish a startup"}
           </Title>
           <Text c="dimmed" size="sm" mt={4}>
-            Add the core information founders, specialists, and investors need to understand the
-            project.
+            Add the core information investors need to understand and qualify the project.
           </Text>
         </div>
         <form action={formAction} className={styles.form}>

@@ -1,10 +1,51 @@
 .page {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   min-height: 100svh;
-  padding: 1.5rem;
+  padding: 5rem 1.25rem 2rem;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--sz-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sz-grid) 1px, transparent 1px),
+    var(--mantine-color-body);
+  background-size: 48px 48px;
+}
+
+.page::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--sz-accent) 8%, transparent), transparent 32rem);
+  content: "";
+  pointer-events: none;
+}
+
+.brand {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--sz-ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.brandMark {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  background: var(--sz-accent);
+  color: #09291b;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.55rem;
+  font-weight: 800;
 }
 
 .narrow,
@@ -13,15 +54,19 @@
 }
 
 .narrow {
-  max-width: 24rem;
+  z-index: 1;
+  max-width: 25rem;
 }
 
 .wide {
-  max-width: 28rem;
+  z-index: 1;
+  max-width: 34rem;
 }
 
 @media (min-width: 48rem) {
   .page {
-    padding: 2.5rem;
+    padding: 5.5rem 2.5rem 2.5rem;
   }
+
+  .brand { top: 1.4rem; left: 1.5rem; }
 }

@@ -5,7 +5,7 @@ import { hasEnvVars } from "@/lib/utils";
 import { Skeleton } from "@mantine/core";
 import Link from "next/link";
 import { Suspense } from "react";
-import styles from "./startups.module.css";
+import styles from "./startups-supabase.module.css";
 
 export default function StartupsLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -50,7 +50,7 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <p>Startup Zone · Real projects published by founders.</p>
+          <p>Startup Zone · Real founder projects for aligned investors.</p>
           <Link className={styles.footerLink} href="/">
             About the product
           </Link>

@@ -17,16 +17,16 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: {
-    default: "Startup Zone — Build the right founding team",
+    default: "Startup Zone — Founder–investor marketplace",
     template: "%s · Startup Zone",
   },
   description:
-    "A full-stack marketplace connecting startup founders, specialists, and early-stage investors.",
+    "A focused marketplace where founders publish startups and aligned investors request a conversation.",
   keywords: ["startups", "founders", "investors", "Next.js", "Supabase"],
   authors: [{ name: "DanilYoh", url: "https://github.com/DanilYoh" }],
   openGraph: {
     title: "Startup Zone",
-    description: "Find the right people to move a startup forward.",
+    description: "Where ambitious founders meet aligned capital.",
     type: "website",
   },
 };
@@ -38,8 +38,23 @@ const geistSans = Geist({
 });
 
 const theme = createTheme({
-  primaryColor: "indigo",
-  defaultRadius: "md",
+  colors: {
+    brand: [
+      "#ecfdf5",
+      "#d1fae5",
+      "#a7f3d0",
+      "#6ee7b7",
+      "#4ade9f",
+      "#3ecf8e",
+      "#2fb67c",
+      "#1c8f61",
+      "#16744f",
+      "#10583d",
+    ],
+  },
+  primaryColor: "brand",
+  primaryShade: { light: 8, dark: 5 },
+  defaultRadius: "sm",
   fontFamily: "var(--font-geist-sans), sans-serif",
   headings: {
     fontFamily: "var(--font-geist-sans), sans-serif",
@@ -50,12 +65,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme="dark" />
       </head>
       <body className={`${geistSans.variable} ${styles.body}`}>
         <MantineProvider
           theme={theme}
-          defaultColorScheme="auto"
+          defaultColorScheme="dark"
           deduplicateInlineStyles
         >
           {children}

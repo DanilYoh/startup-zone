@@ -1,3 +1,75 @@
+.card {
+  overflow: hidden;
+  background: var(--sz-panel);
+}
+
+.profileHero {
+  display: grid;
+  margin: -1rem -1rem 0;
+  padding: 1.25rem;
+  gap: 1.25rem;
+  border-bottom: 1px solid var(--sz-line);
+  background: var(--sz-panel-subtle);
+}
+
+.roleLabel,
+.blueprintLabel {
+  color: var(--sz-accent);
+}
+
+.roleLabel {
+  margin-bottom: 0.2rem;
+  font-size: 0.75rem;
+  font-family: var(--mantine-font-family-monospace);
+  font-weight: 550;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.blueprint {
+  padding: 0.85rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.35rem;
+  background: var(--sz-panel);
+}
+
+.formSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.stageFieldset {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.35rem;
+  background: var(--sz-panel-subtle);
+}
+
+.stageFieldset legend {
+  padding-inline: 0.35rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+}
+
+.stageGrid {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .submit {
   align-self: flex-start;
+}
+
+@media (min-width: 40rem) {
+  .profileHero {
+    margin: -2rem -2rem 0;
+    padding: 2rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr);
+    align-items: center;
+  }
+
+  .stageGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

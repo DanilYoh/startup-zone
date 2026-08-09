@@ -1,11 +1,15 @@
 import { z } from "zod";
 
-export const marketplaceRoles = ["founder", "specialist", "investor"] as const;
+export const marketplaceRoles = ["founder", "investor"] as const;
 
 export const marketplaceRoleLabels: Record<(typeof marketplaceRoles)[number], string> = {
   founder: "Founder",
-  specialist: "Specialist",
   investor: "Investor",
+};
+
+export const marketplaceRoleDescriptions: Record<(typeof marketplaceRoles)[number], string> = {
+  founder: "Publish a startup, manage its story, and review investor interest.",
+  investor: "Build an investment profile, discover startups, and request a conversation.",
 };
 
 export const authEmailSchema = z

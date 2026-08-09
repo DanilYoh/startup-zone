@@ -7,7 +7,6 @@ import {
 } from "@/features/applications/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { logRequestError } from "@/lib/logger";
-import type { ApplicationType } from "@/lib/domain-types";
 import type { TablesInsert } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -61,19 +60,12 @@ export async function createApplication(
     return { status: "error", message: "Could not verify this opportunity. Try again." };
   }
 
-  const type: ApplicationType | null =
-    profile?.role === "specialist"
-      ? "team"
-      : profile?.role === "investor"
-        ? "investor"
-        : null;
-
-  if (!type) {
-    return { status: "error", message: "Only specialists and investors can send applications." };
+  if (profile?.role !== "investor") {
+    return { status: "error", message: "Only investor profiles can send interest." };
   }
 
   if (!startup || !startup.is_active) {
-    return { status: "error", message: "This startup is no longer accepting applications." };
+    return { status: "error", message: "This startup is no longer accepting investor interest." };
   }
 
   if (startup.founder_id === user.id) {
@@ -83,32 +75,32 @@ export async function createApplication(
   const application: TablesInsert<"applications"> = {
     startup_id: startup.id,
     applicant_id: user.id,
-    type,
+    type: "investor",
     message: validated.data.message,
   };
 
   const { error } = await supabase.from("applications").insert(application);
   if (error) {
     if (error.code === "23505") {
-      return { status: "error", message: "You already sent this application." };
+      return { status: "error", message: "You already sent interest in this startup." };
     }
 
     if (error.code === "P0001") {
       return {
         status: "error",
-        message: "You reached the application limit. Wait before contacting another startup.",
+        message: "You reached the interest-request limit. Wait before contacting another startup.",
       };
     }
 
     await logRequestError("application.create_failed", { code: error.code });
-    return { status: "error", message: "Could not send the application. Please try again." };
+    return { status: "error", message: "Could not send your interest. Please try again." };
   }
 
   revalidatePath("/dashboard/applications");
   revalidatePath("/startups");
   return {
     status: "success",
-    message: type === "team" ? "Application sent to the founder." : "Interest sent to the founder.",
+    message: "Interest sent to the founder.",
   };
 }
 
@@ -140,7 +132,7 @@ export async function moderateApplication(
   }
 
   if (profile?.role !== "founder") {
-    return { status: "error", message: "Only founders can decide applications." };
+    return { status: "error", message: "Only founders can decide investor interest." };
   }
 
   const { data: application, error: applicationError } = await supabase
@@ -151,15 +143,15 @@ export async function moderateApplication(
 
   if (applicationError) {
     await logRequestError("application.moderation_read_failed", { code: applicationError.code });
-    return { status: "error", message: "Could not load the application. Try again." };
+    return { status: "error", message: "Could not load the interest request. Try again." };
   }
 
   if (!application || application.startup.founder_id !== user.id) {
-    return { status: "error", message: "Application not found or you cannot manage it." };
+    return { status: "error", message: "Interest request not found or you cannot manage it." };
   }
 
   if (application.status !== "pending") {
-    return { status: "error", message: "This application has already been decided." };
+    return { status: "error", message: "This interest request has already been decided." };
   }
 
   const { data: updated, error } = await supabase
@@ -176,13 +168,13 @@ export async function moderateApplication(
   }
 
   if (!updated) {
-    return { status: "error", message: "This application was already decided." };
+    return { status: "error", message: "This interest request was already decided." };
   }
 
   revalidatePath("/dashboard/applications/inbox");
   revalidatePath("/dashboard/applications");
   return {
     status: "success",
-    message: validated.data.decision === "accepted" ? "Application accepted." : "Application rejected.",
+    message: validated.data.decision === "accepted" ? "Interest accepted." : "Interest rejected.",
   };
 }

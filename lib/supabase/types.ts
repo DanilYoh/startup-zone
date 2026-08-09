@@ -104,34 +104,58 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          founder_experience: string | null
           full_name: string | null
+          headline: string | null
           id: string
+          investment_thesis: string | null
+          investor_organization: string | null
           linkedin_url: string | null
           location: string | null
+          preferred_stages: Database["public"]["Enums"]["startup_stage"][]
           role: Database["public"]["Enums"]["user_role"]
+          ticket_max: number | null
+          ticket_min: number | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          founder_experience?: string | null
           full_name?: string | null
+          headline?: string | null
           id: string
+          investment_thesis?: string | null
+          investor_organization?: string | null
           linkedin_url?: string | null
           location?: string | null
+          preferred_stages?: Database["public"]["Enums"]["startup_stage"][]
           role: Database["public"]["Enums"]["user_role"]
+          ticket_max?: number | null
+          ticket_min?: number | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          founder_experience?: string | null
           full_name?: string | null
+          headline?: string | null
           id?: string
+          investment_thesis?: string | null
+          investor_organization?: string | null
           linkedin_url?: string | null
           location?: string | null
+          preferred_stages?: Database["public"]["Enums"]["startup_stage"][]
           role?: Database["public"]["Enums"]["user_role"]
+          ticket_max?: number | null
+          ticket_min?: number | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -208,17 +232,23 @@ export type Database = {
     Views: {
       public_founder_profiles: {
         Row: {
+          founder_experience: string | null
           full_name: string | null
+          headline: string | null
           id: string | null
           location: string | null
         }
         Insert: {
+          founder_experience?: string | null
           full_name?: string | null
+          headline?: string | null
           id?: string | null
           location?: string | null
         }
         Update: {
+          founder_experience?: string | null
           full_name?: string | null
+          headline?: string | null
           id?: string | null
           location?: string | null
         }

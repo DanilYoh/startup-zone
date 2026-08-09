@@ -55,10 +55,10 @@ describe("authentication forms", () => {
 
     render(<SignUpForm />);
 
-    await user.type(screen.getByRole("textbox", { name: "Full name" }), "Sam Specialist");
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "specialist@example.test");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Role" }), "specialist");
-    await user.type(screen.getByLabelText(/^Password/), "specialist-password");
+    await user.type(screen.getByRole("textbox", { name: "Full name" }), "Sam Investor");
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "investor@example.test");
+    await user.click(screen.getByRole("radio", { name: "Investor" }));
+    await user.type(screen.getByLabelText(/^Password/), "investor-password");
     await user.type(screen.getByLabelText(/^Repeat password/), "different-password");
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
@@ -70,6 +70,6 @@ describe("authentication forms", () => {
 
     const submitted = signUpMock.mock.calls[0]?.[1];
     expect(submitted).toBeInstanceOf(FormData);
-    expect(submitted.get("role")).toBe("specialist");
+    expect(submitted.get("role")).toBe("investor");
   });
 });

@@ -1,24 +1,26 @@
 # Startup Zone
 
-Startup Zone is a marketplace MVP where founders publish projects, specialists find teams, and investors discover early-stage startups.
+Startup Zone is a focused marketplace MVP where founders publish projects and investors discover, qualify, and contact early-stage startups.
 
-**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — create a founder, specialist, or investor account to try the complete marketplace flow against isolated synthetic data.
+**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — create a founder or investor account to try the complete marketplace flow against isolated synthetic data.
 
 ## Current scope
 
 Implemented:
 
-- Supabase authentication with explicit founder, specialist, or investor onboarding;
-- protected profile editing with immutable marketplace roles;
-- protected founder dashboard;
+- Supabase authentication with explicit founder or investor onboarding and an SSR-safe email-confirmation callback;
+- protected, role-specific profile editing with immutable marketplace roles;
+- distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;
-- specialist applications and investor interest requests with status tracking;
+- investor interest requests with status tracking;
 - founder moderation with database-enforced terminal decisions;
 - filterable, paginated public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - request-correlated structured server logs, unexpected request capture, application rate limiting, and decision auditing;
 - responsive light and dark UI;
 - Vitest, React Testing Library, Playwright, and GitHub Actions coverage for core flows.
+
+The decision-oriented field model for each role is documented in [profile structure](docs/profile-structure.md).
 
 Deployment gates, environment isolation, monitoring gaps, and backup/restore drills are documented in [operations](docs/operations.md). The repository provides a structured-logging baseline; it does not include an external monitoring backend, verified ingestion, metrics, alerts, or client-error collection.
 

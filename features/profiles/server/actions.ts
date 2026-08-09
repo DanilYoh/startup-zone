@@ -34,12 +34,39 @@ export async function updateProfile(
     };
   }
 
+  const { data: currentProfile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    await logRequestError("profile.authorization_failed", { code: profileError.code });
+    return { status: "error", message: "Could not verify your profile. Please try again." };
+  }
+
+  if (currentProfile?.role !== "founder" && currentProfile?.role !== "investor") {
+    return { status: "error", message: "This account no longer has an active marketplace role." };
+  }
+
   const update: TablesUpdate<"profiles"> = {
     full_name: validated.data.full_name,
+    headline: validated.data.headline,
     bio: validated.data.bio,
     location: validated.data.location,
     avatar_url: validated.data.avatar_url,
     linkedin_url: validated.data.linkedin_url,
+    founder_experience:
+      currentProfile.role === "founder" ? validated.data.founder_experience : null,
+    investor_organization:
+      currentProfile.role === "investor" ? validated.data.investor_organization : null,
+    investment_thesis:
+      currentProfile.role === "investor" ? validated.data.investment_thesis : null,
+    preferred_stages:
+      currentProfile.role === "investor" ? validated.data.preferred_stages : [],
+    ticket_min: currentProfile.role === "investor" ? validated.data.ticket_min : null,
+    ticket_max: currentProfile.role === "investor" ? validated.data.ticket_max : null,
+    website_url: currentProfile.role === "investor" ? validated.data.website_url : null,
   };
 
   const { data: profile, error } = await supabase

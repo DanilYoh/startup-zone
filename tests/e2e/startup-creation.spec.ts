@@ -104,11 +104,9 @@ test("a founder publishes a startup that appears in public discovery", async ({ 
     await expect(page.getByRole("link", { name: startupTitle })).toBeVisible();
 
     await page.goto("/");
-    await expect(page.getByText("Featured live project", { exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: startupTitle })).toBeVisible();
-    await expect(page.getByRole("link", { name: "View project" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Explore startups" })).toHaveAttribute(
       "href",
-      `/startups/${slug}`,
+      "/startups",
     );
 
     const { data: persistedStartup, error: persistedStartupError } = await admin

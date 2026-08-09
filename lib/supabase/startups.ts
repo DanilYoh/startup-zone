@@ -47,7 +47,7 @@ export async function getActiveStartupBySlug(slug: string) {
 
     const { data: founder, error: founderError } = await supabase
       .from("public_founder_profiles")
-      .select("full_name, location")
+      .select("full_name, headline, founder_experience, location")
       .eq("id", startup.founder_id)
       .maybeSingle();
 
@@ -64,32 +64,11 @@ export async function getActiveStartupBySlug(slug: string) {
 async function queryActiveStartups(filters: StartupDirectoryFilters) {
   const supabase = await createClient();
   const { from, to } = pageRange(filters.page, DEFAULT_PAGE_SIZE);
-  let countQuery = supabase
-    .from("startups")
-    .select("id", { count: "exact", head: true })
-    .eq("is_active", true);
-
-  if (filters.query) countQuery = countQuery.ilike("title", toIlikePattern(filters.query));
-  if (filters.stage) countQuery = countQuery.eq("stage", filters.stage);
-  if (filters.niche) countQuery = countQuery.contains("niche", [filters.niche]);
-
-  const { count, error: countError } = await countQuery;
-  if (countError) throw new StartupReadError(countError.code);
-
-  const total = count ?? 0;
-  if (from >= total) {
-    return {
-      items: [],
-      page: filters.page,
-      pageCount: pageCount(total, DEFAULT_PAGE_SIZE),
-      total,
-    };
-  }
-
   let query = supabase
     .from("startups")
     .select(
       "id, founder_id, title, slug, one_pager, stage, niche, funding_ask, equity_offered, created_at",
+      { count: "exact" },
     )
     .eq("is_active", true)
     .order("created_at", { ascending: false })
@@ -100,9 +79,20 @@ async function queryActiveStartups(filters: StartupDirectoryFilters) {
   if (filters.stage) query = query.eq("stage", filters.stage);
   if (filters.niche) query = query.contains("niche", [filters.niche]);
 
-  const { data, error } = await query;
-  if (error) throw new StartupReadError(error.code);
+  const { data, count, error } = await query;
+  if (error) {
+    if (error.code !== "PGRST103") throw new StartupReadError(error.code);
 
+    const total = await countActiveStartups(supabase, filters);
+    return {
+      items: [],
+      page: filters.page,
+      pageCount: pageCount(total, DEFAULT_PAGE_SIZE),
+      total,
+    };
+  }
+
+  const total = count ?? 0;
   const founderIds = [...new Set(data.map((startup) => startup.founder_id))];
   const founderResult = founderIds.length
     ? await supabase
@@ -123,6 +113,24 @@ async function queryActiveStartups(filters: StartupDirectoryFilters) {
     pageCount: pageCount(total, DEFAULT_PAGE_SIZE),
     total,
   };
+}
+
+async function countActiveStartups(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  filters: StartupDirectoryFilters,
+) {
+  let query = supabase
+    .from("startups")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true);
+
+  if (filters.query) query = query.ilike("title", toIlikePattern(filters.query));
+  if (filters.stage) query = query.eq("stage", filters.stage);
+  if (filters.niche) query = query.contains("niche", [filters.niche]);
+
+  const { count, error } = await query;
+  if (error) throw new StartupReadError(error.code);
+  return count ?? 0;
 }
 
 class StartupReadError extends Error {
