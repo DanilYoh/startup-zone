@@ -50,15 +50,17 @@ The callback also accepts `token_hash` links for projects that already use the
 Supabase SSR custom template, so that template is optional rather than an
 undocumented deployment dependency.
 
-The service-role key is required only by test fixture setup. It must never be
-prefixed with `NEXT_PUBLIC_`, sent to the browser, committed, or configured in
-the public demo.
+The service-role key is used only by isolated test fixture setup and the trusted
+operator invitation CLI. It must never be prefixed with `NEXT_PUBLIC_`, sent to
+the browser, committed, or configured in any application runtime, including the
+public demo and production container.
 
 Playwright global setup requires `APP_ENVIRONMENT=local`, `test`, or `demo` and
 uses the test service-role key to activate `local-development-v1` after a clean
 no-seed migration. It refuses production mode. This keeps clean-migration CI and
 the isolated staging workflow reproducible without adding any draft legal
-version to a production migration.
+version to a production migration. Each E2E fixture then creates and consumes a
+short-lived synthetic invitation before creating its Auth user.
 
 Populate the isolated demo/test project with repeatable synthetic marketplace
 data from a trusted operator machine:
@@ -76,6 +78,36 @@ upserts the documented demo startups. It refuses to start unless the environment
 is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
 configured project ref exactly matches the Supabase URL. It rejects production
 even when the other flags are present.
+
+## Closed-beta invitations
+
+Create invitations only from a trusted operator machine with the service-role
+key loaded from a secret manager. Approve the exact Supabase API origin and the
+write explicitly, then issue a short-lived code bound to one email and role:
+
+```bash
+APP_ENVIRONMENT=production \
+ALLOW_BETA_INVITE_CREATE=true \
+BETA_INVITE_TARGET_URL=https://api.example.ru \
+NEXT_PUBLIC_SUPABASE_URL=https://api.example.ru \
+npm run beta:invite -- \
+  --email founder@example.ru \
+  --role founder \
+  --expires-in-days 14
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` must already be present in the trusted process
+environment and must not be written into this command, a dotenv file copied to
+the server, or shell history. The CLI refuses a target-origin mismatch and
+requires a non-local HTTPS target in production. It prints the raw 192-bit code
+once; send it to the invited person through a separate trusted channel. The
+database stores only its SHA-256 hash.
+
+Every invitation is one-time, expires after 1-90 days, and is bound to the exact
+normalized email and either the founder or investor role. Successful Auth
+onboarding consumes it atomically. Delete an unused invitation from
+`beta_invitations` to revoke it; never edit a consumed row to make it reusable.
+The application runtime never receives the service-role key.
 
 ## Migration upgrade procedure
 
@@ -158,6 +190,10 @@ Verify signup for both roles, role-specific profile editing, startup publication
 and deactivation, investor interest submission, founder moderation, and the
 accepted private-contact exchange from both dashboards. Production migration or
 deployment requires explicit approval and a recorded rollback decision.
+
+Verify that a valid invitation works exactly once and that missing, expired,
+wrong-email, and wrong-role invitations fail without creating an Auth user,
+profile, or consent record.
 
 For a production candidate, also verify that `/legal/privacy` and
 `/legal/consent` show the approved operator, processors, version, and effective

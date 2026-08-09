@@ -23,10 +23,20 @@ export const passwordSchema = z
   .min(8, "Используйте не менее 8 символов")
   .max(72, "Используйте не более 72 символов");
 
+export const betaInvitationCodeSchema = z
+  .string()
+  .trim()
+  .length(32, "Введите 32-символьный код приглашения")
+  .regex(
+    /^[A-Za-z0-9_-]{32}$/,
+    "Код приглашения может содержать только латинские буквы, цифры, дефис и подчёркивание",
+  );
+
 export const signUpSchema = z
   .object({
     full_name: z.string().trim().min(2, "Введите не менее 2 символов").max(80),
     email: authEmailSchema,
+    beta_invitation_code: betaInvitationCodeSchema,
     role: z.enum(marketplaceRoles, { error: "Выберите роль на площадке" }),
     password: passwordSchema,
     repeat_password: z.string(),
@@ -65,6 +75,7 @@ export function parseSignUpForm(formData: FormData) {
   return signUpSchema.safeParse({
     full_name: formData.get("full_name"),
     email: formData.get("email"),
+    beta_invitation_code: formData.get("beta_invitation_code"),
     role: formData.get("role"),
     password: formData.get("password"),
     repeat_password: formData.get("repeat_password"),

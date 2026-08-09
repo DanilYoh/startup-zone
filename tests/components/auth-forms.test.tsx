@@ -67,6 +67,10 @@ describe("authentication forms", () => {
 
     render(<SignUpForm legalConfig={localLegalConfig} />);
 
+    await user.type(
+      screen.getByRole("textbox", { name: "Код приглашения" }),
+      "AbCdEfGhIjKlMnOpQrStUvWxYz012345",
+    );
     await user.type(screen.getByRole("textbox", { name: "Имя и фамилия" }), "Sam Investor");
     await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "investor@example.test");
     await user.click(screen.getByRole("radio", { name: "Инвестор" }));
@@ -85,6 +89,7 @@ describe("authentication forms", () => {
 
     const submitted = signUpMock.mock.calls[0]?.[1];
     expect(submitted).toBeInstanceOf(FormData);
+    expect(submitted.get("beta_invitation_code")).toBe("AbCdEfGhIjKlMnOpQrStUvWxYz012345");
     expect(submitted.get("role")).toBe("investor");
     expect(submitted.get("legal_document_version")).toBe("local-development-v1");
     expect(submitted.get("personal_data_consent")).toBe("accepted");

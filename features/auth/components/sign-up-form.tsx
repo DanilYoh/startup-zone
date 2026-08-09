@@ -43,7 +43,8 @@ export function SignUpForm({
             <Text className={styles.eyebrow}>Две стороны. Одна целевая площадка.</Text>
             <Title order={1} size="h2" mt={6}>Создайте аккаунт</Title>
             <Text c="dimmed" size="sm" mt={4}>
-              Выберите роль. После регистрации её нельзя изменить — это помогает сохранять доверие.
+              Закрытая бета доступна по одноразовому приглашению. Выберите указанную в нём роль —
+              после регистрации её нельзя изменить.
             </Text>
           </div>
           <form action={formAction}>
@@ -52,6 +53,18 @@ export function SignUpForm({
                 type="hidden"
                 name="legal_document_version"
                 value={legalConfig.documentVersion}
+              />
+              <TextInput
+                id="beta-invitation-code"
+                name="beta_invitation_code"
+                label="Код приглашения"
+                description="Код привязан к вашей электронной почте и роли и действует один раз."
+                autoComplete="one-time-code"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                maxLength={32}
+                error={fieldError("beta_invitation_code")}
               />
               <TextInput
                 id="full-name"

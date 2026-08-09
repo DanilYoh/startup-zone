@@ -236,6 +236,14 @@ webhook, external integration, file response, or public API.
   write grant. They intentionally have no cascading Auth foreign key so account
   deletion cannot silently erase evidence; the operator's approved retention
   policy must define eventual evidence deletion.
+- Closed-beta access uses `beta_invitations`, which stores only a SHA-256 code
+  hash plus the invited email, role, expiry, and consumption state. The raw code
+  exists only in the operator's one-time CLI output. A narrow anonymous RPC
+  pre-validates the high-entropy hash tuple so the form can return a stable
+  expected error without exposing the table. The Auth trigger then locks the
+  matching unused row, verifies email, role, and expiry, and consumes it in the
+  same transaction that creates the profile and legal-consent evidence. Direct
+  Auth calls cannot bypass this boundary, and browser roles have no table grant.
 - Collection reads use server-validated page numbers, stable ordering, bounded
   database ranges, and an exact count. They never rely on a silent terminal
   `limit` or load an unbounded dashboard history.

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { passwordSchema } from "../../features/auth/schemas";
 import type { MarketplaceRole } from "../../lib/domain-types";
 import type { Database } from "../../lib/supabase/types";
+import { issueBetaInvitation } from "./support/beta-invitations";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -53,6 +54,41 @@ test("public Auth rejects passwords shorter than the shared policy", async () =>
   }
 });
 
+test("signup rejects a valid-format code that does not match the issued invitation", async ({ page }) => {
+  const suffix = randomUUID();
+  const email = `wrong-invitation-${suffix}@example.test`;
+  const password = `Test-${suffix}-password`;
+  const invitation = await issueBetaInvitation(admin, email, "founder");
+
+  try {
+    await page.goto("/auth/sign-up");
+    await page.getByRole("textbox", { name: "Код приглашения" }).fill("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    await page.getByLabel("Имя и фамилия").fill("Wrong Invitation");
+    await page.getByLabel("Электронная почта").fill(email);
+    await page.locator("#password").fill(password);
+    await page.locator("#repeat-password").fill(password);
+    await page
+      .getByRole("checkbox", { name: /Я даю отдельное согласие/u })
+      .check();
+    await page.getByRole("button", { name: "Создать аккаунт" }).click();
+
+    await expect(page).toHaveURL(/\/auth\/sign-up$/);
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Код приглашения недействителен" }),
+    ).toBeVisible();
+
+    const { data: storedInvitation, error } = await admin
+      .from("beta_invitations")
+      .select("used_at, used_by")
+      .eq("id", invitation.id)
+      .single();
+    expect(error).toBeNull();
+    expect(storedInvitation).toEqual({ used_at: null, used_by: null });
+  } finally {
+    await admin.from("beta_invitations").delete().eq("id", invitation.id);
+  }
+});
+
 for (const { role, label } of roles) {
   test(`a new ${role} chooses a locked role and edits their profile`, async ({ page }) => {
     const suffix = randomUUID();
@@ -67,7 +103,9 @@ for (const { role, label } of roles) {
         await page.setViewportSize({ width: 390, height: 844 });
       }
 
+      const invitation = await issueBetaInvitation(admin, email, role);
       await page.goto("/auth/sign-up");
+      await page.getByRole("textbox", { name: "Код приглашения" }).fill(invitation.code);
       await page.getByLabel("Имя и фамилия").fill(initialName);
       await page.getByLabel("Электронная почта").fill(email);
       await page.getByRole("radio", { name: label }).check();
@@ -187,6 +225,20 @@ for (const { role, label } of roles) {
         source: "signup",
       });
       expect(Number.isNaN(Date.parse(consent?.accepted_at ?? ""))).toBe(false);
+
+      const { data: usedInvitation, error: invitationError } = await admin
+        .from("beta_invitations")
+        .select("email, role, used_at, used_by")
+        .eq("id", invitation.id)
+        .single();
+
+      expect(invitationError).toBeNull();
+      expect(usedInvitation).toMatchObject({
+        email,
+        role,
+        used_by: userId,
+      });
+      expect(Number.isNaN(Date.parse(usedInvitation?.used_at ?? ""))).toBe(false);
 
       if (role === "founder") {
         const viewport = await page.evaluate(() => ({

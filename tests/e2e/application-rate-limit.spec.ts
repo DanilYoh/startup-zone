@@ -2,14 +2,10 @@ import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import type { Database, TablesInsert } from "../../lib/supabase/types";
+import { createInvitedUser } from "./support/beta-invitations";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const legalMetadata = {
-  legal_consent: true,
-  legal_document_version: "local-development-v1",
-};
-
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
     "Application rate-limit E2E tests require NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from a local or test Supabase instance.",
@@ -27,22 +23,22 @@ test("concurrent application submissions share the per-applicant hourly limit", 
   let applicantId: string | undefined;
 
   try {
-    const { data: founder, error: founderError } = await admin.auth.admin.createUser({
+    const { data: founder, error: founderError } = await createInvitedUser(admin, {
       email: `rate-founder-${suffix}@example.test`,
+      fullName: "Rate Limit Founder",
       password,
-      email_confirm: true,
-      user_metadata: { full_name: "Rate Limit Founder", role: "founder", ...legalMetadata },
+      role: "founder",
     });
     expect(founderError).toBeNull();
     const createdFounderId = founder.user?.id;
     if (!createdFounderId) throw new Error("Rate-limit founder fixture was not created");
     founderId = createdFounderId;
 
-    const { data: applicant, error: applicantError } = await admin.auth.admin.createUser({
+    const { data: applicant, error: applicantError } = await createInvitedUser(admin, {
       email: `rate-applicant-${suffix}@example.test`,
+      fullName: "Rate Limit Investor",
       password,
-      email_confirm: true,
-      user_metadata: { full_name: "Rate Limit Investor", role: "investor", ...legalMetadata },
+      role: "investor",
     });
     expect(applicantError).toBeNull();
     const createdApplicantId = applicant.user?.id;

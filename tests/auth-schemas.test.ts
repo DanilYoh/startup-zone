@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  betaInvitationCodeSchema,
   parseSignInForm,
   parseSignUpForm,
   passwordSchema,
@@ -7,6 +8,8 @@ import {
   signInSchema,
   signUpSchema,
 } from "../features/auth/schemas";
+
+const betaInvitationCode = "AbCdEfGhIjKlMnOpQrStUvWxYz012345";
 
 describe("signUpSchema", () => {
   it.each(["founder", "investor"] as const)(
@@ -16,6 +19,7 @@ describe("signUpSchema", () => {
         signUpSchema.safeParse({
           full_name: "Taylor Jordan",
           email: "taylor@example.test",
+          beta_invitation_code: betaInvitationCode,
           role,
           password: "safe-password",
           repeat_password: "safe-password",
@@ -31,6 +35,7 @@ describe("signUpSchema", () => {
       signUpSchema.safeParse({
         full_name: "Taylor Jordan",
         email: "taylor@example.test",
+        beta_invitation_code: betaInvitationCode,
         role: "specialist",
         password: "safe-password",
         repeat_password: "safe-password",
@@ -42,6 +47,7 @@ describe("signUpSchema", () => {
     const result = signUpSchema.safeParse({
       full_name: "Taylor Jordan",
       email: "taylor@example.test",
+      beta_invitation_code: betaInvitationCode,
       role: "admin",
       password: "safe-password",
       repeat_password: "safe-password",
@@ -57,6 +63,7 @@ describe("signUpSchema", () => {
     const result = signUpSchema.safeParse({
       full_name: "Taylor Jordan",
       email: "taylor@example.test",
+      beta_invitation_code: betaInvitationCode,
       role: "founder",
       password: "safe-password",
       repeat_password: "different-password",
@@ -74,6 +81,7 @@ describe("signUpSchema", () => {
     const result = signUpSchema.safeParse({
       full_name: "Taylor Jordan",
       email: "taylor@example.test",
+      beta_invitation_code: betaInvitationCode,
       role: "founder",
       password: "safe-password",
       repeat_password: "safe-password",
@@ -95,6 +103,13 @@ describe("signUpSchema", () => {
     formData.set("repeat_password", "short");
 
     expect(parseSignUpForm(formData).success).toBe(false);
+  });
+
+  it("accepts only fixed-length base64url invitation codes", () => {
+    expect(betaInvitationCodeSchema.parse(`  ${betaInvitationCode}  `)).toBe(
+      betaInvitationCode,
+    );
+    expect(betaInvitationCodeSchema.safeParse("invalid invitation code").success).toBe(false);
   });
 });
 

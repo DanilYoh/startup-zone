@@ -99,6 +99,39 @@ export type Database = {
           },
         ]
       }
+      beta_invitations: {
+        Row: {
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       legal_consents: {
         Row: {
           accepted_at: string
@@ -360,6 +393,14 @@ export type Database = {
       }
       can_read_profile_contact: {
         Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      is_beta_invitation_valid: {
+        Args: {
+          candidate_email: string
+          candidate_hash: string
+          candidate_role: string
+        }
         Returns: boolean
       }
       valid_startup_niches: { Args: { value: string[] }; Returns: boolean }

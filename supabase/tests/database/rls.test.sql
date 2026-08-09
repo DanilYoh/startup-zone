@@ -1,6 +1,6 @@
 begin;
 
-select plan(72);
+select plan(84);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -18,33 +18,89 @@ set
   effective_date = excluded.effective_date,
   is_active = excluded.is_active;
 
+insert into public.beta_invitations (code_hash, email, role, expires_at)
+values
+  (repeat('1', 64), 'founder@example.test', 'founder', now() + interval '1 day'),
+  (repeat('2', 64), 'primary-investor@example.test', 'investor', now() + interval '1 day'),
+  (repeat('3', 64), 'applicant@example.test', 'investor', now() + interval '1 day'),
+  (repeat('4', 64), 'other-founder@example.test', 'founder', now() + interval '1 day'),
+  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day');
+
+set local role anon;
+
+select results_eq(
+  $$
+    select public.is_beta_invitation_valid(
+      repeat('1', 64),
+      'founder@example.test',
+      'founder'
+    )
+  $$,
+  $$ values (true) $$,
+  'anonymous signup can pre-validate an exact high-entropy invitation tuple'
+);
+
+select results_eq(
+  $$
+    select public.is_beta_invitation_valid(
+      repeat('1', 64),
+      'other-email@example.test',
+      'founder'
+    )
+  $$,
+  $$ values (false) $$,
+  'invitation pre-validation does not accept another email'
+);
+
+reset role;
+
 insert into auth.users (id, email, raw_user_meta_data)
 values
   (
     '10000000-0000-0000-0000-000000000001',
     'founder@example.test',
-    '{"role":"founder","full_name":"Test Founder","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"founder","full_name":"Test Founder","beta_invitation_hash":"1111111111111111111111111111111111111111111111111111111111111111","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000002',
     'primary-investor@example.test',
-    '{"role":"investor","full_name":"Primary Investor","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"investor","full_name":"Primary Investor","beta_invitation_hash":"2222222222222222222222222222222222222222222222222222222222222222","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000003',
     'applicant@example.test',
-    '{"role":"investor","full_name":"Test Applicant","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"investor","full_name":"Test Applicant","beta_invitation_hash":"3333333333333333333333333333333333333333333333333333333333333333","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000004',
     'other-founder@example.test',
-    '{"role":"founder","full_name":"Other Founder","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"founder","full_name":"Other Founder","beta_invitation_hash":"4444444444444444444444444444444444444444444444444444444444444444","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
     '10000000-0000-0000-0000-000000000005',
     'investor@example.test',
-    '{"role":"investor","full_name":"Test Investor","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"investor","full_name":"Test Investor","beta_invitation_hash":"5555555555555555555555555555555555555555555555555555555555555555","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
+
+select results_eq(
+  $$
+    select count(*)
+    from public.beta_invitations
+    where used_at is not null and used_by is not null
+  $$,
+  $$ values (5::bigint) $$,
+  'onboarding atomically consumes every one-time beta invitation'
+);
+
+select results_eq(
+  $$
+    select email, role::text, used_by
+    from public.beta_invitations
+    where code_hash = repeat('1', 64)
+  $$,
+  $$ values ('founder@example.test', 'founder', '10000000-0000-0000-0000-000000000001'::uuid) $$,
+  'the consumed invitation remains bound to its email, role, and account'
+);
 
 select results_eq(
   $$ select count(*) from public.legal_consents $$,
@@ -88,6 +144,116 @@ select throws_like(
   '%The personal data consent version is not active%',
   'onboarding rejects an inactive legal document version'
 );
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000010',
+      'missing-invitation@example.test',
+      '{"role":"founder","full_name":"Missing Invitation","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%A valid beta invitation is required%',
+  'onboarding rejects an account without a beta invitation hash'
+);
+
+insert into public.beta_invitations (code_hash, email, role, created_at, expires_at)
+values
+  (repeat('6', 64), 'invited-email@example.test', 'founder', now(), now() + interval '1 day'),
+  (repeat('7', 64), 'wrong-role@example.test', 'founder', now(), now() + interval '1 day'),
+  (
+    repeat('8', 64),
+    'expired-invitation@example.test',
+    'founder',
+    now() - interval '2 days',
+    now() - interval '1 day'
+  );
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000011',
+      'different-email@example.test',
+      '{"role":"founder","full_name":"Wrong Email","beta_invitation_hash":"6666666666666666666666666666666666666666666666666666666666666666","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an invitation issued for another email'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000012',
+      'wrong-role@example.test',
+      '{"role":"investor","full_name":"Wrong Role","beta_invitation_hash":"7777777777777777777777777777777777777777777777777777777777777777","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an invitation issued for another role'
+);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000013',
+      'expired-invitation@example.test',
+      '{"role":"founder","full_name":"Expired Invitation","beta_invitation_hash":"8888888888888888888888888888888888888888888888888888888888888888","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an expired invitation'
+);
+
+update public.beta_invitations
+set email = 'used-invitation@example.test'
+where code_hash = repeat('1', 64);
+
+select throws_like(
+  $$
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (
+      '10000000-0000-0000-0000-000000000014',
+      'used-invitation@example.test',
+      '{"role":"founder","full_name":"Used Invitation","beta_invitation_hash":"1111111111111111111111111111111111111111111111111111111111111111","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    )
+  $$,
+  '%The beta invitation is invalid, expired, or already used%',
+  'onboarding rejects an already consumed invitation'
+);
+
+set local role anon;
+
+select throws_like(
+  $$ select * from public.beta_invitations $$,
+  '%permission denied%',
+  'anonymous clients cannot read beta invitations'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select throws_like(
+  $$ select * from public.beta_invitations $$,
+  '%permission denied%',
+  'authenticated clients cannot read beta invitations'
+);
+
+select throws_like(
+  $$
+    insert into public.beta_invitations (code_hash, email, role, expires_at)
+    values (repeat('9', 64), 'client-created@example.test', 'founder', now() + interval '1 day')
+  $$,
+  '%permission denied%',
+  'authenticated clients cannot create beta invitations'
+);
+
+reset role;
 
 select throws_like(
   $$

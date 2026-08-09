@@ -10,6 +10,7 @@ import { logRequestError } from "@/lib/logger";
 import { getPublicLegalConfig } from "@/features/legal/server/config";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
+import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -34,6 +35,10 @@ function normalizeOrigin(value: string | null) {
   } catch {
     return null;
   }
+}
+
+function hashBetaInvitationCode(value: string) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
 export async function signUp(
@@ -72,15 +77,43 @@ export async function signUp(
     };
   }
 
+  const invitationHash = hashBetaInvitationCode(validated.data.beta_invitation_code);
+  const supabase = await createClient();
+  const { data: invitationValid, error: invitationError } = await supabase.rpc(
+    "is_beta_invitation_valid",
+    {
+      candidate_email: validated.data.email,
+      candidate_hash: invitationHash,
+      candidate_role: validated.data.role,
+    },
+  );
+
+  if (invitationError) {
+    await logRequestError("auth.invitation_validation_failed", {
+      code: invitationError.code,
+    });
+    return {
+      status: "error",
+      message: "Регистрация временно недоступна. Попробуйте позже.",
+    };
+  }
+
+  if (!invitationValid) {
+    return {
+      status: "error",
+      message: "Код приглашения недействителен, уже использован или не соответствует email и роли.",
+    };
+  }
+
   const requestOrigin = normalizeOrigin((await headers()).get("origin"));
   const configuredOrigin = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL ?? null);
   const origin = configuredOrigin ?? requestOrigin ?? "http://localhost:3000";
-  const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: validated.data.email,
     password: validated.data.password,
     options: {
       data: {
+        beta_invitation_hash: invitationHash,
         full_name: validated.data.full_name,
         legal_consent: true,
         legal_document_version: legalConfig.documentVersion,
@@ -101,7 +134,7 @@ export async function signUp(
       message:
         error.status === 429
           ? "Слишком много попыток регистрации. Подождите и попробуйте снова."
-          : "Не удалось создать аккаунт. Проверьте данные или попробуйте позже.",
+          : "Не удалось создать аккаунт. Проверьте email, роль и код приглашения или попробуйте позже.",
     };
   }
 

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { assertDemoSeedAllowed } from "./demo-seed-guard.mjs";
 
@@ -74,19 +74,38 @@ async function findFounder() {
 let founder = await findFounder();
 
 if (!founder) {
+  const invitationCode = randomBytes(24).toString("base64url");
+  const invitationHash = createHash("sha256").update(invitationCode, "utf8").digest("hex");
+  const { data: invitation, error: invitationError } = await admin
+    .from("beta_invitations")
+    .insert({
+      code_hash: invitationHash,
+      email: founderEmail,
+      expires_at: new Date(Date.now() + 60 * 60 * 1_000).toISOString(),
+      role: "founder",
+    })
+    .select("id")
+    .single();
+
+  if (invitationError) throw invitationError;
+
   const { data, error } = await admin.auth.admin.createUser({
     email: founderEmail,
     password: `Demo-${randomUUID()}-Aa1!`,
     email_confirm: true,
     user_metadata: {
       full_name: "Startup Zone Demo Team",
+      beta_invitation_hash: invitationHash,
       legal_consent: true,
       legal_document_version: legalDocumentVersion,
       role: "founder",
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    await admin.from("beta_invitations").delete().eq("id", invitation.id);
+    throw error;
+  }
   founder = data.user;
 }
 

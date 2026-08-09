@@ -11,6 +11,7 @@ const {
   headersMock,
   logRequestErrorMock,
   redirectMock,
+  rpcMock,
   signInWithPasswordMock,
   signUpMock,
 } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const {
   redirectMock: vi.fn((pathname: string): never => {
     throw new Error(`REDIRECT:${pathname}`);
   }),
+  rpcMock: vi.fn(),
   signInWithPasswordMock: vi.fn(),
   signUpMock: vi.fn(),
 }));
@@ -33,11 +35,13 @@ vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 const initialSignUpState: SignUpActionState = { status: "idle" };
 const initialSignInState: SignInActionState = { status: "idle" };
+const betaInvitationCode = "AbCdEfGhIjKlMnOpQrStUvWxYz012345";
 
 function validSignUpForm() {
   const formData = new FormData();
   formData.set("full_name", "Taylor Jordan");
   formData.set("email", "taylor@example.test");
+  formData.set("beta_invitation_code", betaInvitationCode);
   formData.set("role", "founder");
   formData.set("password", "safe-password");
   formData.set("repeat_password", "safe-password");
@@ -58,15 +62,18 @@ beforeEach(() => {
   headersMock.mockReset();
   logRequestErrorMock.mockReset();
   redirectMock.mockClear();
+  rpcMock.mockReset();
   signInWithPasswordMock.mockReset();
   signUpMock.mockReset();
 
   headersMock.mockResolvedValue(new Headers({ origin: "https://request.example" }));
+  rpcMock.mockResolvedValue({ data: true, error: null });
   createClientMock.mockResolvedValue({
     auth: {
       signInWithPassword: signInWithPasswordMock,
       signUp: signUpMock,
     },
+    rpc: rpcMock,
   });
 });
 
@@ -88,6 +95,7 @@ describe("auth Server Actions", () => {
       password: "safe-password",
       options: {
         data: {
+          beta_invitation_hash: "0ab93262e08b4a300dafed0e5f6e809388300db11ea5f0039eef5dfd2c322f41",
           full_name: "Taylor Jordan",
           legal_consent: true,
           legal_document_version: "local-development-v1",
@@ -97,6 +105,11 @@ describe("auth Server Actions", () => {
           "https://startup.example/auth/confirm?next=%2Fdashboard%2Fprofile",
       },
     });
+    expect(rpcMock).toHaveBeenCalledWith("is_beta_invitation_valid", {
+      candidate_email: "taylor@example.test",
+      candidate_hash: "0ab93262e08b4a300dafed0e5f6e809388300db11ea5f0039eef5dfd2c322f41",
+      candidate_role: "founder",
+    });
   });
 
   it("returns field errors without contacting Auth", async () => {
@@ -104,6 +117,39 @@ describe("auth Server Actions", () => {
 
     expect(state.status).toBe("error");
     expect(state.errors?.email).toBeDefined();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed invitation codes before contacting Auth", async () => {
+    const formData = validSignUpForm();
+    formData.set("beta_invitation_code", "short-code");
+
+    const state = await signUp(initialSignUpState, formData);
+
+    expect(state.errors?.beta_invitation_code).toBeDefined();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("returns a stable error for an invalid or mismatched invitation", async () => {
+    rpcMock.mockResolvedValue({ data: false, error: null });
+
+    const state = await signUp(initialSignUpState, validSignUpForm());
+
+    expect(state.message).toBe(
+      "Код приглашения недействителен, уже использован или не соответствует email и роли.",
+    );
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("does not expose invitation lookup failures", async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { code: "08006" } });
+
+    const state = await signUp(initialSignUpState, validSignUpForm());
+
+    expect(state.message).toBe("Регистрация временно недоступна. Попробуйте позже.");
+    expect(logRequestErrorMock).toHaveBeenCalledWith("auth.invitation_validation_failed", {
+      code: "08006",
+    });
     expect(signUpMock).not.toHaveBeenCalled();
   });
 

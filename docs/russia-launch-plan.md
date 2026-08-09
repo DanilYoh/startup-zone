@@ -87,7 +87,9 @@ flows before public signup.
 The repository now provides separate `/legal/privacy` and `/legal/consent`
 pages, a mandatory unchecked signup consent, immutable server-timestamped
 version evidence, and a database trigger that rejects direct Auth signup without
-an active version. These are engineering controls, not approved legal text.
+an active version and a valid one-time beta invitation. Invitation records are
+bound to email and role, expire, and store only a SHA-256 code hash. These are
+engineering controls, not approved legal text.
 Production registration fails closed until the operator's actual identity,
 address, privacy contact, processors, approved non-draft document version, and
 effective date are configured both in the database and application runtime.
@@ -181,6 +183,8 @@ upload flow and storage-specific abuse controls.
 ### 4. Verify before inviting users
 
 - Confirm signup and email confirmation for founder and investor accounts.
+- Confirm that one-time invitation codes reject reuse, expiry, another email,
+  and another role without creating an account.
 - Confirm profile persistence and that roles cannot be changed.
 - Publish and deactivate a startup; verify public directory behavior.
 - Submit, accept, and reject investor interest.
@@ -213,6 +217,8 @@ been explicitly approved.
 
 - Recruit 20 curated B2B/AI founders and 10 active angels or seed investors
   through direct outreach, accelerator communities, and warm introductions.
+- Issue one short-lived email- and role-bound code per approved participant with
+  the operator CLI; do not open public self-registration during the beta.
 - Interview and manually review every founder before publishing. Help each one
   sharpen the problem, traction, ask, and contact path.
 - Send investors a weekly digest assembled manually from live records. Do not
