@@ -18,7 +18,7 @@ import {
 import { ArrowLeft, ExternalLink, FileText, MapPin, ServerOff, UserRound } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import styles from "../startups.module.css";
+import styles from "../startups-supabase.module.css";
 
 type StartupDetailPageProps = {
   params: Promise<{ slug: string }>;

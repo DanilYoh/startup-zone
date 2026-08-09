@@ -58,17 +58,17 @@ async function DashboardContent() {
 
   return (
     <div className={styles.dashboardGrid}>
-      <Paper component="section" withBorder shadow="sm" radius="xl" p={{ base: "md", sm: "xl" }} className={styles.dashboardHero}>
+      <Paper component="section" withBorder radius="md" p={0} className={styles.dashboardHero}>
         <div className={styles.heroContent}>
           <div className={styles.heroIdentity}>
-            <ThemeIcon size={44} radius="md" color="teal" variant="light">
+            <ThemeIcon size={36} radius="sm" color="brand" variant="light">
               <ShieldCheck className={styles.icon} aria-hidden="true" />
             </ThemeIcon>
             <div>
-              <Text size="sm" fw={500} c="teal">
+              <Text className={styles.workspaceLabel}>
                 {isFounder ? "Founder workspace" : isInvestor ? "Investor workspace" : "Marketplace account"}
               </Text>
-              <Title order={1} size="h2" mt={4}>
+              <Title order={1} size="h2" mt={3}>
                 {profile?.full_name ? `Welcome back, ${profile.full_name}.` : "Welcome to Startup Zone."}
               </Title>
               <Text mt="xs" c="dimmed">
@@ -78,12 +78,12 @@ async function DashboardContent() {
           </div>
           {isFounder ? (
             <Group gap="sm">
-              <LinkButton href="/dashboard/applications/inbox" variant="outline" size="md">
+              <LinkButton href="/dashboard/applications/inbox" variant="default" size="sm">
                 Investor interest
               </LinkButton>
               <LinkButton
                 href="/dashboard/startups/new"
-                size="md"
+                size="sm"
                 leftSection={<Plus size={18} aria-hidden="true" />}
               >
                 Publish startup
@@ -91,10 +91,10 @@ async function DashboardContent() {
             </Group>
           ) : isInvestor ? (
             <Group gap="sm">
-              <LinkButton href="/dashboard/applications" variant="outline" size="md">
+              <LinkButton href="/dashboard/applications" variant="default" size="sm">
                 My interest
               </LinkButton>
-              <LinkButton href="/startups" size="md">
+              <LinkButton href="/startups" size="sm">
                 Discover startups
               </LinkButton>
             </Group>
@@ -131,10 +131,10 @@ async function DashboardContent() {
             <Text size="sm" c="dimmed">Your startups could not be loaded. Please refresh and try again.</Text>
           </Paper>
         ) : isInvestor ? (
-          <Paper withBorder radius="xl" p={{ base: "lg", sm: "xl" }} className={styles.investorPanel}>
+          <Paper withBorder radius="md" p={0} className={styles.investorPanel}>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
-              <Stack gap="md" align="flex-start">
-                <ThemeIcon color="blue" variant="light" size={44} radius="lg">
+              <Stack gap="md" align="flex-start" className={styles.workspaceCard}>
+                <ThemeIcon color="brand" variant="light" size={36} radius="sm">
                   <Landmark className={styles.icon} aria-hidden="true" />
                 </ThemeIcon>
                 <div>
@@ -143,10 +143,10 @@ async function DashboardContent() {
                     Make your organization, thesis, preferred stages, and ticket range explicit.
                   </Text>
                 </div>
-                <LinkButton href="/dashboard/profile" variant="outline">Edit investor profile</LinkButton>
+                <LinkButton href="/dashboard/profile" variant="default" size="sm">Edit investor profile</LinkButton>
               </Stack>
-              <Stack gap="md" align="flex-start">
-                <ThemeIcon color="lime" variant="light" size={44} radius="lg">
+              <Stack gap="md" align="flex-start" className={styles.workspaceCard}>
+                <ThemeIcon color="brand" variant="light" size={36} radius="sm">
                   <Rocket className={styles.icon} aria-hidden="true" />
                 </ThemeIcon>
                 <div>
@@ -155,7 +155,7 @@ async function DashboardContent() {
                     Browse real founder projects and send focused investment interest.
                   </Text>
                 </div>
-                <LinkButton href="/startups">Browse active startups</LinkButton>
+                <LinkButton href="/startups" size="sm">Browse active startups</LinkButton>
               </Stack>
             </SimpleGrid>
           </Paper>
@@ -171,9 +171,9 @@ async function DashboardContent() {
                 component="article"
                 aria-label={startup.title}
                 withBorder
-                shadow="xs"
-                radius="lg"
+                radius="md"
                 p="lg"
+                className={styles.startupCard}
               >
                 <Stack gap="md">
                   <Group justify="space-between" align="flex-start" wrap="nowrap">
