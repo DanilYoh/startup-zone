@@ -1,9 +1,10 @@
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
+import styles from "../auth-layout.module.css";
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-md">
+    <div className={styles.page}>
+      <div className={styles.wide}>
         <SignUpForm />
       </div>
     </div>

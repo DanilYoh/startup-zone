@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Paper, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import styles from "../../dashboard.module.css";
 
 async function NewStartupContent() {
   const supabase = await createClient();
@@ -21,7 +22,7 @@ async function NewStartupContent() {
 
   if (error || !profile) {
     return (
-      <Paper withBorder shadow="xs" radius="lg" p="xl" className="mx-auto w-full max-w-2xl">
+      <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Founder profile unavailable</Title>
           <Text size="sm" c="dimmed">
@@ -37,7 +38,7 @@ async function NewStartupContent() {
 
   if (profile.role !== "founder") {
     return (
-      <Paper withBorder shadow="xs" radius="lg" p="xl" className="mx-auto w-full max-w-2xl">
+      <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Founder profile required</Title>
           <Text size="sm" c="dimmed">Only founder profiles can publish startups.</Text>
@@ -50,8 +51,8 @@ async function NewStartupContent() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-5">
-      <LinkButton href="/dashboard" variant="subtle" className="w-fit">
+    <div className={styles.formPage}>
+      <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
         Back to dashboard
       </LinkButton>
       <StartupForm />
@@ -61,7 +62,7 @@ async function NewStartupContent() {
 
 export default function NewStartupPage() {
   return (
-    <Suspense fallback={<Skeleton height="44rem" radius="lg" className="mx-auto w-full max-w-3xl" />}>
+    <Suspense fallback={<Skeleton height="44rem" radius="lg" className={styles.formSkeleton} />}>
       <NewStartupContent />
     </Suspense>
   );

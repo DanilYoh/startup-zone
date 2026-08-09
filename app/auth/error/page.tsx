@@ -1,6 +1,7 @@
 import { getAuthErrorMessage } from "@/features/auth/errors";
 import { Paper, Stack, Text, Title } from "@mantine/core";
 import { Suspense } from "react";
+import styles from "../auth-layout.module.css";
 
 async function ErrorContent({
   searchParams,
@@ -22,8 +23,8 @@ export default function Page({
   searchParams: Promise<{ code?: string | string[] }>;
 }) {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
+    <div className={styles.page}>
+      <div className={styles.narrow}>
         <Stack gap="lg">
           <Paper withBorder shadow="sm" radius="lg" p="xl">
             <Stack gap="md">

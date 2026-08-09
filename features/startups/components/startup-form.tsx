@@ -20,6 +20,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useActionState } from "react";
+import styles from "./startup-form.module.css";
 
 const initialStartupActionState: StartupActionState = { status: "idle" };
 
@@ -55,11 +56,11 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
             project.
           </Text>
         </div>
-        <form action={formAction} className="grid gap-6">
+        <form action={formAction} className={styles.form}>
           {startup && <input type="hidden" name="startup_id" value={startup.id} />}
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className={styles.fields}>
             <TextInput
-              className="sm:col-span-2"
+              className={styles.wideField}
               id="title"
               name="title"
               label="Startup name"
@@ -98,7 +99,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               error={fieldError("stage")}
             />
             <TextInput
-              className="sm:col-span-2"
+              className={styles.wideField}
               id={startup ? "edit-one_pager" : "one_pager"}
               name="one_pager"
               label="One-line summary"
@@ -109,7 +110,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               error={fieldError("one_pager")}
             />
             <Textarea
-              className="sm:col-span-2"
+              className={styles.wideField}
               id="description"
               name="description"
               label="Description"
@@ -121,7 +122,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               error={fieldError("description")}
             />
             <TextInput
-              className="sm:col-span-2"
+              className={styles.wideField}
               id="niche"
               name="niche"
               label="Niches"
@@ -178,7 +179,7 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               {state.message}
             </Alert>
           )}
-          <div className="flex justify-end">
+          <div className={styles.actions}>
             <Button type="submit" size="md" loading={pending}>
               {startup ? "Save changes" : "Publish startup"}
             </Button>

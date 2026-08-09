@@ -1,0 +1,28 @@
+.form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.fields {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.wideField {
+  grid-column: auto;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 40rem) {
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wideField {
+    grid-column: span 2 / span 2;
+  }
+}

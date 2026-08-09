@@ -1,12 +1,13 @@
 import { ProfileForm } from "@/features/profiles/components/profile-form";
 import { getCurrentProfile } from "@/features/profiles/server/queries";
 import { Alert, Stack, Text, Title } from "@mantine/core";
+import styles from "../dashboard.module.css";
 
 export default async function ProfilePage() {
   const result = await getCurrentProfile();
 
   return (
-    <Stack gap="xl" className="w-full">
+    <Stack gap="xl" className={styles.fullWidth}>
       <div>
         <Title order={1}>Profile</Title>
         <Text c="dimmed" mt={6}>
@@ -26,4 +27,3 @@ export default async function ProfilePage() {
     </Stack>
   );
 }
-

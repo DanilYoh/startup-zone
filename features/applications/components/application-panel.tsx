@@ -2,6 +2,7 @@ import { LinkButton } from "@/components/link-button";
 import { ApplicationForm } from "@/features/applications/components/application-form";
 import { getApplicationContext } from "@/features/applications/server/queries";
 import { Alert, Badge, Stack, Text, Title } from "@mantine/core";
+import styles from "./applications.module.css";
 
 const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
 
@@ -20,7 +21,7 @@ export async function ApplicationPanel({
       {context.status === "signed_out" ? (
         <>
           <Text c="dimmed">Sign in with a specialist or investor account to contact the founder.</Text>
-          <LinkButton href="/auth/login" className="w-fit">Sign in to respond</LinkButton>
+          <LinkButton href="/auth/login" className={styles.fitWidth}>Sign in to respond</LinkButton>
         </>
       ) : context.status === "owner" ? (
         <Text c="dimmed">This is your startup. Applications from other participants appear in your dashboard.</Text>
@@ -40,4 +41,3 @@ export async function ApplicationPanel({
     </Stack>
   );
 }
-

@@ -18,6 +18,7 @@ import {
 import { ArrowLeft, ExternalLink, FileText, MapPin, ServerOff, UserRound } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import styles from "../startups.module.css";
 
 type StartupDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -103,7 +104,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
           </Text>
         </Group>
 
-        <Title order={1} className="text-balance" fz={{ base: 42, sm: 58 }} lh={1.05}>
+        <Title order={1} className={styles.textBalance} fz={{ base: 42, sm: 58 }} lh={1.05}>
           {startup.title}
         </Title>
         <Text mt="lg" size="xl" c="dimmed" lh={1.6} maw={820}>
@@ -119,11 +120,17 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
       </div>
 
       <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
-        <Paper component="article" withBorder radius="lg" p={{ base: "lg", sm: "xl" }} className="md:col-span-2">
+        <Paper
+          component="article"
+          withBorder
+          radius="lg"
+          p={{ base: "lg", sm: "xl" }}
+          className={styles.detailMain}
+        >
           <Title order={2} size="h3">
             About the project
           </Title>
-          <Text mt="lg" lh={1.8} className="whitespace-pre-wrap">
+          <Text mt="lg" lh={1.8} className={styles.preWrap}>
             {startup.description}
           </Text>
         </Paper>
@@ -226,7 +233,7 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
 
 export default function StartupDetailPage({ params }: StartupDetailPageProps) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
+    <div className={styles.pageContainer}>
       <Suspense fallback={<DetailSkeleton />}>
         <StartupDetail params={params} />
       </Suspense>

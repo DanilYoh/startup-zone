@@ -6,6 +6,7 @@ import {
 } from "@/features/applications/server/actions";
 import { Alert, Button, Stack, Textarea } from "@mantine/core";
 import { useActionState } from "react";
+import styles from "./applications.module.css";
 
 const initialState: ApplicationActionState = { status: "idle" };
 
@@ -40,7 +41,7 @@ export function ApplicationForm({
           minLength={20}
           maxLength={2_000}
           error={state.errors?.message?.[0]}
-          className="w-full"
+          className={styles.fullWidth}
         />
         {state.message && <Alert color="red" role="alert">{state.message}</Alert>}
         <Button type="submit" loading={pending}>
@@ -50,4 +51,3 @@ export function ApplicationForm({
     </form>
   );
 }
-
