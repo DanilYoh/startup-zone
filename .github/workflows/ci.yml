@@ -15,6 +15,7 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+      NEXT_PUBLIC_SITE_URL: https://example.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +32,22 @@ jobs:
         run: npm run test:coverage
       - name: Build production bundle
         run: npm run build
+      - name: Validate and build production container
+        run: |
+          docker compose --env-file .env.example -f compose.production.yaml config --quiet
+          docker run --rm \
+            --env APP_DOMAIN=app.example.com \
+            --env SUPABASE_DOMAIN=api.example.com \
+            --env SUPABASE_UPSTREAM=host.docker.internal:8000 \
+            --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+            --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+            --tag startup-zone:ci \
+            .
 
   integration:
     runs-on: ubuntu-latest

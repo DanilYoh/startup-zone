@@ -1,5 +1,12 @@
 # Startup Zone operations
 
+The concrete single-VPS deployment profile, expected closed-beta budget, and
+market-entry gates for Russia are documented in
+[`russia-launch-plan.md`](russia-launch-plan.md). Its Docker Compose file runs
+the application and TLS edge; the database and Auth services come from the
+official self-hosted Supabase bundle and remain a separately pinned operational
+dependency.
+
 ## Environment boundaries
 
 Use three isolated Supabase environments:
@@ -88,6 +95,19 @@ Run this sequence from a clean checkout before deployment:
 npm ci
 npm run check
 npm run build
+docker compose --env-file .env.example -f compose.production.yaml config --quiet
+docker run --rm \
+  --env APP_DOMAIN=app.example.com \
+  --env SUPABASE_DOMAIN=api.example.com \
+  --env SUPABASE_UPSTREAM=host.docker.internal:8000 \
+  --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+  caddy:2-alpine \
+  caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
+  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=release-check \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://example.com \
+  --tag startup-zone:release-check .
 npx supabase start
 npx supabase db reset --local --no-seed
 npm run test:rls
@@ -99,6 +119,13 @@ Verify signup for both roles, role-specific profile editing, startup publication
 and deactivation, investor interest submission, founder moderation, and the
 accepted private-contact exchange from both dashboards. Production migration or
 deployment requires explicit approval and a recorded rollback decision.
+
+The production image is a Next.js standalone build and runs as an unprivileged
+user with a read-only root filesystem. `GET /healthz` is a process-liveness
+probe and deliberately bypasses Auth Proxy and Supabase; a green liveness probe
+does not prove database readiness or a complete user flow. Before shifting
+traffic, run the critical browser flows against the production candidate and
+check the Supabase gateway, Auth SMTP delivery, and database separately.
 
 ## Logging and unexpected errors
 

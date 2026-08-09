@@ -22,7 +22,7 @@ Implemented:
 
 The decision-oriented field model for each role is documented in [profile structure](docs/profile-structure.md).
 
-Deployment gates, environment isolation, monitoring gaps, and backup/restore drills are documented in [operations](docs/operations.md). The repository provides a structured-logging baseline; it does not include an external monitoring backend, verified ingestion, metrics, alerts, or client-error collection.
+Deployment gates, environment isolation, monitoring gaps, and backup/restore drills are documented in [operations](docs/operations.md). The low-cost, Russia-hosted production topology and market-entry sequence are documented in the [Russia launch plan](docs/russia-launch-plan.md). The repository provides a structured-logging baseline; it does not include an external monitoring backend, verified ingestion, metrics, alerts, or client-error collection.
 
 The public demo never uses production data or a service-role key at runtime. Operators can populate an isolated demo or test project with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, and an exact `DEMO_SEED_PROJECT_REF` match.
 

@@ -1,0 +1,42 @@
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 1MB
+	}
+
+	reverse_proxy app:3000 {
+		health_uri /healthz
+		health_interval 30s
+		health_timeout 5s
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
+
+{$SUPABASE_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 1MB
+	}
+
+	reverse_proxy {$SUPABASE_UPSTREAM}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

@@ -10,6 +10,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   cacheComponents: true,
+  output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: {
