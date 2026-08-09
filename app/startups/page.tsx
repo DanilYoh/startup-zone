@@ -25,6 +25,7 @@ import { ArrowRight, MapPin, Rocket, Search, SearchX, ServerOff } from "lucide-r
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import styles from "./startups.module.css";
 
 export const metadata: Metadata = {
   title: "Discover startups",
@@ -86,7 +87,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
   return (
     <Stack gap="xl">
       <Paper component="form" action="/startups" withBorder radius="lg" p="lg">
-        <div className="grid gap-4 md:grid-cols-[1.4fr_0.8fr_1fr_auto] md:items-end">
+        <div className={styles.filterGrid}>
           <TextInput
             name="q"
             label="Search by startup name"
@@ -171,7 +172,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                       <Title order={3} size="h4">
                         <Link
                           href={`/startups/${startup.slug}`}
-                          className="transition-colors hover:text-primary"
+                          className={styles.startupLink}
                         >
                           {startup.title}
                         </Link>
@@ -197,7 +198,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                     ))}
                   </Group>
 
-                  <div className="mt-auto border-t pt-4">
+                  <div className={styles.cardFooter}>
                     <Group justify="space-between" align="center">
                       <div>
                         {startup.funding_ask !== null && (
@@ -235,12 +236,12 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
 
 export default function StartupsPage({ searchParams }: StartupsPageProps) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
-      <div className="mb-9 max-w-3xl">
+    <div className={styles.pageContainer}>
+      <div className={styles.heroIntro}>
         <Badge variant="light" size="lg">
           Founder marketplace
         </Badge>
-        <Title order={1} mt="md" className="text-balance" fz={{ base: 40, sm: 52 }} lh={1.08}>
+        <Title order={1} mt="md" className={styles.textBalance} fz={{ base: 40, sm: 52 }} lh={1.08}>
           Discover startups building what comes next.
         </Title>
         <Text mt="lg" size="lg" c="dimmed" lh={1.7}>

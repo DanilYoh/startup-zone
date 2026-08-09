@@ -2,6 +2,7 @@ import { Group, Text } from "@mantine/core";
 import { createClient } from "@/lib/supabase/server";
 import { LinkButton } from "./link-button";
 import { LogoutButton } from "./logout-button";
+import styles from "./auth-button.module.css";
 
 export async function AuthButton() {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export async function AuthButton() {
 
   return user ? (
     <Group gap="xs" wrap="nowrap">
-      <Text size="sm" c="dimmed" className="hidden max-w-48 truncate lg:block">
+      <Text size="sm" c="dimmed" className={styles.email}>
         {typeof user.email === "string" ? user.email : "Signed in"}
       </Text>
       <LogoutButton />

@@ -1,6 +1,7 @@
 import { LinkButton } from "@/components/link-button";
 import { listMyApplications } from "@/features/applications/server/queries";
 import { Alert, Badge, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import styles from "../dashboard.module.css";
 
 const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
 
@@ -8,7 +9,7 @@ export default async function MyApplicationsPage() {
   const result = await listMyApplications();
 
   return (
-    <Stack gap="xl" className="w-full">
+    <Stack gap="xl" className={styles.fullWidth}>
       <div>
         <Title order={1}>My applications</Title>
         <Text c="dimmed" mt={6}>Track specialist applications and investor interest requests.</Text>
@@ -36,7 +37,7 @@ export default async function MyApplicationsPage() {
                     {application.type === "team" ? "Specialist application" : "Investor interest"}
                   </Text>
                 </div>
-                <Text className="whitespace-pre-wrap">{application.message}</Text>
+                <Text className={styles.preWrap}>{application.message}</Text>
                 {application.startup.is_active ? (
                   <LinkButton href={`/startups/${application.startup.slug}`} variant="subtle" px={0}>
                     View startup
@@ -52,4 +53,3 @@ export default async function MyApplicationsPage() {
     </Stack>
   );
 }
-

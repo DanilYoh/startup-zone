@@ -2,6 +2,7 @@ import { LinkButton } from "@/components/link-button";
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
 import { Alert, Anchor, Badge, Paper, Stack, Text, Title } from "@mantine/core";
+import styles from "../../dashboard.module.css";
 
 const statusLabels = { pending: "Pending", accepted: "Accepted", rejected: "Rejected" } as const;
 const statusColors = { pending: "yellow", accepted: "teal", rejected: "red" } as const;
@@ -11,14 +12,14 @@ export default async function FounderApplicationsPage() {
 
   if (result.status === "forbidden") {
     return (
-      <Alert color="yellow" title="Founder profile required" className="w-full">
+      <Alert color="yellow" title="Founder profile required" className={styles.fullWidth}>
         Incoming applications are available only to founders.
       </Alert>
     );
   }
 
   if (result.status === "error") {
-    return <Alert color="red" role="alert" className="w-full">Applications could not be loaded. Refresh and try again.</Alert>;
+    return <Alert color="red" role="alert" className={styles.fullWidth}>Applications could not be loaded. Refresh and try again.</Alert>;
   }
 
   const groups = new Map<
@@ -33,7 +34,7 @@ export default async function FounderApplicationsPage() {
   }
 
   return (
-    <Stack gap="xl" className="w-full">
+    <Stack gap="xl" className={styles.fullWidth}>
       <div>
         <Title order={1}>Incoming applications</Title>
         <Text c="dimmed" mt={6}>Review each message once and make a terminal decision.</Text>
@@ -78,8 +79,8 @@ export default async function FounderApplicationsPage() {
                         LinkedIn profile
                       </Anchor>
                     )}
-                    <Paper bg="var(--mantine-color-default-hover)" radius="md" p="md" className="w-full">
-                      <Text className="whitespace-pre-wrap">{application.message}</Text>
+                    <Paper bg="var(--mantine-color-default-hover)" radius="md" p="md" className={styles.messagePanel}>
+                      <Text className={styles.preWrap}>{application.message}</Text>
                     </Paper>
                     {application.status === "pending" && (
                       <ApplicationDecisionForm applicationId={application.id} />

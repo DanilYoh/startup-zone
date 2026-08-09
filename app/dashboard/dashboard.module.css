@@ -1,0 +1,107 @@
+.fullWidth {
+  width: 100%;
+}
+
+.fitWidth,
+.alignStart {
+  align-self: flex-start;
+}
+
+.fitWidth {
+  width: fit-content;
+}
+
+.dashboardGrid {
+  display: grid;
+  width: 100%;
+  gap: 2rem;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heroIdentity {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.security {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.securityList {
+  display: grid;
+  margin-top: 1rem;
+  gap: 0.75rem;
+  color: var(--mantine-color-dimmed);
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+.securityItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.successIcon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--mantine-color-teal-6);
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+}
+
+.preWrap {
+  white-space: pre-wrap;
+}
+
+.messagePanel {
+  width: 100%;
+}
+
+.formPage {
+  display: grid;
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  gap: 1.25rem;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+.formSkeleton {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 40rem) {
+  .heroContent {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .securityList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
