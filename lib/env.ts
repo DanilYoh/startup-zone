@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const environmentNames = ["local", "test", "demo", "production"] as const;
+const vercelEnvironmentNames = ["development", "preview", "production"] as const;
 type Environment = Readonly<Record<string, string | undefined>>;
 
 const httpUrl = z.url().refine(
@@ -17,7 +18,6 @@ const httpsUrl = z.url().refine(
 );
 
 export const productionEnvSchema = z.object({
-  APP_ENVIRONMENT: z.literal("production"),
   NEXT_PUBLIC_SITE_URL: httpsUrl,
   NEXT_PUBLIC_SUPABASE_URL: httpsUrl,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().trim().min(1),
@@ -45,6 +45,9 @@ function issueNames(error: z.ZodError) {
 }
 
 export function isProductionRuntime(environment: Environment = process.env) {
+  if (vercelEnvironmentNames.some((name) => environment.VERCEL_ENV === name)) {
+    return environment.VERCEL_ENV === "production";
+  }
   if (environment.APP_ENVIRONMENT === "production") return true;
   if (environmentNames.some((name) => environment.APP_ENVIRONMENT === name)) return false;
   return environment.NODE_ENV === "production";
@@ -53,7 +56,11 @@ export function isProductionRuntime(environment: Environment = process.env) {
 export function validateProductionEnv(environment: Environment = process.env) {
   if (!isProductionRuntime(environment)) return null;
 
-  const parsed = productionEnvSchema.safeParse(environment);
+  const parsed = productionEnvSchema.safeParse({
+    ...environment,
+    RELEASE_VERSION:
+      environment.RELEASE_VERSION?.trim() || environment.VERCEL_GIT_COMMIT_SHA?.trim(),
+  });
   if (!parsed.success) {
     throw new Error(
       `Invalid production environment. Check required variables: ${issueNames(parsed.error)}.`,

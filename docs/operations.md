@@ -255,6 +255,13 @@ Before shifting
 traffic, run the critical browser flows against the production candidate and
 check the Supabase gateway, Auth SMTP delivery, and database separately.
 
+Vercel deployments use the platform-owned `VERCEL_ENV` value to distinguish
+Preview from Production even though both build with `NODE_ENV=production`.
+Preview must not inherit Production-only Supabase credentials. In Vercel
+Production, the automatically exposed immutable `VERCEL_GIT_COMMIT_SHA` may
+satisfy the release-version gate; non-Vercel production deployments must set
+`RELEASE_VERSION` explicitly.
+
 ## Production preflight
 
 After deployment, DNS, and TLS are active but before public invitations or user

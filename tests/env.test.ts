@@ -45,6 +45,43 @@ describe("runtime environment", () => {
     );
   });
 
+  it("does not mistake a Vercel Preview build for production", () => {
+    const previewEnvironment = {
+      NODE_ENV: "production",
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "startup-zone-preview.vercel.app",
+    };
+
+    expect(isProductionRuntime(previewEnvironment)).toBe(false);
+    expect(validateProductionEnv(previewEnvironment)).toBeNull();
+    expect(getSiteOrigin(previewEnvironment)).toBe(
+      "https://startup-zone-preview.vercel.app",
+    );
+  });
+
+  it("keeps Vercel production fail-closed and uses its immutable commit SHA", () => {
+    const vercelProductionEnvironment = {
+      ...productionEnvironment,
+      APP_ENVIRONMENT: "test",
+      RELEASE_VERSION: undefined,
+      VERCEL_ENV: "production",
+      VERCEL_GIT_COMMIT_SHA: "bf9eced21954aaeb24951b9248374e5d4d9e5fce",
+    };
+
+    expect(isProductionRuntime(vercelProductionEnvironment)).toBe(true);
+    expect(validateProductionEnv(vercelProductionEnvironment)).toMatchObject({
+      RELEASE_VERSION: "bf9eced21954aaeb24951b9248374e5d4d9e5fce",
+    });
+    expect(() =>
+      validateProductionEnv({
+        APP_ENVIRONMENT: "test",
+        NODE_ENV: "production",
+        VERCEL_ENV: "production",
+        VERCEL_GIT_COMMIT_SHA: "bf9eced21954aaeb24951b9248374e5d4d9e5fce",
+      }),
+    ).toThrow(/NEXT_PUBLIC_SITE_URL/u);
+  });
+
   it("allows a localhost fallback only for an explicit non-production environment", () => {
     expect(getSiteOrigin({ APP_ENVIRONMENT: "local", NODE_ENV: "production" })).toBe(
       "http://localhost:3000",
