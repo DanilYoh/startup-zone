@@ -77,7 +77,10 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Verify upgrade from the immutable April schema
         run: |
-          npx supabase db reset --local --version 20260401102910 --sql-paths ./tests/upgrade/legacy-fixture.sql
+          # This destructive fixture is allowed only on the disposable local stack
+          # started by this job. It is deliberately outside supabase/tests so a
+          # remote `supabase test db` invocation can never discover it.
+          npx supabase db reset --local --version 20260401102910 --sql-paths ./fixtures/upgrade/legacy-fixture.sql
           npx supabase migration up --local
           npx supabase test db supabase/tests/upgrade/verify.sql
       - name: Verify migrations on a clean database
