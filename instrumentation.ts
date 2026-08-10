@@ -1,7 +1,12 @@
 import { logServerError, logServerInfo } from "@/lib/logger";
+import { validateProductionEnv } from "@/lib/env";
+import * as Sentry from "@sentry/nextjs";
 import type { Instrumentation } from "next";
 
-export function register() {
+export async function register() {
+  validateProductionEnv();
+  if (process.env.NEXT_RUNTIME === "nodejs") await import("./sentry.server.config");
+  if (process.env.NEXT_RUNTIME === "edge") await import("./sentry.edge.config");
   logServerInfo("server.started", { runtime: process.env.NEXT_RUNTIME ?? "unknown" });
 }
 
@@ -24,4 +29,5 @@ export const onRequestError: Instrumentation.onRequestError = (
     route: context.routePath,
     routeType: context.routeType,
   });
+  Sentry.captureRequestError(error, request, context);
 };

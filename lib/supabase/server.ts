@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/env";
+import { cookies, headers } from "next/headers";
 import type { Database } from "./types";
 
 /**
@@ -8,12 +9,15 @@ import type { Database } from "./types";
  * it.
  */
 export async function createClient() {
-  const cookieStore = await cookies();
+  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const environment = getSupabaseEnv();
+  const requestId = requestHeaders.get("x-request-id");
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    environment.NEXT_PUBLIC_SUPABASE_URL,
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
+      global: requestId ? { headers: { "x-request-id": requestId } } : undefined,
       cookies: {
         getAll() {
           return cookieStore.getAll();
