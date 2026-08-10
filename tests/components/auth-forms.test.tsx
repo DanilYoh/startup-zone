@@ -6,7 +6,8 @@ import { render, screen, userEvent } from "../test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicLegalConfig } from "@/features/legal/types";
 
-const { signInMock, signUpMock } = vi.hoisted(() => ({
+const { signInDemoMock, signInMock, signUpMock } = vi.hoisted(() => ({
+  signInDemoMock: vi.fn(),
   signInMock: vi.fn(),
   signUpMock: vi.fn(),
 }));
@@ -24,15 +25,31 @@ const localLegalConfig: PublicLegalConfig = {
 
 vi.mock("@/features/auth/server/actions", () => ({
   signIn: signInMock,
+  signInDemo: signInDemoMock,
   signUp: signUpMock,
 }));
 
 beforeEach(() => {
+  signInDemoMock.mockReset();
   signInMock.mockReset();
   signUpMock.mockReset();
 });
 
 describe("authentication forms", () => {
+  it("offers both one-click roles only in the isolated demo", async () => {
+    signInDemoMock.mockResolvedValue({ status: "idle" });
+    const user = userEvent.setup();
+
+    const { rerender } = render(<LoginForm />);
+    expect(screen.queryByRole("button", { name: "Войти как основатель" })).not.toBeInTheDocument();
+
+    rerender(<LoginForm demoAccessEnabled />);
+    await user.click(screen.getByRole("button", { name: "Войти как инвестор" }));
+
+    expect(signInDemoMock).toHaveBeenCalledOnce();
+    expect(signInDemoMock.mock.calls[0]?.[1].get("role")).toBe("investor");
+  });
+
   it("submits credentials and presents a stable sign-in error", async () => {
     signInMock.mockResolvedValue({
       status: "error",

@@ -1,5 +1,6 @@
 import {
   signIn,
+  signInDemo,
   signUp,
   type SignInActionState,
   type SignUpActionState,
@@ -82,6 +83,37 @@ afterEach(() => {
 });
 
 describe("auth Server Actions", () => {
+  it("signs into the isolated demo without exposing shared credentials", async () => {
+    vi.stubEnv("APP_ENVIRONMENT", "demo");
+    vi.stubEnv("DEMO_ACCESS_ENABLED", "true");
+    vi.stubEnv("DEMO_FOUNDER_EMAIL", "founder@example.test");
+    vi.stubEnv("DEMO_FOUNDER_PASSWORD", "founder-password");
+    vi.stubEnv("DEMO_INVESTOR_EMAIL", "investor@example.test");
+    vi.stubEnv("DEMO_INVESTOR_PASSWORD", "investor-password");
+    signInWithPasswordMock.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("role", "founder");
+
+    await expect(signInDemo(initialSignInState, formData)).rejects.toThrow(
+      "REDIRECT:/dashboard",
+    );
+    expect(signInWithPasswordMock).toHaveBeenCalledWith({
+      email: "founder@example.test",
+      password: "founder-password",
+    });
+  });
+
+  it("rejects demo login outside the isolated demo environment", async () => {
+    const formData = new FormData();
+    formData.set("role", "investor");
+
+    await expect(signInDemo(initialSignInState, formData)).resolves.toEqual({
+      status: "error",
+      message: "Демонстрационный вход недоступен.",
+    });
+    expect(signInWithPasswordMock).not.toHaveBeenCalled();
+  });
+
   it("uses the repository callback for hosted email confirmation", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://startup.example/some-path");
     signUpMock.mockResolvedValue({ data: { session: null }, error: null });
