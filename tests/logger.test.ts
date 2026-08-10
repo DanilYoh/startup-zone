@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { logServerError, logServerInfo } from "../lib/logger";
+import { logRequestError, logServerError, logServerInfo } from "../lib/logger";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -34,6 +34,18 @@ describe("server logger", () => {
       level: "error",
       event: "application.create_failed",
       code: "P0001",
+    });
+  });
+
+  it("still writes request errors outside a request context", async () => {
+    const output = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await logRequestError("background.failed", { code: "08006" });
+
+    expect(JSON.parse(String(output.mock.calls[0][0]))).toMatchObject({
+      level: "error",
+      event: "background.failed",
+      code: "08006",
     });
   });
 });

@@ -7,12 +7,13 @@ import {
   type SignUpInput,
 } from "@/features/auth/schemas";
 import { logRequestError } from "@/lib/logger";
+import { getDemoCredentials, getSiteOrigin, isDemoAccessEnabled } from "@/lib/env";
 import { getPublicLegalConfig } from "@/features/legal/server/config";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 export type SignUpActionState = {
   status: "idle" | "error";
@@ -26,16 +27,7 @@ export type SignInActionState = {
   errors?: Partial<Record<keyof SignInInput, string[]>>;
 };
 
-function normalizeOrigin(value: string | null) {
-  if (!value) return null;
-
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:" ? url.origin : null;
-  } catch {
-    return null;
-  }
-}
+export type DemoSignInActionState = SignInActionState;
 
 function hashBetaInvitationCode(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -105,9 +97,7 @@ export async function signUp(
     };
   }
 
-  const requestOrigin = normalizeOrigin((await headers()).get("origin"));
-  const configuredOrigin = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL ?? null);
-  const origin = configuredOrigin ?? requestOrigin ?? "http://localhost:3000";
+  const origin = getSiteOrigin();
   const { data, error } = await supabase.auth.signUp({
     email: validated.data.email,
     password: validated.data.password,
@@ -170,6 +160,36 @@ export async function signIn(
         error.status === 429
           ? "Слишком много попыток входа. Подождите и попробуйте снова."
           : "Неверная электронная почта или пароль.",
+    };
+  }
+
+  redirect("/dashboard");
+}
+
+export async function signInDemo(
+  _previousState: DemoSignInActionState,
+  formData: FormData,
+): Promise<DemoSignInActionState> {
+  if (!isDemoAccessEnabled()) {
+    return { status: "error", message: "Демонстрационный вход недоступен." };
+  }
+
+  const role = z.enum(["founder", "investor"]).safeParse(formData.get("role"));
+  if (!role.success) {
+    return { status: "error", message: "Неизвестная демонстрационная роль." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(getDemoCredentials(role.data));
+  if (error) {
+    await logRequestError("auth.demo_signin_failed", {
+      code: error.code,
+      role: role.data,
+      status: error.status,
+    });
+    return {
+      status: "error",
+      message: "Демонстрационный вход временно недоступен. Попробуйте позже.",
     };
   }
 

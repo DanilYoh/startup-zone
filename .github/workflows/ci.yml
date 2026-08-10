@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
+      APP_ENVIRONMENT: test
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
       NEXT_PUBLIC_SITE_URL: https://example.com
+      RELEASE_VERSION: ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +28,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Check Markdown links
+        run: npm run docs:links
       - name: Lint, type-check, and test
         run: npm run check
       - name: Enforce test coverage thresholds
@@ -46,6 +50,7 @@ jobs:
             --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
             --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
             --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+            --build-arg RELEASE_VERSION="$RELEASE_VERSION" \
             --tag startup-zone:ci \
             .
 
@@ -77,7 +82,10 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Verify upgrade from the immutable April schema
         run: |
-          npx supabase db reset --local --version 20260401102910 --sql-paths ./tests/upgrade/legacy-fixture.sql
+          # This destructive fixture is allowed only on the disposable local stack
+          # started by this job. It is deliberately outside supabase/tests so a
+          # remote `supabase test db` invocation can never discover it.
+          npx supabase db reset --local --version 20260401102910 --sql-paths ./fixtures/upgrade/legacy-fixture.sql
           npx supabase migration up --local
           npx supabase test db supabase/tests/upgrade/verify.sql
       - name: Verify migrations on a clean database

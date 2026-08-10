@@ -59,7 +59,7 @@ jobs:
       - name: Apply pending migrations
         run: npx supabase db push --db-url "$SUPABASE_TEST_DB_URL" --include-all --yes
       - name: Test remote database authorization
-        run: npx supabase test db --db-url "$SUPABASE_TEST_DB_URL"
+        run: npx supabase test db supabase/tests/database --db-url "$SUPABASE_TEST_DB_URL"
       - name: Lint, type-check, and unit test
         run: npm run check
       - name: Build production bundle

@@ -1,15 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isProtectedPathname } from "../routing";
+import { requestIdFromHeaders } from "../request-id";
+import { getSupabaseEnv } from "../env";
 import { hasEnvVars } from "../utils";
 import type { Database } from "./types";
 
 export async function updateSession(request: NextRequest) {
-  const incomingRequestId = request.headers.get("x-request-id");
-  const requestId =
-    incomingRequestId && /^[a-zA-Z0-9._:-]{1,128}$/.test(incomingRequestId)
-      ? incomingRequestId
-      : crypto.randomUUID();
+  const requestId = requestIdFromHeaders(request.headers);
 
   const createForwardResponse = () => {
     const requestHeaders = new Headers(request.headers);
@@ -41,10 +39,12 @@ export async function updateSession(request: NextRequest) {
 
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
+  const environment = getSupabaseEnv();
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    environment.NEXT_PUBLIC_SUPABASE_URL,
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
+      global: { headers: { "x-request-id": requestId } },
       cookies: {
         getAll() {
           return request.cookies.getAll();

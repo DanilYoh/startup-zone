@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Button, Stack, Title } from "@mantine/core";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import styles from "./status.module.css";
 
@@ -12,8 +13,7 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Next.js instrumentation records the sanitized server-side failure.
-    void error.digest;
+    Sentry.captureException(error);
   }, [error]);
 
   return (

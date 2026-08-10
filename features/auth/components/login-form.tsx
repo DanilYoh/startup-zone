@@ -1,6 +1,11 @@
 "use client";
 
-import { signIn, type SignInActionState } from "@/features/auth/server/actions";
+import {
+  signIn,
+  signInDemo,
+  type DemoSignInActionState,
+  type SignInActionState,
+} from "@/features/auth/server/actions";
 import type { SignInInput } from "@/features/auth/schemas";
 import {
   Alert,
@@ -18,12 +23,18 @@ import { useActionState } from "react";
 import styles from "./auth-form.module.css";
 
 const initialState: SignInActionState = { status: "idle" };
+const initialDemoState: DemoSignInActionState = { status: "idle" };
 
 export function LoginForm({
   className,
+  demoAccessEnabled = false,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { demoAccessEnabled?: boolean }) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
+  const [demoState, demoAction, demoPending] = useActionState(
+    signInDemo,
+    initialDemoState,
+  );
   const fieldError = (field: keyof SignInInput) => state.errors?.[field]?.[0];
 
   return (
@@ -68,6 +79,32 @@ export function LoginForm({
               <Anchor component={Link} href="/auth/sign-up">Зарегистрироваться</Anchor>
             </Text>
           </form>
+          {demoAccessEnabled && (
+            <Stack gap="sm">
+              <Text c="dimmed" size="sm" ta="center">
+                Или откройте изолированную демосреду без регистрации
+              </Text>
+              <Stack gap="sm">
+                <form action={demoAction}>
+                  <input type="hidden" name="role" value="founder" />
+                  <Button type="submit" variant="outline" fullWidth loading={demoPending}>
+                    Войти как основатель
+                  </Button>
+                </form>
+                <form action={demoAction}>
+                  <input type="hidden" name="role" value="investor" />
+                  <Button type="submit" variant="outline" fullWidth loading={demoPending}>
+                    Войти как инвестор
+                  </Button>
+                </form>
+              </Stack>
+              {demoState.message && (
+                <Alert color="red" variant="light" role="alert">
+                  {demoState.message}
+                </Alert>
+              )}
+            </Stack>
+          )}
         </Stack>
       </Paper>
     </div>

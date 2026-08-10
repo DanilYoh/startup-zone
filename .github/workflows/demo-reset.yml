@@ -1,0 +1,42 @@
+name: Reset isolated demo data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-data-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: Demo
+    env:
+      APP_ENVIRONMENT: demo
+      ALLOW_DEMO_SEED: "true"
+      DEMO_SEED_PROJECT_REF: ${{ vars.DEMO_SEED_PROJECT_REF }}
+      LEGAL_DOCUMENT_VERSION: ${{ vars.LEGAL_DOCUMENT_VERSION }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEMO_FOUNDER_EMAIL: ${{ vars.DEMO_FOUNDER_EMAIL }}
+      DEMO_FOUNDER_PASSWORD: ${{ secrets.DEMO_FOUNDER_PASSWORD }}
+      DEMO_INVESTOR_EMAIL: ${{ vars.DEMO_INVESTOR_EMAIL }}
+      DEMO_INVESTOR_PASSWORD: ${{ secrets.DEMO_INVESTOR_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Reset synthetic demo records
+        run: npm run demo:seed

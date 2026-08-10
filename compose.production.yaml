@@ -9,9 +9,12 @@ services:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?Set NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?Set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        RELEASE_VERSION: ${RELEASE_VERSION:?Set RELEASE_VERSION}
     environment:
       APP_ENVIRONMENT: production
       RELEASE_VERSION: ${RELEASE_VERSION:?Set RELEASE_VERSION}
+      SENTRY_DSN: ${SENTRY_DSN:-}
       LEGAL_DOCUMENT_APPROVED: ${LEGAL_DOCUMENT_APPROVED:-false}
       LEGAL_DOCUMENT_VERSION: ${LEGAL_DOCUMENT_VERSION:-}
       LEGAL_DOCUMENT_EFFECTIVE_DATE: ${LEGAL_DOCUMENT_EFFECTIVE_DATE:-}
@@ -30,7 +33,7 @@ services:
     volumes:
       - next_cache:/app/.next/cache
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/readyz"]
       interval: 30s
       timeout: 5s
       start_period: 15s

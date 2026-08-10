@@ -2,7 +2,7 @@
 
 Startup Zone is a focused marketplace MVP where founders publish projects and investors discover, qualify, and contact early-stage startups.
 
-**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** — create a founder or investor account to try the complete marketplace flow against isolated synthetic data.
+**[Open the public demo](https://startup-zone-danilyoh.vercel.app)** to browse the synthetic startup directory without an account. An isolated demo deployment can enable “Войти как основатель” and “Войти как инвестор” on the login page; its shared records reset automatically. Registration for a personal closed-beta account still requires an invitation.
 
 ## Current scope
 
@@ -18,15 +18,16 @@ Implemented:
 - founder moderation with database-enforced terminal decisions and consent-based private contact exchange after acceptance;
 - filterable, paginated public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
-- request-correlated structured server logs, unexpected request capture, application rate limiting, and decision auditing;
+- request-correlated structured server logs, Sentry-compatible server/client error tracking, unexpected request capture, application rate limiting, and decision auditing;
+- separate `/healthz` liveness and bounded `/readyz` Supabase readiness probes, plus a restrictive Content Security Policy;
 - responsive light and dark UI;
 - Vitest, React Testing Library, Playwright, and GitHub Actions coverage for core flows.
 
 The decision-oriented field model for each role is documented in [profile structure](docs/profile-structure.md).
 
-Deployment gates, environment isolation, monitoring gaps, and backup/restore drills are documented in [operations](docs/operations.md). The low-cost, Russia-hosted production topology and market-entry sequence are documented in the [Russia launch plan](docs/russia-launch-plan.md). The repository provides a structured-logging baseline; it does not include an external monitoring backend, verified ingestion, metrics, alerts, or client-error collection.
+Deployment gates, environment isolation, monitoring, and backup/restore drills are documented in [operations](docs/operations.md). The low-cost, Russia-hosted production topology and market-entry sequence are documented in the [Russia launch plan](docs/russia-launch-plan.md). Architecture trade-offs are recorded in the [ADR index](docs/adr/README.md), and the role of AI-assisted tooling is disclosed in [AI_USAGE.md](AI_USAGE.md).
 
-The public demo never uses production data or a service-role key at runtime. Operators can populate an isolated demo or test project with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, and an exact `DEMO_SEED_PROJECT_REF` match.
+The public demo never uses production data or a service-role key at runtime. Operators reset its two synthetic accounts, startups, pending application, and accepted contact-exchange scenario with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, an exact `DEMO_SEED_PROJECT_REF` match, and server-only demo credentials. The scheduled workflow performs the same guarded reset daily.
 
 Trusted operators create a one-time invitation with `npm run beta:invite -- --email person@example.ru --role founder`. The command requires explicit `ALLOW_BETA_INVITE_CREATE=true`, an exact `BETA_INVITE_TARGET_URL` match, and a service-role key that is never configured in the application runtime. Full production usage is documented in [operations](docs/operations.md#closed-beta-invitations).
 
@@ -70,7 +71,7 @@ npm run test:e2e
 
 `npm run check` runs linting, type-checking, unit tests, and component tests. RLS and E2E tests require a local or explicitly designated test Supabase environment; E2E also requires `SUPABASE_SERVICE_ROLE_KEY`.
 
-Coverage includes all executable application, component, feature, and shared-library files, counting untested files as zero. Its threshold is a regression floor; pgTAP and Playwright remain the authoritative checks for database authorization and complete product flows.
+Coverage includes all executable application, component, feature, and shared-library files, counting untested files as zero. The global line floor is 60%; critical Server Actions have an additional 80% floor. pgTAP and Playwright remain the authoritative checks for database authorization and complete product flows.
 
 For clean migration verification, release checks, environment separation, logging, rate limits, and recovery procedures, see [docs/operations.md](docs/operations.md).
 

@@ -73,6 +73,7 @@ function successfulDependencies(config: ReturnType<typeof validateProductionPref
   const fetchImpl = vi.fn(async (input: string | URL | Request) => {
     const url = input.toString();
     if (url.endsWith("/healthz")) return response({ status: "ok" });
+    if (url.endsWith("/readyz")) return response({ status: "ok" });
     if (url.endsWith("/auth/v1/health")) return response("ok");
     if (url.endsWith("/auth/sign-up")) return response(`${legalHtml} Код приглашения`);
     return response(legalHtml);
@@ -149,7 +150,7 @@ describe("production preflight checks", () => {
         supabase: "https://api.startup-zone.ru",
       },
     });
-    expect(report.checks).toHaveLength(8);
+    expect(report.checks).toHaveLength(9);
     expect(JSON.stringify(report)).not.toContain(config.publishableKey);
     expect(JSON.stringify(report)).not.toContain(config.serviceRoleKey);
     expect(dependencies.publicClient.rpc).toHaveBeenCalledWith("is_beta_invitation_valid", {
@@ -169,6 +170,7 @@ describe("production preflight checks", () => {
     dependencies.fetchImpl.mockImplementation(async (input: string | URL | Request) => {
       const url = input.toString();
       if (url.endsWith("/healthz")) return response({ status: "ok" });
+      if (url.endsWith("/readyz")) return response({ status: "ok" });
       if (url.endsWith("/auth/v1/health")) return response("ok");
       return response("stale legal content");
     });

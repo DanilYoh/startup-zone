@@ -252,6 +252,20 @@ export async function runProductionPreflight({
   }
   checks.push(checkResult("application_liveness", "GET /healthz reported status=ok"));
 
+  const appReadiness = await fetchResponse(fetchImpl, `${config.siteOrigin}/readyz`, {}, "Application readiness");
+  let appReadinessBody;
+
+  try {
+    appReadinessBody = await appReadiness.json();
+  } catch {
+    throw new Error("Application readiness returned invalid JSON.");
+  }
+
+  if (appReadinessBody?.status !== "ok") {
+    throw new Error("Application readiness did not report status=ok.");
+  }
+  checks.push(checkResult("application_readiness", "GET /readyz reached the database"));
+
   await fetchResponse(
     fetchImpl,
     `${config.supabaseOrigin}/auth/v1/health`,
