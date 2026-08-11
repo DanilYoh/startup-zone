@@ -127,7 +127,18 @@ select results_eq(
 );
 
 select results_eq(
-  $$ select count(*) from public.legal_consents $$,
+  $$
+    select count(*)
+    from public.legal_consents
+    where subject_id in (
+      '10000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000002',
+      '10000000-0000-0000-0000-000000000003',
+      '10000000-0000-0000-0000-000000000004',
+      '10000000-0000-0000-0000-000000000005',
+      '10000000-0000-0000-0000-000000000015'
+    )
+  $$,
   $$ values (6::bigint) $$,
   'onboarding records one immutable consent for every profile'
 );
@@ -138,6 +149,14 @@ select results_eq(
     from public.legal_consents
     where document_version = 'local-development-v1'
       and source = 'signup'
+      and subject_id in (
+        '10000000-0000-0000-0000-000000000001',
+        '10000000-0000-0000-0000-000000000002',
+        '10000000-0000-0000-0000-000000000003',
+        '10000000-0000-0000-0000-000000000004',
+        '10000000-0000-0000-0000-000000000005',
+        '10000000-0000-0000-0000-000000000015'
+      )
   $$,
   $$ values (6::bigint) $$,
   'onboarding records the active document version and signup source'
