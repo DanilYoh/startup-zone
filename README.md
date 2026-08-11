@@ -21,13 +21,13 @@ Implemented:
 - request-correlated structured server logs, Sentry-compatible server/client error tracking, unexpected request capture, application rate limiting, and decision auditing;
 - separate `/healthz` liveness and bounded `/readyz` Supabase readiness probes, plus a restrictive Content Security Policy;
 - responsive light and dark UI;
-- Vitest, React Testing Library, Playwright, and GitHub Actions coverage for core flows.
+- Vitest, React Testing Library, Playwright, CodeQL, container scanning, SBOM generation, and GitHub Actions coverage for core flows.
 
 The decision-oriented field model for each role is documented in [profile structure](docs/profile-structure.md).
 
 Deployment gates, environment isolation, monitoring, and backup/restore drills are documented in [operations](docs/operations.md). The low-cost, Russia-hosted production topology and market-entry sequence are documented in the [Russia launch plan](docs/russia-launch-plan.md). Architecture trade-offs are recorded in the [ADR index](docs/adr/README.md), and the role of AI-assisted tooling is disclosed in [AI_USAGE.md](AI_USAGE.md).
 
-The public demo never uses production data, shared credentials, or a service-role key at runtime. Operators reset its synthetic records with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, an exact `DEMO_SEED_PROJECT_REF` match, and workflow-only synthetic account credentials. The scheduled workflow performs the same guarded reset.
+The public demo never uses production data, shared credentials, or a service-role key at runtime. Operators reset its synthetic records with `npm run demo:seed`; the command additionally requires `APP_ENVIRONMENT`, `ALLOW_DEMO_SEED=true`, an exact `DEMO_SEED_PROJECT_REF` match, and workflow-only synthetic account credentials. The scheduled workflow reports a successful skip until every GitHub `Demo` value is configured.
 
 Trusted operators create a one-time invitation with `npm run beta:invite -- --email person@example.ru --role founder`. The command requires explicit `ALLOW_BETA_INVITE_CREATE=true`, an exact `BETA_INVITE_TARGET_URL` match, and a service-role key that is never configured in the application runtime. Full production usage is documented in [operations](docs/operations.md#closed-beta-invitations).
 

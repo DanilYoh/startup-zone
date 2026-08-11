@@ -20,14 +20,14 @@ jobs:
       RELEASE_VERSION: ci
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Check Markdown links
         run: npm run docs:links
       - name: Lint, type-check, and test
@@ -44,7 +44,7 @@ jobs:
             --env SUPABASE_DOMAIN=api.example.com \
             --env SUPABASE_UPSTREAM=host.docker.internal:8000 \
             --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
-            caddy:2-alpine \
+            caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           docker build \
             --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
@@ -53,20 +53,40 @@ jobs:
             --build-arg RELEASE_VERSION="$RELEASE_VERSION" \
             --tag startup-zone:ci \
             .
+      - name: Save production container
+        run: docker save startup-zone:ci --output /tmp/startup-zone-image.tar
+      - name: Scan production container
+        run: |
+          docker run --rm \
+            --volume /tmp:/scan \
+            aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c \
+            image --input /scan/startup-zone-image.tar --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed
+      - name: Generate container SBOM
+        run: |
+          docker run --rm \
+            --volume /tmp:/scan \
+            aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c \
+            image --input /scan/startup-zone-image.tar --format cyclonedx --output /scan/startup-zone.cdx.json
+      - name: Upload container SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: startup-zone-container-sbom
+          path: /tmp/startup-zone.cdx.json
+          if-no-files-found: error
 
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Start local Supabase
         run: npx supabase start
       - name: Export local test environment

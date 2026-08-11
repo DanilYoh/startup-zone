@@ -91,9 +91,11 @@ three startups, and pending/accepted application examples. It refuses to start u
 is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
 configured project ref exactly matches the Supabase URL. It rejects production
 even when the other flags are present. `.github/workflows/demo-reset.yml` runs
-this same guarded command daily using only the GitHub `Demo` environment. The
-synthetic accounts are reset fixtures rather than visitor login identities and
-must never contain real personal data.
+this same guarded command daily using only the GitHub `Demo` environment. A
+dependency-free preflight reports a successful skip before dependency
+installation when any required value is missing. The synthetic accounts are
+reset fixtures rather than visitor login identities and must never contain real
+personal data.
 
 The web deployment enables read-only links to the persisted catalog and demo
 project only with `APP_ENVIRONMENT=demo` and `DEMO_READ_ONLY_ENABLED=true`.
@@ -206,7 +208,7 @@ operator fields is a `NEXT_PUBLIC_*` build argument.
 Run this sequence from a clean checkout before deployment:
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 npm run check
 npm run build
 docker compose --env-file .env.example -f compose.production.yaml config --quiet
@@ -215,7 +217,7 @@ docker run --rm \
   --env SUPABASE_DOMAIN=api.example.com \
   --env SUPABASE_UPSTREAM=host.docker.internal:8000 \
   --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
-  caddy:2-alpine \
+  caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 \
   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
@@ -228,6 +230,15 @@ npx supabase db reset --local --no-seed
 npm run test:rls
 npm run test:e2e
 ```
+
+GitHub Actions and production container bases are pinned to immutable commit
+SHAs or manifest digests. CI installs locked dependencies with lifecycle scripts
+disabled, runs CodeQL, scans the built image for high and critical findings, and
+uploads a CycloneDX container SBOM. Staging database credentials and demo reset
+credentials are scoped only to the exact validation, migration, database-test,
+reset, or E2E step that consumes them; build and dependency-install steps never
+receive service-role or database-password secrets. Dependabot tracks npm,
+Actions, and Docker updates so these pins are refreshed through reviewable PRs.
 
 Apply additive migrations to the designated test project before production.
 Verify signup for both roles, role-specific profile editing, startup publication
@@ -357,8 +368,6 @@ Never overwrite production as part of a restore drill.
 
 ## Known limitations
 
-- The demo accounts are shared, so simultaneous visitors can observe or change
-  the same synthetic workflow until the next daily reset.
 - Offset pagination is simple and bounded but may shift when rows are inserted
   between page requests; cursor pagination is deferred until traffic warrants it.
 - The closed beta has no operator UI; invitations and production preflight are
