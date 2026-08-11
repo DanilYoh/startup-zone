@@ -25,7 +25,7 @@ values
   (repeat('3', 64), 'applicant@example.test', 'investor', now() + interval '1 day'),
   (repeat('4', 64), 'other-founder@example.test', 'founder', now() + interval '1 day'),
   (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day'),
-  (repeat('7', 64), 'deletion@example.test', 'investor', now() + interval '1 day');
+  (repeat('a', 64), 'deletion@example.test', 'investor', now() + interval '1 day');
 
 set local role anon;
 
@@ -101,9 +101,9 @@ values
     '{"role":"investor","full_name":"Test Investor","beta_invitation_hash":"5555555555555555555555555555555555555555555555555555555555555555","legal_consent":true,"legal_document_version":"local-development-v1"}'
   ),
   (
-    '10000000-0000-0000-0000-000000000007',
+    '10000000-0000-0000-0000-000000000015',
     'deletion@example.test',
-    '{"role":"investor","full_name":"Deletion Test","beta_invitation_hash":"7777777777777777777777777777777777777777777777777777777777777777","legal_consent":true,"legal_document_version":"local-development-v1"}'
+    '{"role":"investor","full_name":"Deletion Test","beta_invitation_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
 
 select results_eq(
@@ -458,7 +458,7 @@ select throws_like(
 reset role;
 
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000007', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000015', true);
 
 select results_eq(
   $$ select public.export_my_personal_data() -> 'account' ->> 'email' $$,
@@ -477,8 +477,8 @@ reset role;
 select results_eq(
   $$
     select
-      (select count(*) from auth.users where id = '10000000-0000-0000-0000-000000000007'),
-      (select count(*) from public.profiles where id = '10000000-0000-0000-0000-000000000007')
+      (select count(*) from auth.users where id = '10000000-0000-0000-0000-000000000015'),
+      (select count(*) from public.profiles where id = '10000000-0000-0000-0000-000000000015')
   $$,
   $$ values (0::bigint, 0::bigint) $$,
   'account deletion removes both Auth identity and product profile'
@@ -499,7 +499,7 @@ select results_eq(
   $$
     select email, used_by, used_at is not null
     from public.beta_invitations
-    where code_hash = repeat('7', 64)
+    where code_hash = repeat('a', 64)
   $$,
   $$ values (null::text, null::uuid, true) $$,
   'a consumed invitation remains consumed after its personal identifiers are erased'

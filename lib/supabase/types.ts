@@ -175,6 +175,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_reports_startup_id_fkey"
             columns: ["startup_id"]
             isOneToOne: false
@@ -452,6 +459,9 @@ export type Database = {
         Args: { target_profile_id: string }
         Returns: boolean
       }
+      delete_my_account: { Args: never; Returns: boolean }
+      export_my_personal_data: { Args: never; Returns: Json }
+      external_url_hostname: { Args: { value: string }; Returns: string }
       is_beta_invitation_valid: {
         Args: {
           candidate_email: string
@@ -460,11 +470,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      delete_my_account: { Args: Record<PropertyKey, never>; Returns: boolean }
-      export_my_personal_data: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      is_pitch_deck_url: { Args: { value: string }; Returns: boolean }
+      is_public_https_url: { Args: { value: string }; Returns: boolean }
       report_startup_link: {
         Args: {
           reported_link_kind: string
