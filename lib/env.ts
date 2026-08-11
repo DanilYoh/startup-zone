@@ -31,11 +31,7 @@ const supabaseEnvSchema = z.object({
 
 const demoEnvSchema = z.object({
   APP_ENVIRONMENT: z.literal("demo"),
-  DEMO_ACCESS_ENABLED: z.literal("true"),
-  DEMO_FOUNDER_EMAIL: z.email(),
-  DEMO_FOUNDER_PASSWORD: z.string().min(12),
-  DEMO_INVESTOR_EMAIL: z.email(),
-  DEMO_INVESTOR_PASSWORD: z.string().min(12),
+  DEMO_READ_ONLY_ENABLED: z.literal("true"),
 });
 
 function issueNames(error: z.ZodError) {
@@ -110,28 +106,14 @@ export function getSiteOrigin(environment: Environment = process.env) {
   return "http://localhost:3000";
 }
 
-export function isDemoAccessEnabled(environment: Environment = process.env) {
-  if (environment.DEMO_ACCESS_ENABLED !== "true") return false;
+export function isReadOnlyDemoEnabled(environment: Environment = process.env) {
+  if (environment.DEMO_READ_ONLY_ENABLED !== "true") return false;
 
   const parsed = demoEnvSchema.safeParse(environment);
   if (!parsed.success) {
     throw new Error(
-      `Invalid demo access environment. Check required variables: ${issueNames(parsed.error)}.`,
+      `Invalid read-only demo environment. Check required variables: ${issueNames(parsed.error)}.`,
     );
   }
   return true;
-}
-
-export function getDemoCredentials(
-  role: "founder" | "investor",
-  environment: Environment = process.env,
-) {
-  const parsed = demoEnvSchema.safeParse(environment);
-  if (!parsed.success) {
-    throw new Error("Demo access is not configured.");
-  }
-
-  return role === "founder"
-    ? { email: parsed.data.DEMO_FOUNDER_EMAIL, password: parsed.data.DEMO_FOUNDER_PASSWORD }
-    : { email: parsed.data.DEMO_INVESTOR_EMAIL, password: parsed.data.DEMO_INVESTOR_PASSWORD };
 }

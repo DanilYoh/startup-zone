@@ -15,12 +15,12 @@ Use three isolated Supabase environments:
 - demo/test, containing synthetic data only and disposable credentials;
 - production, available only to the deployment runtime and approved operators.
 
-The public portfolio deployment may use the demo project so visitors can
-complete the marketplace flows through two shared synthetic accounts. Its
-runtime receives the project URL, publishable key, draft legal metadata, and
-server-only demo passwords. The service-role key remains restricted to the
-guarded reset workflow and is never configured in Vercel or another public
-application runtime.
+The public portfolio deployment may use the demo project so visitors can browse
+persisted synthetic startups through read-only public routes. Visitors never
+receive an Auth session for a shared synthetic account. The application runtime
+receives only the project URL, publishable key, and draft legal metadata; demo
+account passwords and the service-role key remain restricted to the guarded
+reset workflow and are never configured in Vercel or another public runtime.
 
 CI starts a fresh local Supabase stack, resets it from every migration with
 `npx supabase db reset --local --no-seed`. It also resets specifically to the
@@ -91,15 +91,14 @@ three startups, and pending/accepted application examples. It refuses to start u
 is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
 configured project ref exactly matches the Supabase URL. It rejects production
 even when the other flags are present. `.github/workflows/demo-reset.yml` runs
-this same guarded command daily using only the GitHub `Demo` environment. A
-shared demo can still be modified between resets and must never contain real
-personal data.
+this same guarded command daily using only the GitHub `Demo` environment. The
+synthetic accounts are reset fixtures rather than visitor login identities and
+must never contain real personal data.
 
-The web deployment enables the two buttons only with
-`APP_ENVIRONMENT=demo`, `DEMO_ACCESS_ENABLED=true`, and the same four
-server-only account values used by the reset. Passwords are submitted to
-Supabase only inside a Server Action and are never rendered or prefixed with
-`NEXT_PUBLIC_`.
+The web deployment enables read-only links to the persisted catalog and demo
+project only with `APP_ENVIRONMENT=demo` and `DEMO_READ_ONLY_ENABLED=true`.
+There is no demo login Server Action, and the four reset credentials are not
+part of the application runtime environment.
 
 ## Clean installation
 

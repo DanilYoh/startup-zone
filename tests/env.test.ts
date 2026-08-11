@@ -1,9 +1,8 @@
 import {
-  getDemoCredentials,
   getSiteOrigin,
   getSupabaseEnv,
   hasSupabaseConfiguration,
-  isDemoAccessEnabled,
+  isReadOnlyDemoEnabled,
   isProductionRuntime,
   validateProductionEnv,
 } from "@/lib/env";
@@ -104,23 +103,15 @@ describe("runtime environment", () => {
     ).toMatchObject({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "local-key" });
   });
 
-  it("enables one-click accounts only in a fully configured demo environment", () => {
+  it("enables read-only demo links only in the demo environment", () => {
     const environment = {
       APP_ENVIRONMENT: "demo",
-      DEMO_ACCESS_ENABLED: "true",
-      DEMO_FOUNDER_EMAIL: "founder@example.test",
-      DEMO_FOUNDER_PASSWORD: "founder-password",
-      DEMO_INVESTOR_EMAIL: "investor@example.test",
-      DEMO_INVESTOR_PASSWORD: "investor-password",
+      DEMO_READ_ONLY_ENABLED: "true",
     };
 
-    expect(isDemoAccessEnabled(environment)).toBe(true);
-    expect(getDemoCredentials("investor", environment)).toEqual({
-      email: "investor@example.test",
-      password: "investor-password",
-    });
+    expect(isReadOnlyDemoEnabled(environment)).toBe(true);
     expect(() =>
-      isDemoAccessEnabled({ ...environment, APP_ENVIRONMENT: "production" }),
-    ).toThrow(/Invalid demo access environment/u);
+      isReadOnlyDemoEnabled({ ...environment, APP_ENVIRONMENT: "production" }),
+    ).toThrow(/Invalid read-only demo environment/u);
   });
 });

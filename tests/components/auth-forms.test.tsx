@@ -6,8 +6,7 @@ import { render, screen, userEvent } from "../test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicLegalConfig } from "@/features/legal/types";
 
-const { signInDemoMock, signInMock, signUpMock } = vi.hoisted(() => ({
-  signInDemoMock: vi.fn(),
+const { signInMock, signUpMock } = vi.hoisted(() => ({
   signInMock: vi.fn(),
   signUpMock: vi.fn(),
 }));
@@ -25,29 +24,30 @@ const localLegalConfig: PublicLegalConfig = {
 
 vi.mock("@/features/auth/server/actions", () => ({
   signIn: signInMock,
-  signInDemo: signInDemoMock,
   signUp: signUpMock,
 }));
 
 beforeEach(() => {
-  signInDemoMock.mockReset();
   signInMock.mockReset();
   signUpMock.mockReset();
 });
 
 describe("authentication forms", () => {
-  it("offers both one-click roles only in the isolated demo", async () => {
-    signInDemoMock.mockResolvedValue({ status: "idle" });
-    const user = userEvent.setup();
-
+  it("offers persisted read-only demo pages without an authentication action", () => {
     const { rerender } = render(<LoginForm />);
-    expect(screen.queryByRole("button", { name: "Войти как основатель" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Открыть демо-каталог" })).not.toBeInTheDocument();
 
-    rerender(<LoginForm demoAccessEnabled />);
-    await user.click(screen.getByRole("button", { name: "Войти как инвестор" }));
+    rerender(<LoginForm readOnlyDemoEnabled />);
 
-    expect(signInDemoMock).toHaveBeenCalledOnce();
-    expect(signInDemoMock.mock.calls[0]?.[1].get("role")).toBe("investor");
+    expect(screen.getByRole("link", { name: "Открыть демо-каталог" })).toHaveAttribute(
+      "href",
+      "/startups",
+    );
+    expect(screen.getByRole("link", { name: "Открыть демо-проект" })).toHaveAttribute(
+      "href",
+      "/startups/flowpilot-operations-ai",
+    );
+    expect(screen.getByText(/не создаёт пользовательскую сессию/u)).toBeVisible();
   });
 
   it("submits credentials and presents a stable sign-in error", async () => {

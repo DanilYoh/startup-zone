@@ -1,5 +1,5 @@
 import { LoginForm } from "@/features/auth/components/login-form";
-import { isDemoAccessEnabled } from "@/lib/env";
+import { isReadOnlyDemoEnabled } from "@/lib/env";
 import Link from "next/link";
 import styles from "../auth-layout.module.css";
 
@@ -11,7 +11,7 @@ export default function Page() {
         <span>Startup Zone</span>
       </Link>
       <div className={styles.narrow}>
-        <LoginForm demoAccessEnabled={isDemoAccessEnabled()} />
+        <LoginForm readOnlyDemoEnabled={isReadOnlyDemoEnabled()} />
       </div>
     </div>
   );
