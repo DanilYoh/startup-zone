@@ -130,7 +130,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
       "href",
       `mailto:${investorEmail}`,
     );
-    await expect(page.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Открыть t.me" })).toHaveAttribute(
       "href",
       "https://t.me/moderation_investor",
     );
@@ -157,7 +157,7 @@ test("a founder accepts a pending application to their startup", async ({ page }
       "href",
       `mailto:${founderEmail}`,
     );
-    await expect(page.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Открыть t.me" })).toHaveAttribute(
       "href",
       "https://t.me/moderation_founder",
     );
