@@ -11,6 +11,7 @@ Implemented:
 - Supabase authentication with explicit founder or investor onboarding and an SSR-safe email-confirmation callback;
 - invitation-only closed-beta signup with one-time, expiring codes bound to an email address and marketplace role;
 - separate, versioned personal-data consent at signup, with immutable server-timestamped evidence and production registration that fails closed until operator-approved documents are configured;
+- self-service JSON export, consent withdrawal, and account deletion with password confirmation and immediate anonymization of retained audit evidence;
 - protected, role-specific profile editing with immutable marketplace roles;
 - distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;

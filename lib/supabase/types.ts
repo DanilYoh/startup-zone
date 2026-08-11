@@ -103,7 +103,7 @@ export type Database = {
         Row: {
           code_hash: string
           created_at: string
-          email: string
+          email: string | null
           expires_at: string
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -113,7 +113,7 @@ export type Database = {
         Insert: {
           code_hash: string
           created_at?: string
-          email: string
+          email?: string | null
           expires_at: string
           id?: string
           role: Database["public"]["Enums"]["user_role"]
@@ -123,7 +123,7 @@ export type Database = {
         Update: {
           code_hash?: string
           created_at?: string
-          email?: string
+          email?: string | null
           expires_at?: string
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -187,23 +187,29 @@ export type Database = {
         Row: {
           accepted_at: string
           document_version: string
+          evidence_id: string
           source: string
-          subject_email: string
-          subject_id: string
+          subject_email: string | null
+          subject_id: string | null
+          withdrawn_at: string | null
         }
         Insert: {
           accepted_at?: string
           document_version: string
+          evidence_id?: string
           source?: string
-          subject_email: string
-          subject_id: string
+          subject_email?: string | null
+          subject_id?: string | null
+          withdrawn_at?: string | null
         }
         Update: {
           accepted_at?: string
           document_version?: string
+          evidence_id?: string
           source?: string
-          subject_email?: string
-          subject_id?: string
+          subject_email?: string | null
+          subject_id?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -453,6 +459,11 @@ export type Database = {
           candidate_role: string
         }
         Returns: boolean
+      }
+      delete_my_account: { Args: Record<PropertyKey, never>; Returns: boolean }
+      export_my_personal_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       report_startup_link: {
         Args: {

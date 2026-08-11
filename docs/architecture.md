@@ -242,11 +242,11 @@ operator scripts and isolated test setup, never in the application runtime.
   version to Auth. The Auth database trigger independently requires that version
   to be active before it creates a marketplace profile.
 - `legal_consents` stores the subject id, normalized signup email, document
-  version, source, and a database-generated acceptance timestamp. Consent rows
+  version, source, and database-generated acceptance time. Active consent rows
   are immutable, readable only by their subject through RLS, and have no browser
-  write grant. They intentionally have no cascading Auth foreign key so account
-  deletion cannot silently erase evidence; the operator's approved retention
-  policy must define eventual evidence deletion.
+  write grant. The account-deletion function is the sole narrow exception: it
+  clears both subject identifiers, records `withdrawn_at`, and retains only
+  anonymous version/timestamp evidence.
 - Closed-beta access uses `beta_invitations`, which stores only a SHA-256 code
   hash plus the invited email, role, expiry, and consumption state. The raw code
   exists only in the operator's one-time CLI output. A narrow anonymous RPC
@@ -255,6 +255,13 @@ operator scripts and isolated test setup, never in the application runtime.
   matching unused row, verifies email, role, and expiry, and consumes it in the
   same transaction that creates the profile and legal-consent evidence. Direct
   Auth calls cannot bypass this boundary, and browser roles have no table grant.
+- Authenticated users can download a server-built JSON export of their own Auth
+  metadata and marketplace records. Account deletion requires exact typed
+  confirmation and password reauthentication in the application, while the
+  database function derives the deletion target exclusively from `auth.uid()`.
+  Existing cascades remove the Auth identity and product data; consumed
+  invitations lose email and user id, and durable decision audit rows lose the
+  actor id. Neither RPC accepts a caller-provided subject identifier.
 - Collection reads use server-validated page numbers, stable ordering, bounded
   database ranges, and an exact count. They never rely on a silent terminal
   `limit` or load an unbounded dashboard history.

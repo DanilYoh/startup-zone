@@ -1,6 +1,6 @@
 begin;
 
-select plan(91);
+select plan(98);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -24,7 +24,8 @@ values
   (repeat('2', 64), 'primary-investor@example.test', 'investor', now() + interval '1 day'),
   (repeat('3', 64), 'applicant@example.test', 'investor', now() + interval '1 day'),
   (repeat('4', 64), 'other-founder@example.test', 'founder', now() + interval '1 day'),
-  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day');
+  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day'),
+  (repeat('7', 64), 'deletion@example.test', 'investor', now() + interval '1 day');
 
 set local role anon;
 
@@ -58,6 +59,18 @@ select throws_like(
   'anonymous visitors cannot submit content reports'
 );
 
+select throws_like(
+  $$ select public.export_my_personal_data() $$,
+  '%permission denied%export_my_personal_data%',
+  'anonymous visitors cannot export account data'
+);
+
+select throws_like(
+  $$ select public.delete_my_account() $$,
+  '%permission denied%delete_my_account%',
+  'anonymous visitors cannot delete accounts'
+);
+
 reset role;
 
 insert into auth.users (id, email, raw_user_meta_data)
@@ -86,6 +99,11 @@ values
     '10000000-0000-0000-0000-000000000005',
     'investor@example.test',
     '{"role":"investor","full_name":"Test Investor","beta_invitation_hash":"5555555555555555555555555555555555555555555555555555555555555555","legal_consent":true,"legal_document_version":"local-development-v1"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000007',
+    'deletion@example.test',
+    '{"role":"investor","full_name":"Deletion Test","beta_invitation_hash":"7777777777777777777777777777777777777777777777777777777777777777","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
 
 select results_eq(
@@ -94,7 +112,7 @@ select results_eq(
     from public.beta_invitations
     where used_at is not null and used_by is not null
   $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding atomically consumes every one-time beta invitation'
 );
 
@@ -110,7 +128,7 @@ select results_eq(
 
 select results_eq(
   $$ select count(*) from public.legal_consents $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding records one immutable consent for every profile'
 );
 
@@ -121,7 +139,7 @@ select results_eq(
     where document_version = 'local-development-v1'
       and source = 'signup'
   $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding records the active document version and signup source'
 );
 
@@ -273,7 +291,7 @@ select throws_like(
 
 select results_eq(
   $$ select count(*) from public.profile_contacts $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding creates one private contact record for every profile'
 );
 
@@ -438,6 +456,54 @@ select throws_like(
 );
 
 reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000007', true);
+
+select results_eq(
+  $$ select public.export_my_personal_data() -> 'account' ->> 'email' $$,
+  $$ values ('deletion@example.test') $$,
+  'an authenticated subject can export their own account data'
+);
+
+select results_eq(
+  $$ select public.delete_my_account() $$,
+  $$ values (true) $$,
+  'an authenticated subject can withdraw consent and delete their account'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select
+      (select count(*) from auth.users where id = '10000000-0000-0000-0000-000000000007'),
+      (select count(*) from public.profiles where id = '10000000-0000-0000-0000-000000000007')
+  $$,
+  $$ values (0::bigint, 0::bigint) $$,
+  'account deletion removes both Auth identity and product profile'
+);
+
+select results_eq(
+  $$
+    select subject_id, subject_email, withdrawn_at is not null
+    from public.legal_consents
+    where evidence_id is not null
+      and withdrawn_at is not null
+  $$,
+  $$ values (null::uuid, null::text, true) $$,
+  'account deletion retains only anonymous consent evidence with withdrawal time'
+);
+
+select results_eq(
+  $$
+    select email, used_by, used_at is not null
+    from public.beta_invitations
+    where code_hash = repeat('7', 64)
+  $$,
+  $$ values (null::text, null::uuid, true) $$,
+  'a consumed invitation remains consumed after its personal identifiers are erased'
+);
 
 select results_eq(
   $$

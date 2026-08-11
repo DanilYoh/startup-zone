@@ -1,6 +1,6 @@
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ArrowUpRight, LayoutDashboard, Rocket, UserRound } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard, Rocket, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import styles from "./dashboard-shell.module.css";
 
@@ -39,6 +39,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <p className={styles.navLabel}>Аккаунт</p>
             <Link href="/dashboard/profile" className={styles.navLink}>
               <UserRound size={16} aria-hidden="true" /> Профиль
+            </Link>
+            <Link href="/dashboard/account" className={styles.navLink}>
+              <ShieldCheck size={16} aria-hidden="true" /> Данные аккаунта
             </Link>
           </nav>
           <Link href="/" className={styles.backLink}>

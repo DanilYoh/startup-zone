@@ -102,6 +102,33 @@ project only with `APP_ENVIRONMENT=demo` and `DEMO_READ_ONLY_ENABLED=true`.
 There is no demo login Server Action, and the four reset credentials are not
 part of the application runtime environment.
 
+## Account privacy lifecycle
+
+An authenticated user can download a JSON copy from **Dashboard → Data account**.
+The export is assembled by `export_my_personal_data()` from the caller identity,
+never accepts another subject id, omits Auth secrets and invitation hashes, and
+is returned with `Cache-Control: no-store` as an attachment.
+
+Withdrawal is coupled to account deletion because the marketplace cannot provide
+an account without processing its profile and workflow data. The UI requires the
+current password and exact confirmation text before calling `delete_my_account()`.
+The database function always targets `auth.uid()` and performs one transaction:
+
+- the Auth identity, profile, contacts, startups, applications, and reports are
+  deleted immediately from the live database through explicit deletes/cascades;
+- consent evidence loses subject id and email and gains `withdrawn_at`;
+- the consumed invitation loses email and user id but remains consumed;
+- durable application-decision records lose the actor id.
+
+The retained rows are no longer linkable to a person and support only aggregate
+integrity and legal/security evidence. Production log and backup policies must
+use a rolling maximum retention of 30 days for deleted personal data. After an
+account deletion, operators must not restore that account from backup; a restore
+for disaster recovery must replay deletions made after the backup snapshot before
+traffic resumes. A longer retention exception requires a documented legal basis
+and access restriction. pgTAP covers deletion, anonymization, retention of the
+consumed invitation state, and denial of both lifecycle RPCs to anonymous users.
+
 ## Clean installation
 
 A clean installation is always built from the immutable migration directory,
