@@ -132,6 +132,57 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          created_at: string
+          id: number
+          link_kind: string
+          reason: string
+          reported_url: string
+          reporter_id: string | null
+          reviewed_at: string | null
+          startup_id: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          link_kind: string
+          reason: string
+          reported_url: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          startup_id?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          link_kind?: string
+          reason?: string
+          reported_url?: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          startup_id?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_consents: {
         Row: {
           accepted_at: string
@@ -400,6 +451,14 @@ export type Database = {
           candidate_email: string
           candidate_hash: string
           candidate_role: string
+        }
+        Returns: boolean
+      }
+      report_startup_link: {
+        Args: {
+          reported_link_kind: string
+          reported_reason: string
+          reported_startup_id: number
         }
         Returns: boolean
       }

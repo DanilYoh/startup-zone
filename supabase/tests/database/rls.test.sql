@@ -1,6 +1,6 @@
 begin;
 
-select plan(84);
+select plan(91);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -50,6 +50,12 @@ select results_eq(
   $$,
   $$ values (false) $$,
   'invitation pre-validation does not accept another email'
+);
+
+select throws_like(
+  $$ select public.report_startup_link(1, 'website', 'phishing') $$,
+  '%permission denied%report_startup_link%',
+  'anonymous visitors cannot submit content reports'
 );
 
 reset role;
@@ -350,6 +356,10 @@ update public.startups
 set is_active = false
 where slug = 'inactive-startup';
 
+update public.startups
+set website_url = 'https://existing.example.test'
+where slug = 'existing-startup';
+
 insert into public.startups (
   founder_id,
   title,
@@ -383,6 +393,61 @@ select
   'This startup fits my thesis and I would like to discuss the current round.'
 from public.startups
 where slug = 'existing-startup';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select results_eq(
+  $$
+    select public.report_startup_link(
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'phishing'
+    )
+  $$,
+  $$ values (true) $$,
+  'an authenticated user can report a current public startup link'
+);
+
+select results_eq(
+  $$
+    select public.report_startup_link(
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'malware'
+    )
+  $$,
+  $$ values (false) $$,
+  'duplicate pending reports are collapsed'
+);
+
+select throws_like(
+  $$
+    insert into public.content_reports (
+      reporter_id, startup_id, link_kind, reported_url, reason
+    ) values (
+      '10000000-0000-0000-0000-000000000003',
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'https://spoofed.example.test',
+      'phishing'
+    )
+  $$,
+  '%permission denied%content_reports%',
+  'authenticated users cannot manufacture moderation records directly'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select reported_url
+    from public.content_reports
+    where reporter_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('https://existing.example.test') $$,
+  'the report captures the persisted link rather than caller-controlled input'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -420,7 +485,7 @@ select throws_like(
     where profile_id = '10000000-0000-0000-0000-000000000001'
   $$,
   '%profile_contacts_url_check%',
-  'private contact links are restricted to HTTP and HTTPS'
+  'private contact links require a public HTTPS host'
 );
 
 select lives_ok(
@@ -474,7 +539,26 @@ select throws_like(
     )
   $$,
   '%startups_website_url_http_check%',
-  'startup links are restricted to HTTP and HTTPS at the database boundary'
+  'startup links require a public HTTPS host at the database boundary'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, website_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Private network startup',
+      'private-network-startup',
+      'A startup summary with a private link.',
+      'A detailed startup description that attempts to persist a private network link.',
+      'idea',
+      array['Marketplace'],
+      'https://127.0.0.1/internal'
+    )
+  $$,
+  '%startups_website_url_http_check%',
+  'startup links cannot target a private or local address'
 );
 
 select throws_like(
@@ -493,7 +577,26 @@ select throws_like(
     )
   $$,
   '%startups_deck_url_http_check%',
-  'pitch-deck links are restricted to HTTP and HTTPS at the database boundary'
+  'pitch-deck links require the dedicated file policy at the database boundary'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, deck_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Untrusted deck startup',
+      'untrusted-deck-startup',
+      'A startup summary with an untrusted deck.',
+      'A detailed startup description that attempts to persist an untrusted deck provider.',
+      'idea',
+      array['Marketplace'],
+      'https://files.example.test/presentation'
+    )
+  $$,
+  '%startups_deck_url_http_check%',
+  'pitch decks must be a direct PDF or use an approved presentation provider'
 );
 
 select throws_like(

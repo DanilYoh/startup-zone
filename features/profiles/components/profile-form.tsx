@@ -268,6 +268,7 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
                   name="avatar_url"
                   type="url"
                   label="Ссылка на фотографию"
+                  description="Только публичный HTTPS-адрес. Локальные и служебные сети запрещены."
                   defaultValue={profile.avatar_url ?? ""}
                   error={fieldError("avatar_url")}
                 />

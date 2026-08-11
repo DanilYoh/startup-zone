@@ -334,6 +334,16 @@ RLS-protected `application_status_audit` table with the acting user, transition,
 startup, and time. Application messages are deliberately excluded from audit
 records.
 
+Authenticated users can report a persisted startup website or pitch-deck link.
+The database snapshots the current stored URL, collapses duplicate pending
+reports, and accepts at most five new reports per account per hour. Browser
+roles cannot read or write `content_reports` directly. An approved operator
+reviews the queue with service-role access, removes or corrects unsafe content,
+then sets `status` to `resolved` or `dismissed` together with `reviewed_at`.
+Before applying the external-link migration to existing data, audit any HTTP,
+IP-literal, local-network, or non-policy deck URLs; constraint validation fails
+closed rather than silently deleting them.
+
 ## Backup and restore
 
 Enable scheduled managed database backups and point-in-time recovery for the

@@ -57,6 +57,25 @@ describe("profileSchema", () => {
   });
 
   it.each([
+    "http://images.example.test/avatar.png",
+    "https://localhost/avatar.png",
+    "https://127.0.0.1/avatar.png",
+    "https://10.0.0.1/avatar.png",
+    "https://[::1]/avatar.png",
+  ])("rejects non-public avatar URL: %s", (avatarUrl) => {
+    expect(
+      profileSchema.safeParse({
+        full_name: "Taylor Jordan",
+        bio: "",
+        location: "",
+        avatar_url: avatarUrl,
+        linkedin_url: "",
+        ...emptyRoleFields,
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each([
     ["javascript:alert(1)", "https://www.linkedin.com/in/taylor"],
     ["https://images.example.test/avatar.png", "http://linkedin.com/in/taylor"],
     ["https://images.example.test/avatar.png", "https://linkedin.example.com/in/taylor"],

@@ -21,7 +21,7 @@ Email is an account credential, displayed only to its owner in profile editing.
 The marketplace role is assigned during registration and cannot be changed.
 
 Each user also controls a separate private contact record. A contact email and
-optional HTTP(S) contact link remain unavailable to anonymous visitors, profile
+optional public HTTPS contact link remain unavailable to anonymous visitors, profile
 browsers, pending requests, rejected requests, and unrelated authenticated
 users. When sharing is enabled, the database reveals those details only to the
 other participant in an accepted investor-interest request. Disabling sharing

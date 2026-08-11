@@ -260,6 +260,12 @@ operator scripts and isolated test setup, never in the application runtime.
   `limit` or load an unbounded dashboard history.
 - Logs contain safe error codes and operational context, not secrets, tokens,
   raw credentials, or unnecessary personal data.
+- User-provided avatars, websites, contacts, and deck links require public HTTPS
+  hostnames in both Zod and PostgreSQL. IP literals, localhost/private suffixes,
+  credentials in URLs, and non-standard ports are rejected. Pitch decks must be
+  a direct PDF or use one of the named presentation providers. Rendered links
+  show their destination hostname, and authenticated reports enter an
+  operator-only, rate-limited moderation queue that snapshots the stored URL.
 - Proxy creates an unpredictable nonce for each HTML request and forwards the
   same value to rendering and the response CSP. Executable scripts and generated
   style elements require that nonce; the narrower `style-src-attr` compatibility

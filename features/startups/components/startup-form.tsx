@@ -169,7 +169,8 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               name="deck_url"
               type="url"
               label="Ссылка на презентацию"
-              placeholder="https://example.com/deck"
+              description="Прямой PDF или ссылка Google Drive, Google Slides, DocSend либо Pitch."
+              placeholder="https://example.com/deck.pdf"
               defaultValue={startup?.deck_url ?? ""}
               error={fieldError("deck_url")}
             />

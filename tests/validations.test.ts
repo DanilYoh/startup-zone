@@ -11,7 +11,7 @@ const validStartup = {
   niche: ["ClimateTech", "B2B SaaS"],
   funding_ask: 250_000,
   equity_offered: 8,
-  deck_url: "https://example.com/deck",
+  deck_url: "https://example.com/deck.pdf",
   website_url: "https://example.com",
 };
 
@@ -51,5 +51,33 @@ describe("startupSchema", () => {
       const result = startupSchema.safeParse({ ...validStartup, ...links });
       expect(result.success).toBe(false);
     }
+  });
+
+  it.each([
+    "http://example.com",
+    "https://localhost/project",
+    "https://127.0.0.1/project",
+    "https://10.0.0.1/project",
+    "https://203.0.113.10/project",
+    "https://[::1]/project",
+  ])("rejects non-public project links: %s", (websiteUrl) => {
+    expect(
+      startupSchema.safeParse({ ...validStartup, website_url: websiteUrl }).success,
+    ).toBe(false);
+  });
+
+  it("applies a separate file policy to pitch decks", () => {
+    expect(
+      startupSchema.safeParse({
+        ...validStartup,
+        deck_url: "https://files.example.com/presentation",
+      }).success,
+    ).toBe(false);
+    expect(
+      startupSchema.safeParse({
+        ...validStartup,
+        deck_url: "https://docs.google.com/presentation/d/example",
+      }).success,
+    ).toBe(true);
   });
 });

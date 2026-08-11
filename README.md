@@ -17,6 +17,7 @@ Implemented:
 - investor interest requests with status tracking;
 - founder moderation with database-enforced terminal decisions and consent-based private contact exchange after acceptance;
 - filterable, paginated public startup directory and detail pages;
+- public-HTTPS link validation with private-network blocking, visible destination hosts, a separate pitch-deck provider policy, and an operator moderation queue for reports;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - request-correlated structured server logs, Sentry-compatible server/client error tracking, unexpected request capture, application rate limiting, and decision auditing;
 - separate `/healthz` liveness and cached `/readyz` Supabase readiness probes, plus a request-nonce Content Security Policy;

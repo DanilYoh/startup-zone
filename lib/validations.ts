@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isPitchDeckUrl, isPublicHttpsUrl } from "@/lib/external-url";
 
 export const startupStages = [
   "idea",
@@ -18,18 +19,20 @@ export const startupStageLabels: Record<(typeof startupStages)[number], string> 
   later: "Поздняя стадия",
 };
 
-function isHttpUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-const optionalUrl = z
+const optionalPublicUrl = z
   .union([z.literal(""), z.string().trim().url("Введите корректный URL")])
-  .refine((value) => value === "" || isHttpUrl(value), "Используйте HTTP(S)-ссылку")
+  .refine(
+    (value) => value === "" || isPublicHttpsUrl(value),
+    "Используйте публичную HTTPS-ссылку без локального или служебного адреса",
+  )
+  .transform((value) => value || undefined);
+
+const optionalPitchDeckUrl = z
+  .union([z.literal(""), z.string().trim().url("Введите корректный URL")])
+  .refine(
+    (value) => value === "" || isPitchDeckUrl(value),
+    "Используйте публичную HTTPS-ссылку на PDF, Google Drive, Google Slides, DocSend или Pitch",
+  )
   .transform((value) => value || undefined);
 
 export const startupSchema = z.object({
@@ -61,8 +64,8 @@ export const startupSchema = z.object({
     ),
   funding_ask: z.number().positive().max(1_000_000_000).optional(),
   equity_offered: z.number().min(0).max(100).optional(),
-  deck_url: optionalUrl.optional(),
-  website_url: optionalUrl.optional(),
+  deck_url: optionalPitchDeckUrl.optional(),
+  website_url: optionalPublicUrl.optional(),
 });
 
 export type StartupInput = z.infer<typeof startupSchema>;

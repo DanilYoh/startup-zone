@@ -1,21 +1,13 @@
 import { z } from "zod";
 import { startupStages } from "@/lib/validations";
 import { parseMarketNumber } from "@/lib/market";
-
-function isHttpUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+import { isPublicHttpsUrl } from "@/lib/external-url";
 
 function isLinkedInUrl(value: string) {
   try {
     const url = new URL(value);
     return (
-      url.protocol === "https:" &&
+      isPublicHttpsUrl(value) &&
       (url.hostname === "linkedin.com" || url.hostname.endsWith(".linkedin.com"))
     );
   } catch {
@@ -30,11 +22,14 @@ const optionalText = (maximum: number, message: string) =>
     .max(maximum, message)
     .transform((value) => value || null);
 
-const optionalHttpUrl = z
+const optionalPublicHttpsUrl = z
   .string()
   .trim()
   .max(2_048, "Введите не более 2 048 символов")
-  .refine((value) => value === "" || isHttpUrl(value), "Укажите ссылку с протоколом HTTP(S)")
+  .refine(
+    (value) => value === "" || isPublicHttpsUrl(value),
+    "Укажите публичную HTTPS-ссылку без локального или служебного адреса",
+  )
   .transform((value) => value || null);
 
 const optionalLinkedInUrl = z
@@ -62,7 +57,7 @@ export const profileSchema = z.object({
   headline: optionalText(120, "Введите не более 120 символов"),
   bio: optionalText(1_000, "Введите не более 1 000 символов"),
   location: optionalText(120, "Введите не более 120 символов"),
-  avatar_url: optionalHttpUrl,
+  avatar_url: optionalPublicHttpsUrl,
   linkedin_url: optionalLinkedInUrl,
   founder_experience: optionalText(1_200, "Введите не более 1 200 символов"),
   investor_organization: optionalText(120, "Введите не более 120 символов"),
@@ -79,7 +74,7 @@ export const profileSchema = z.object({
     normalizeCurrencyInput,
     z.number().int().positive().max(1_000_000_000).nullable(),
   ),
-  website_url: optionalHttpUrl,
+  website_url: optionalPublicHttpsUrl,
 }).superRefine((profile, context) => {
   if (
     profile.ticket_min !== null &&
@@ -104,7 +99,7 @@ export type ProfileInput = z.infer<typeof profileSchema>;
 export const profileContactSchema = z
   .object({
     contact_email: optionalEmail,
-    contact_url: optionalHttpUrl,
+    contact_url: optionalPublicHttpsUrl,
     sharing_enabled: z.boolean(),
   })
   .superRefine((contact, context) => {
