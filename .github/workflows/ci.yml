@@ -68,7 +68,7 @@ jobs:
             aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c \
             image --input /scan/startup-zone-image.tar --format cyclonedx --output /scan/startup-zone.cdx.json
       - name: Upload container SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: startup-zone-container-sbom
           path: /tmp/startup-zone.cdx.json
