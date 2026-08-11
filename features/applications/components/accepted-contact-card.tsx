@@ -1,4 +1,5 @@
 import type { AcceptedContact } from "@/features/applications/server/queries";
+import { externalHostname } from "@/lib/external-url";
 import { Alert, Anchor, Paper, Stack, Text, Title } from "@mantine/core";
 
 type AcceptedContactCardProps = {
@@ -48,7 +49,7 @@ export function AcceptedContactCard({
         )}
         {contact.contact_url && (
           <Anchor href={contact.contact_url} target="_blank" rel="noreferrer">
-            Открыть ссылку для связи
+            Открыть {externalHostname(contact.contact_url)}
           </Anchor>
         )}
       </Stack>

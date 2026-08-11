@@ -17,26 +17,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: Demo
-    env:
-      APP_ENVIRONMENT: demo
-      ALLOW_DEMO_SEED: "true"
-      DEMO_SEED_PROJECT_REF: ${{ vars.DEMO_SEED_PROJECT_REF }}
-      LEGAL_DOCUMENT_VERSION: ${{ vars.LEGAL_DOCUMENT_VERSION }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      DEMO_FOUNDER_EMAIL: ${{ vars.DEMO_FOUNDER_EMAIL }}
-      DEMO_FOUNDER_PASSWORD: ${{ secrets.DEMO_FOUNDER_PASSWORD }}
-      DEMO_INVESTOR_EMAIL: ${{ vars.DEMO_INVESTOR_EMAIL }}
-      DEMO_INVESTOR_PASSWORD: ${{ secrets.DEMO_INVESTOR_PASSWORD }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
+      - name: Check demo environment
+        id: preflight
+        env:
+          DEMO_SEED_PROJECT_REF: ${{ vars.DEMO_SEED_PROJECT_REF }}
+          LEGAL_DOCUMENT_VERSION: ${{ vars.LEGAL_DOCUMENT_VERSION }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEMO_FOUNDER_EMAIL: ${{ vars.DEMO_FOUNDER_EMAIL }}
+          DEMO_FOUNDER_PASSWORD: ${{ secrets.DEMO_FOUNDER_PASSWORD }}
+          DEMO_INVESTOR_EMAIL: ${{ vars.DEMO_INVESTOR_EMAIL }}
+          DEMO_INVESTOR_PASSWORD: ${{ secrets.DEMO_INVESTOR_PASSWORD }}
+        run: node scripts/demo-reset-preflight.mjs
       - name: Install dependencies
-        run: npm ci
+        if: steps.preflight.outputs.configured == 'true'
+        run: npm ci --ignore-scripts
       - name: Reset synthetic demo records
+        if: steps.preflight.outputs.configured == 'true'
+        env:
+          APP_ENVIRONMENT: demo
+          ALLOW_DEMO_SEED: "true"
+          DEMO_SEED_PROJECT_REF: ${{ vars.DEMO_SEED_PROJECT_REF }}
+          LEGAL_DOCUMENT_VERSION: ${{ vars.LEGAL_DOCUMENT_VERSION }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEMO_FOUNDER_EMAIL: ${{ vars.DEMO_FOUNDER_EMAIL }}
+          DEMO_FOUNDER_PASSWORD: ${{ secrets.DEMO_FOUNDER_PASSWORD }}
+          DEMO_INVESTOR_EMAIL: ${{ vars.DEMO_INVESTOR_EMAIL }}
+          DEMO_INVESTOR_PASSWORD: ${{ secrets.DEMO_INVESTOR_PASSWORD }}
         run: npm run demo:seed

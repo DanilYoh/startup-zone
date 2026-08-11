@@ -15,12 +15,12 @@ Use three isolated Supabase environments:
 - demo/test, containing synthetic data only and disposable credentials;
 - production, available only to the deployment runtime and approved operators.
 
-The public portfolio deployment may use the demo project so visitors can
-complete the marketplace flows through two shared synthetic accounts. Its
-runtime receives the project URL, publishable key, draft legal metadata, and
-server-only demo passwords. The service-role key remains restricted to the
-guarded reset workflow and is never configured in Vercel or another public
-application runtime.
+The public portfolio deployment may use the demo project so visitors can browse
+persisted synthetic startups through read-only public routes. Visitors never
+receive an Auth session for a shared synthetic account. The application runtime
+receives only the project URL, publishable key, and draft legal metadata; demo
+account passwords and the service-role key remain restricted to the guarded
+reset workflow and are never configured in Vercel or another public runtime.
 
 CI starts a fresh local Supabase stack, resets it from every migration with
 `npx supabase db reset --local --no-seed`. It also resets specifically to the
@@ -92,14 +92,42 @@ is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
 configured project ref exactly matches the Supabase URL. It rejects production
 even when the other flags are present. `.github/workflows/demo-reset.yml` runs
 this same guarded command daily using only the GitHub `Demo` environment. A
-shared demo can still be modified between resets and must never contain real
+dependency-free preflight reports a successful skip before dependency
+installation when any required value is missing. The synthetic accounts are
+reset fixtures rather than visitor login identities and must never contain real
 personal data.
 
-The web deployment enables the two buttons only with
-`APP_ENVIRONMENT=demo`, `DEMO_ACCESS_ENABLED=true`, and the same four
-server-only account values used by the reset. Passwords are submitted to
-Supabase only inside a Server Action and are never rendered or prefixed with
-`NEXT_PUBLIC_`.
+The web deployment enables read-only links to the persisted catalog and demo
+project only with `APP_ENVIRONMENT=demo` and `DEMO_READ_ONLY_ENABLED=true`.
+There is no demo login Server Action, and the four reset credentials are not
+part of the application runtime environment.
+
+## Account privacy lifecycle
+
+An authenticated user can download a JSON copy from **Dashboard → Data account**.
+The export is assembled by `export_my_personal_data()` from the caller identity,
+never accepts another subject id, omits Auth secrets and invitation hashes, and
+is returned with `Cache-Control: no-store` as an attachment.
+
+Withdrawal is coupled to account deletion because the marketplace cannot provide
+an account without processing its profile and workflow data. The UI requires the
+current password and exact confirmation text before calling `delete_my_account()`.
+The database function always targets `auth.uid()` and performs one transaction:
+
+- the Auth identity, profile, contacts, startups, applications, and reports are
+  deleted immediately from the live database through explicit deletes/cascades;
+- consent evidence loses subject id and email and gains `withdrawn_at`;
+- the consumed invitation loses email and user id but remains consumed;
+- durable application-decision records lose the actor id.
+
+The retained rows are no longer linkable to a person and support only aggregate
+integrity and legal/security evidence. Production log and backup policies must
+use a rolling maximum retention of 30 days for deleted personal data. After an
+account deletion, operators must not restore that account from backup; a restore
+for disaster recovery must replay deletions made after the backup snapshot before
+traffic resumes. A longer retention exception requires a documented legal basis
+and access restriction. pgTAP covers deletion, anonymization, retention of the
+consumed invitation state, and denial of both lifecycle RPCs to anonymous users.
 
 ## Clean installation
 
@@ -207,7 +235,7 @@ operator fields is a `NEXT_PUBLIC_*` build argument.
 Run this sequence from a clean checkout before deployment:
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 npm run check
 npm run build
 docker compose --env-file .env.example -f compose.production.yaml config --quiet
@@ -216,7 +244,7 @@ docker run --rm \
   --env SUPABASE_DOMAIN=api.example.com \
   --env SUPABASE_UPSTREAM=host.docker.internal:8000 \
   --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
-  caddy:2-alpine \
+  caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 \
   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
@@ -229,6 +257,15 @@ npx supabase db reset --local --no-seed
 npm run test:rls
 npm run test:e2e
 ```
+
+GitHub Actions and production container bases are pinned to immutable commit
+SHAs or manifest digests. CI installs locked dependencies with lifecycle scripts
+disabled, runs CodeQL, scans the built image for high and critical findings, and
+uploads a CycloneDX container SBOM. Staging database credentials and demo reset
+credentials are scoped only to the exact validation, migration, database-test,
+reset, or E2E step that consumes them; build and dependency-install steps never
+receive service-role or database-password secrets. Dependabot tracks npm,
+Actions, and Docker updates so these pins are refreshed through reviewable PRs.
 
 Apply additive migrations to the designated test project before production.
 Verify signup for both roles, role-specific profile editing, startup publication
@@ -250,7 +287,10 @@ The production image is a Next.js standalone build and runs as an unprivileged
 user with a read-only root filesystem. `GET /healthz` is a process-liveness
 probe and deliberately bypasses Auth Proxy and Supabase. `GET /readyz` performs
 a three-second, read-only query through the publishable Supabase client and
-returns only `ok` or `unavailable`; the container health check uses readiness.
+returns only `ok` or `unavailable`; successful results are reused in-process for
+ten seconds and failures for two seconds so repeated probes do not consume one
+database query each. HTTP responses remain `no-store`, and the container health
+check uses readiness.
 Before shifting
 traffic, run the critical browser flows against the production candidate and
 check the Supabase gateway, Auth SMTP delivery, and database separately.
@@ -321,6 +361,16 @@ RLS-protected `application_status_audit` table with the acting user, transition,
 startup, and time. Application messages are deliberately excluded from audit
 records.
 
+Authenticated users can report a persisted startup website or pitch-deck link.
+The database snapshots the current stored URL, collapses duplicate pending
+reports, and accepts at most five new reports per account per hour. Browser
+roles cannot read or write `content_reports` directly. An approved operator
+reviews the queue with service-role access, removes or corrects unsafe content,
+then sets `status` to `resolved` or `dismissed` together with `reviewed_at`.
+Before applying the external-link migration to existing data, audit any HTTP,
+IP-literal, local-network, or non-policy deck URLs; constraint validation fails
+closed rather than silently deleting them.
+
 ## Backup and restore
 
 Enable scheduled managed database backups and point-in-time recovery for the
@@ -358,8 +408,6 @@ Never overwrite production as part of a restore drill.
 
 ## Known limitations
 
-- The demo accounts are shared, so simultaneous visitors can observe or change
-  the same synthetic workflow until the next daily reset.
 - Offset pagination is simple and bounded but may shift when rows are inserted
   between page requests; cursor pagination is deferred until traffic warrants it.
 - The closed beta has no operator UI; invitations and production preflight are
@@ -367,7 +415,9 @@ Never overwrite production as part of a restore drill.
 - Error tracking, log shipping, metrics, alerts, SMTP delivery, backups, and
   uptime checks require external services and operator configuration. Repository
   integration alone does not prove ingestion or alert delivery.
-- The current static CSP permits inline framework styles and scripts required by
-  Next.js and Mantine; moving to request nonces would further reduce script risk.
+- Request nonces protect framework scripts and generated style elements. Mantine
+  still requires the isolated `style-src-attr 'unsafe-inline'` exception for
+  per-component CSS custom properties; executable scripts never receive an
+  inline exception.
 - The single-VPS production model has an acknowledged availability window during
   host failure or maintenance; recovery depends on tested off-host backups.

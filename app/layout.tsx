@@ -3,13 +3,14 @@ import { Geist } from "next/font/google";
 import {
   ColorSchemeScript,
   createTheme,
-  MantineProvider,
   mantineHtmlProps,
 } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import styles from "./layout.module.css";
 import { getSiteOrigin } from "@/lib/env";
+import { headers } from "next/headers";
+import { AppProviders } from "./providers";
 
 const defaultUrl = getSiteOrigin();
 
@@ -60,20 +61,16 @@ const theme = createTheme({
   },
 });
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+
   return (
     <html lang="ru" data-scroll-behavior="smooth" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript defaultColorScheme="dark" />
+        <ColorSchemeScript defaultColorScheme="dark" nonce={nonce} />
       </head>
       <body className={`${geistSans.variable} ${styles.body}`}>
-        <MantineProvider
-          theme={theme}
-          defaultColorScheme="dark"
-          deduplicateInlineStyles
-        >
-          {children}
-        </MantineProvider>
+        <AppProviders nonce={nonce} theme={theme}>{children}</AppProviders>
       </body>
     </html>
   );

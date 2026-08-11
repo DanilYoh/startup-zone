@@ -15,27 +15,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: Preview
-    env:
-      APP_ENVIRONMENT: test
-      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
-      SUPABASE_TEST_DB_HOST: ${{ vars.SUPABASE_TEST_DB_HOST }}
-      SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Validate staging configuration
         shell: bash
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
+          SUPABASE_TEST_DB_HOST: ${{ vars.SUPABASE_TEST_DB_HOST }}
+          SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
         run: |
           required=(
             NEXT_PUBLIC_SUPABASE_URL
@@ -52,19 +51,43 @@ jobs:
               exit 1
             fi
           done
-      - name: Build test database URL
-        shell: bash
-        run: |
-          echo "SUPABASE_TEST_DB_URL=postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${SUPABASE_TEST_DB_PASSWORD}@${SUPABASE_TEST_DB_HOST}:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
       - name: Apply pending migrations
-        run: npx supabase db push --db-url "$SUPABASE_TEST_DB_URL" --include-all --yes
+        shell: bash
+        env:
+          SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
+          SUPABASE_TEST_DB_HOST: ${{ vars.SUPABASE_TEST_DB_HOST }}
+          SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
+        run: |
+          encoded_password=$(node -e 'process.stdout.write(encodeURIComponent(process.env.SUPABASE_TEST_DB_PASSWORD))')
+          db_url="postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${encoded_password}@${SUPABASE_TEST_DB_HOST}:5432/postgres?sslmode=require"
+          npx supabase db push --db-url "$db_url" --include-all --yes
       - name: Test remote database authorization
-        run: npx supabase test db supabase/tests/database --db-url "$SUPABASE_TEST_DB_URL"
+        shell: bash
+        env:
+          SUPABASE_TEST_DB_PASSWORD: ${{ secrets.SUPABASE_TEST_DB_PASSWORD }}
+          SUPABASE_TEST_DB_HOST: ${{ vars.SUPABASE_TEST_DB_HOST }}
+          SUPABASE_TEST_PROJECT_REF: ${{ vars.SUPABASE_TEST_PROJECT_REF }}
+        run: |
+          encoded_password=$(node -e 'process.stdout.write(encodeURIComponent(process.env.SUPABASE_TEST_DB_PASSWORD))')
+          db_url="postgresql://postgres.${SUPABASE_TEST_PROJECT_REF}:${encoded_password}@${SUPABASE_TEST_DB_HOST}:5432/postgres?sslmode=require"
+          npx supabase test db supabase/tests/database --db-url "$db_url"
       - name: Lint, type-check, and unit test
         run: npm run check
       - name: Build production bundle
+        env:
+          APP_ENVIRONMENT: test
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          RELEASE_VERSION: staging-check
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Test marketplace flows against staging
+        env:
+          APP_ENVIRONMENT: test
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run test:e2e

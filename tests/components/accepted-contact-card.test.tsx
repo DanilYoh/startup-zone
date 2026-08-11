@@ -22,7 +22,7 @@ describe("AcceptedContactCard", () => {
       "href",
       "mailto:founder@example.test",
     );
-    expect(screen.getByRole("link", { name: "Открыть ссылку для связи" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Открыть t.me" })).toHaveAttribute(
       "href",
       "https://t.me/founder",
     );

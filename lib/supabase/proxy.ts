@@ -6,11 +6,14 @@ import { getSupabaseEnv } from "../env";
 import { hasEnvVars } from "../utils";
 import type { Database } from "./types";
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+  forwardedHeaders = new Headers(request.headers),
+) {
   const requestId = requestIdFromHeaders(request.headers);
 
   const createForwardResponse = () => {
-    const requestHeaders = new Headers(request.headers);
+    const requestHeaders = new Headers(forwardedHeaders);
     requestHeaders.set("x-request-id", requestId);
     const response = NextResponse.next({ request: { headers: requestHeaders } });
     response.headers.set("x-request-id", requestId);

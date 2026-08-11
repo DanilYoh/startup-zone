@@ -4,6 +4,7 @@ import { AcceptedContactCard } from "@/features/applications/components/accepted
 import { ApplicationDecisionForm } from "@/features/applications/components/application-decision-form";
 import { listFounderApplications } from "@/features/applications/server/queries";
 import { formatMarketCurrency, russianPlural } from "@/lib/market";
+import { externalHostname } from "@/lib/external-url";
 import { parsePage } from "@/lib/pagination";
 import { startupStageLabels } from "@/lib/validations";
 import { Alert, Anchor, Badge, Group, Paper, Stack, Text, Title } from "@mantine/core";
@@ -115,7 +116,7 @@ export default async function FounderApplicationsPage({
                       <Text size="sm">
                         {application.applicant.investor_organization ?? "Инвестиционная организация"}
                         {application.applicant.website_url && (
-                          <> · <Anchor href={application.applicant.website_url} target="_blank" rel="noreferrer">Сайт</Anchor></>
+                          <> · <Anchor href={application.applicant.website_url} target="_blank" rel="noreferrer">{externalHostname(application.applicant.website_url)}</Anchor></>
                         )}
                       </Text>
                     )}
@@ -141,7 +142,7 @@ export default async function FounderApplicationsPage({
                     )}
                     {application.applicant.linkedin_url && (
                       <Anchor href={application.applicant.linkedin_url} target="_blank" rel="noreferrer">
-                        Профиль LinkedIn
+                        {externalHostname(application.applicant.linkedin_url)}
                       </Anchor>
                     )}
                     <Paper bg="var(--mantine-color-default-hover)" radius="md" p="md" className={styles.messagePanel}>

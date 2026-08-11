@@ -1,6 +1,6 @@
 begin;
 
-select plan(84);
+select plan(98);
 
 select ok(
   pg_get_functiondef('public.limit_application_submissions()'::regprocedure)
@@ -24,7 +24,8 @@ values
   (repeat('2', 64), 'primary-investor@example.test', 'investor', now() + interval '1 day'),
   (repeat('3', 64), 'applicant@example.test', 'investor', now() + interval '1 day'),
   (repeat('4', 64), 'other-founder@example.test', 'founder', now() + interval '1 day'),
-  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day');
+  (repeat('5', 64), 'investor@example.test', 'investor', now() + interval '1 day'),
+  (repeat('a', 64), 'deletion@example.test', 'investor', now() + interval '1 day');
 
 set local role anon;
 
@@ -50,6 +51,24 @@ select results_eq(
   $$,
   $$ values (false) $$,
   'invitation pre-validation does not accept another email'
+);
+
+select throws_like(
+  $$ select public.report_startup_link(1, 'website', 'phishing') $$,
+  '%permission denied%report_startup_link%',
+  'anonymous visitors cannot submit content reports'
+);
+
+select throws_like(
+  $$ select public.export_my_personal_data() $$,
+  '%permission denied%export_my_personal_data%',
+  'anonymous visitors cannot export account data'
+);
+
+select throws_like(
+  $$ select public.delete_my_account() $$,
+  '%permission denied%delete_my_account%',
+  'anonymous visitors cannot delete accounts'
 );
 
 reset role;
@@ -80,6 +99,11 @@ values
     '10000000-0000-0000-0000-000000000005',
     'investor@example.test',
     '{"role":"investor","full_name":"Test Investor","beta_invitation_hash":"5555555555555555555555555555555555555555555555555555555555555555","legal_consent":true,"legal_document_version":"local-development-v1"}'
+  ),
+  (
+    '10000000-0000-0000-0000-000000000015',
+    'deletion@example.test',
+    '{"role":"investor","full_name":"Deletion Test","beta_invitation_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","legal_consent":true,"legal_document_version":"local-development-v1"}'
   );
 
 select results_eq(
@@ -88,7 +112,7 @@ select results_eq(
     from public.beta_invitations
     where used_at is not null and used_by is not null
   $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding atomically consumes every one-time beta invitation'
 );
 
@@ -103,8 +127,19 @@ select results_eq(
 );
 
 select results_eq(
-  $$ select count(*) from public.legal_consents $$,
-  $$ values (5::bigint) $$,
+  $$
+    select count(*)
+    from public.legal_consents
+    where subject_id in (
+      '10000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000002',
+      '10000000-0000-0000-0000-000000000003',
+      '10000000-0000-0000-0000-000000000004',
+      '10000000-0000-0000-0000-000000000005',
+      '10000000-0000-0000-0000-000000000015'
+    )
+  $$,
+  $$ values (6::bigint) $$,
   'onboarding records one immutable consent for every profile'
 );
 
@@ -114,8 +149,16 @@ select results_eq(
     from public.legal_consents
     where document_version = 'local-development-v1'
       and source = 'signup'
+      and subject_id in (
+        '10000000-0000-0000-0000-000000000001',
+        '10000000-0000-0000-0000-000000000002',
+        '10000000-0000-0000-0000-000000000003',
+        '10000000-0000-0000-0000-000000000004',
+        '10000000-0000-0000-0000-000000000005',
+        '10000000-0000-0000-0000-000000000015'
+      )
   $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding records the active document version and signup source'
 );
 
@@ -267,7 +310,7 @@ select throws_like(
 
 select results_eq(
   $$ select count(*) from public.profile_contacts $$,
-  $$ values (5::bigint) $$,
+  $$ values (6::bigint) $$,
   'onboarding creates one private contact record for every profile'
 );
 
@@ -350,6 +393,10 @@ update public.startups
 set is_active = false
 where slug = 'inactive-startup';
 
+update public.startups
+set website_url = 'https://existing.example.test'
+where slug = 'existing-startup';
+
 insert into public.startups (
   founder_id,
   title,
@@ -383,6 +430,109 @@ select
   'This startup fits my thesis and I would like to discuss the current round.'
 from public.startups
 where slug = 'existing-startup';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
+
+select results_eq(
+  $$
+    select public.report_startup_link(
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'phishing'
+    )
+  $$,
+  $$ values (true) $$,
+  'an authenticated user can report a current public startup link'
+);
+
+select results_eq(
+  $$
+    select public.report_startup_link(
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'malware'
+    )
+  $$,
+  $$ values (false) $$,
+  'duplicate pending reports are collapsed'
+);
+
+select throws_like(
+  $$
+    insert into public.content_reports (
+      reporter_id, startup_id, link_kind, reported_url, reason
+    ) values (
+      '10000000-0000-0000-0000-000000000003',
+      (select id from public.startups where slug = 'existing-startup'),
+      'website',
+      'https://spoofed.example.test',
+      'phishing'
+    )
+  $$,
+  '%permission denied%content_reports%',
+  'authenticated users cannot manufacture moderation records directly'
+);
+
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000015', true);
+
+select results_eq(
+  $$ select public.export_my_personal_data() -> 'account' ->> 'email' $$,
+  $$ values ('deletion@example.test') $$,
+  'an authenticated subject can export their own account data'
+);
+
+select results_eq(
+  $$ select public.delete_my_account() $$,
+  $$ values (true) $$,
+  'an authenticated subject can withdraw consent and delete their account'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select
+      (select count(*) from auth.users where id = '10000000-0000-0000-0000-000000000015'),
+      (select count(*) from public.profiles where id = '10000000-0000-0000-0000-000000000015')
+  $$,
+  $$ values (0::bigint, 0::bigint) $$,
+  'account deletion removes both Auth identity and product profile'
+);
+
+select results_eq(
+  $$
+    select subject_id, subject_email, withdrawn_at is not null
+    from public.legal_consents
+    where evidence_id is not null
+      and withdrawn_at is not null
+  $$,
+  $$ values (null::uuid, null::text, true) $$,
+  'account deletion retains only anonymous consent evidence with withdrawal time'
+);
+
+select results_eq(
+  $$
+    select email, used_by, used_at is not null
+    from public.beta_invitations
+    where code_hash = repeat('a', 64)
+  $$,
+  $$ values (null::text, null::uuid, true) $$,
+  'a consumed invitation remains consumed after its personal identifiers are erased'
+);
+
+select results_eq(
+  $$
+    select reported_url
+    from public.content_reports
+    where reporter_id = '10000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('https://existing.example.test') $$,
+  'the report captures the persisted link rather than caller-controlled input'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -420,7 +570,7 @@ select throws_like(
     where profile_id = '10000000-0000-0000-0000-000000000001'
   $$,
   '%profile_contacts_url_check%',
-  'private contact links are restricted to HTTP and HTTPS'
+  'private contact links require a public HTTPS host'
 );
 
 select lives_ok(
@@ -474,7 +624,26 @@ select throws_like(
     )
   $$,
   '%startups_website_url_http_check%',
-  'startup links are restricted to HTTP and HTTPS at the database boundary'
+  'startup links require a public HTTPS host at the database boundary'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, website_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Private network startup',
+      'private-network-startup',
+      'A startup summary with a private link.',
+      'A detailed startup description that attempts to persist a private network link.',
+      'idea',
+      array['Marketplace'],
+      'https://127.0.0.1/internal'
+    )
+  $$,
+  '%startups_website_url_http_check%',
+  'startup links cannot target a private or local address'
 );
 
 select throws_like(
@@ -493,7 +662,26 @@ select throws_like(
     )
   $$,
   '%startups_deck_url_http_check%',
-  'pitch-deck links are restricted to HTTP and HTTPS at the database boundary'
+  'pitch-deck links require the dedicated file policy at the database boundary'
+);
+
+select throws_like(
+  $$
+    insert into public.startups (
+      founder_id, title, slug, one_pager, description, stage, niche, deck_url
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'Untrusted deck startup',
+      'untrusted-deck-startup',
+      'A startup summary with an untrusted deck.',
+      'A detailed startup description that attempts to persist an untrusted deck provider.',
+      'idea',
+      array['Marketplace'],
+      'https://files.example.test/presentation'
+    )
+  $$,
+  '%startups_deck_url_http_check%',
+  'pitch decks must be a direct PDF or use an approved presentation provider'
 );
 
 select throws_like(

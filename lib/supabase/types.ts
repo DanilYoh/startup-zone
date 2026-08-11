@@ -103,7 +103,7 @@ export type Database = {
         Row: {
           code_hash: string
           created_at: string
-          email: string
+          email: string | null
           expires_at: string
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -113,7 +113,7 @@ export type Database = {
         Insert: {
           code_hash: string
           created_at?: string
-          email: string
+          email?: string | null
           expires_at: string
           id?: string
           role: Database["public"]["Enums"]["user_role"]
@@ -123,7 +123,7 @@ export type Database = {
         Update: {
           code_hash?: string
           created_at?: string
-          email?: string
+          email?: string | null
           expires_at?: string
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -132,27 +132,91 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          created_at: string
+          id: number
+          link_kind: string
+          reason: string
+          reported_url: string
+          reporter_id: string | null
+          reviewed_at: string | null
+          startup_id: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          link_kind: string
+          reason: string
+          reported_url: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          startup_id?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          link_kind?: string
+          reason?: string
+          reported_url?: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          startup_id?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "public_founder_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_consents: {
         Row: {
           accepted_at: string
           document_version: string
+          evidence_id: string
           source: string
-          subject_email: string
-          subject_id: string
+          subject_email: string | null
+          subject_id: string | null
+          withdrawn_at: string | null
         }
         Insert: {
           accepted_at?: string
           document_version: string
+          evidence_id?: string
           source?: string
-          subject_email: string
-          subject_id: string
+          subject_email?: string | null
+          subject_id?: string | null
+          withdrawn_at?: string | null
         }
         Update: {
           accepted_at?: string
           document_version?: string
+          evidence_id?: string
           source?: string
-          subject_email?: string
-          subject_id?: string
+          subject_email?: string | null
+          subject_id?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -395,11 +459,24 @@ export type Database = {
         Args: { target_profile_id: string }
         Returns: boolean
       }
+      delete_my_account: { Args: never; Returns: boolean }
+      export_my_personal_data: { Args: never; Returns: Json }
+      external_url_hostname: { Args: { value: string }; Returns: string }
       is_beta_invitation_valid: {
         Args: {
           candidate_email: string
           candidate_hash: string
           candidate_role: string
+        }
+        Returns: boolean
+      }
+      is_pitch_deck_url: { Args: { value: string }; Returns: boolean }
+      is_public_https_url: { Args: { value: string }; Returns: boolean }
+      report_startup_link: {
+        Args: {
+          reported_link_kind: string
+          reported_reason: string
+          reported_startup_id: number
         }
         Returns: boolean
       }

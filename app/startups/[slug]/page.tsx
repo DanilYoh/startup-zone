@@ -3,6 +3,8 @@ import { formatMarketCurrency } from "@/lib/market";
 import { ApplicationPanel } from "@/features/applications/components/application-panel";
 import { getActiveStartupBySlug } from "@/lib/supabase/startups";
 import { startupStageLabels } from "@/lib/validations";
+import { externalHostname } from "@/lib/external-url";
+import { ReportLinkForm } from "@/features/startups/components/report-link-form";
 import {
   Alert,
   Badge,
@@ -200,28 +202,34 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
               </Title>
               <Stack mt="md" gap="sm">
                 {startup.website_url && (
-                  <Button
-                    component="a"
-                    href={startup.website_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    variant="outline"
-                    rightSection={<ExternalLink size={15} aria-hidden="true" />}
-                  >
-                    Открыть сайт
-                  </Button>
+                  <Stack gap={4}>
+                    <Button
+                      component="a"
+                      href={startup.website_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="outline"
+                      rightSection={<ExternalLink size={15} aria-hidden="true" />}
+                    >
+                      Открыть {externalHostname(startup.website_url)}
+                    </Button>
+                    <ReportLinkForm startupId={startup.id} linkKind="website" />
+                  </Stack>
                 )}
                 {startup.deck_url && (
-                  <Button
-                    component="a"
-                    href={startup.deck_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    variant="outline"
-                    leftSection={<FileText size={15} aria-hidden="true" />}
-                  >
-                    Открыть презентацию
-                  </Button>
+                  <Stack gap={4}>
+                    <Button
+                      component="a"
+                      href={startup.deck_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="outline"
+                      leftSection={<FileText size={15} aria-hidden="true" />}
+                    >
+                      Презентация на {externalHostname(startup.deck_url)}
+                    </Button>
+                    <ReportLinkForm startupId={startup.id} linkKind="deck" />
+                  </Stack>
                 )}
               </Stack>
             </Paper>
