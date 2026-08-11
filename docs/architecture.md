@@ -260,6 +260,10 @@ operator scripts and isolated test setup, never in the application runtime.
   `limit` or load an unbounded dashboard history.
 - Logs contain safe error codes and operational context, not secrets, tokens,
   raw credentials, or unnecessary personal data.
+- Proxy creates an unpredictable nonce for each HTML request and forwards the
+  same value to rendering and the response CSP. Executable scripts and generated
+  style elements require that nonce; the narrower `style-src-attr` compatibility
+  exception exists only for Mantine's component CSS custom properties.
 - Production Supabase data is never accessed or changed without explicit,
   task-specific approval.
 

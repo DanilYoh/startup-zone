@@ -19,7 +19,7 @@ Implemented:
 - filterable, paginated public startup directory and detail pages;
 - PostgreSQL constraints and row-level security with pgTAP tests;
 - request-correlated structured server logs, Sentry-compatible server/client error tracking, unexpected request capture, application rate limiting, and decision auditing;
-- separate `/healthz` liveness and bounded `/readyz` Supabase readiness probes, plus a restrictive Content Security Policy;
+- separate `/healthz` liveness and cached `/readyz` Supabase readiness probes, plus a request-nonce Content Security Policy;
 - responsive light and dark UI;
 - Vitest, React Testing Library, Playwright, CodeQL, container scanning, SBOM generation, and GitHub Actions coverage for core flows.
 

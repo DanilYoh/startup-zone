@@ -1,4 +1,4 @@
-import { GET } from "@/app/readyz/route";
+import { GET, resetReadinessCacheForTests } from "@/app/readyz/route";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -32,6 +32,7 @@ vi.mock("@/lib/logger", () => ({
 vi.mock("@supabase/supabase-js", () => ({ createClient: createClientMock }));
 
 beforeEach(() => {
+  resetReadinessCacheForTests();
   abortSignalMock.mockReset().mockResolvedValue({ data: [], error: null });
   limitMock.mockReset().mockReturnValue({ abortSignal: abortSignalMock });
   selectMock.mockReset().mockReturnValue({ limit: limitMock });
@@ -61,7 +62,21 @@ describe("readiness route", () => {
       global: { headers: { "x-request-id": "edge-request-123" } },
     });
     expect(logServerInfoMock).toHaveBeenCalledWith("readiness.succeeded", {
+      cache: "miss",
       requestId: "edge-request-123",
+    });
+  });
+
+  it("reuses a recent probe instead of spending database quota per request", async () => {
+    const first = await GET(new Request("https://startup-zone.example/readyz"));
+    const second = await GET(new Request("https://startup-zone.example/readyz"));
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(createClientMock).toHaveBeenCalledOnce();
+    expect(logServerInfoMock).toHaveBeenLastCalledWith("readiness.succeeded", {
+      cache: "hit",
+      requestId: expect.any(String),
     });
   });
 
@@ -80,6 +95,7 @@ describe("readiness route", () => {
     expect(response.status).toBe(503);
     expect(await response.text()).toBe('{"status":"unavailable"}');
     expect(logServerErrorMock).toHaveBeenCalledWith("readiness.failed", {
+      cache: "miss",
       code: "08006",
       requestId: "edge-request-456",
     });

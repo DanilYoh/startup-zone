@@ -260,7 +260,10 @@ The production image is a Next.js standalone build and runs as an unprivileged
 user with a read-only root filesystem. `GET /healthz` is a process-liveness
 probe and deliberately bypasses Auth Proxy and Supabase. `GET /readyz` performs
 a three-second, read-only query through the publishable Supabase client and
-returns only `ok` or `unavailable`; the container health check uses readiness.
+returns only `ok` or `unavailable`; successful results are reused in-process for
+ten seconds and failures for two seconds so repeated probes do not consume one
+database query each. HTTP responses remain `no-store`, and the container health
+check uses readiness.
 Before shifting
 traffic, run the critical browser flows against the production candidate and
 check the Supabase gateway, Auth SMTP delivery, and database separately.
@@ -375,7 +378,9 @@ Never overwrite production as part of a restore drill.
 - Error tracking, log shipping, metrics, alerts, SMTP delivery, backups, and
   uptime checks require external services and operator configuration. Repository
   integration alone does not prove ingestion or alert delivery.
-- The current static CSP permits inline framework styles and scripts required by
-  Next.js and Mantine; moving to request nonces would further reduce script risk.
+- Request nonces protect framework scripts and generated style elements. Mantine
+  still requires the isolated `style-src-attr 'unsafe-inline'` exception for
+  per-component CSS custom properties; executable scripts never receive an
+  inline exception.
 - The single-VPS production model has an acknowledged availability window during
   host failure or maintenance; recovery depends on tested off-host backups.
