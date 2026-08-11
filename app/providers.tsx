@@ -13,7 +13,6 @@ export function AppProviders({ children, nonce, theme }: AppProvidersProps) {
     <MantineProvider
       theme={theme}
       defaultColorScheme="dark"
-      deduplicateInlineStyles
       getStyleNonce={() => nonce}
     >
       {children}
