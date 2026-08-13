@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { assertDemoSeedAllowed } from "./demo-seed-guard.mjs";
+import { demoStartups } from "./demo-startups.mjs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -32,45 +33,6 @@ if (!founderEmail || !founderPassword || !investorEmail || !investorPassword) {
 if (founderPassword.length < 12 || investorPassword.length < 12) {
   throw new Error("Demo passwords must contain at least 12 characters.");
 }
-
-const demoStartups = [
-  {
-    title: "FlowPilot",
-    slug: "flowpilot-operations-ai",
-    one_pager:
-      "An AI operations copilot that helps logistics teams resolve delivery exceptions before they become customer problems.",
-    description:
-      "FlowPilot connects shipment events, support signals, and operational playbooks in one workspace. It highlights high-risk exceptions, explains the likely cause, and proposes the next action for an operations manager to approve. The team is validating the product with regional logistics providers and is raising capital to deepen data integrations and workflow automation.",
-    stage: "mvp",
-    niche: ["AI", "B2B SaaS", "Logistics"],
-    funding_ask: 350000,
-    equity_offered: 7.5,
-  },
-  {
-    title: "GreenLedger",
-    slug: "greenledger-climate-reporting",
-    one_pager:
-      "A lightweight climate reporting platform that turns supplier activity into audit-ready emissions evidence for growing companies.",
-    description:
-      "GreenLedger gives finance and operations teams a practical way to collect supplier activity, calculate emissions, and keep the evidence behind every number. The product focuses on companies that have outgrown spreadsheets but are not ready for enterprise sustainability suites. The founders are seeking product and go-to-market collaborators as they prepare the next group of design partners.",
-    stage: "pre_seed",
-    niche: ["ClimateTech", "FinTech", "B2B SaaS"],
-    funding_ask: 500000,
-    equity_offered: 8,
-  },
-  {
-    title: "CareBridge",
-    slug: "carebridge-remote-care",
-    one_pager:
-      "A coordinated remote-care platform helping small clinics run structured follow-up programs with verified care partners.",
-    description:
-      "CareBridge helps independent clinics extend care beyond appointments without building a large internal coordination team. Clinics assemble follow-up programs, invite verified care partners, and track patient-facing milestones in a shared workflow. The current release is focused on operational validation, marketplace trust, and partnerships with regional clinic networks.",
-    stage: "seed",
-    niche: ["HealthTech", "Marketplace", "Future of Work"],
-    funding_ask: 900000,
-    equity_offered: 6,
-  },
-];
 
 async function findUser(email) {
   for (let page = 1; page <= 20; page += 1) {
@@ -237,12 +199,14 @@ if (previousStartupIds.length > 0) {
   if (startupDeleteError) throw startupDeleteError;
 }
 
-const rows = demoStartups.map((startup) => ({
+const seededAt = Date.now();
+const rows = demoStartups.map((startup, index) => ({
   ...startup,
   founder_id: founder.id,
   deck_url: null,
   website_url: null,
   is_active: true,
+  created_at: new Date(seededAt - index * 86_400_000).toISOString(),
 }));
 
 const { data: seededStartups, error: startupError } = await admin
