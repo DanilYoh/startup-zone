@@ -1,7 +1,7 @@
 .body {
   min-height: 100%;
-  font-family: var(--font-geist-sans), sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-inter), Arial, sans-serif;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

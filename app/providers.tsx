@@ -12,7 +12,7 @@ export function AppProviders({ children, nonce, theme }: AppProvidersProps) {
   return (
     <MantineProvider
       theme={theme}
-      defaultColorScheme="dark"
+      forceColorScheme="dark"
       getStyleNonce={() => nonce}
     >
       {children}

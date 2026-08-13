@@ -1,6 +1,5 @@
 import { AuthButton } from "@/components/auth-button";
 import { LinkButton } from "@/components/link-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Skeleton } from "@mantine/core";
 import {
   ArrowRight,
@@ -88,7 +87,6 @@ export default function Home() {
             <a href="#trust">Безопасность</a>
           </div>
           <div className={styles.navActions}>
-            <ThemeSwitcher />
             <Suspense fallback={<Skeleton height={36} width={124} radius="xl" />}>
               <AuthButton />
             </Suspense>

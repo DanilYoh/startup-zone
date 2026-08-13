@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import {
   ColorSchemeScript,
   createTheme,
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   display: "swap",
   subsets: ["latin", "cyrillic"],
 });
@@ -53,11 +53,11 @@ const theme = createTheme({
     ],
   },
   primaryColor: "brand",
-  primaryShade: { light: 8, dark: 5 },
+  primaryShade: 5,
   defaultRadius: "sm",
-  fontFamily: "var(--font-geist-sans), sans-serif",
+  fontFamily: "var(--font-inter), Arial, sans-serif",
   headings: {
-    fontFamily: "var(--font-geist-sans), sans-serif",
+    fontFamily: "var(--font-inter), Arial, sans-serif",
   },
 });
 
@@ -65,11 +65,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const nonce = (await headers()).get("x-nonce") ?? "";
 
   return (
-    <html lang="ru" data-scroll-behavior="smooth" {...mantineHtmlProps}>
+    <html
+      lang="ru"
+      data-scroll-behavior="smooth"
+      {...mantineHtmlProps}
+      data-mantine-color-scheme="dark"
+    >
       <head>
-        <ColorSchemeScript defaultColorScheme="dark" nonce={nonce} />
+        <ColorSchemeScript forceColorScheme="dark" nonce={nonce} />
       </head>
-      <body className={`${geistSans.variable} ${styles.body}`}>
+      <body className={`${inter.variable} ${styles.body}`}>
         <AppProviders nonce={nonce} theme={theme}>{children}</AppProviders>
       </body>
     </html>
