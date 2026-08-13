@@ -1,5 +1,4 @@
 import { LogoutButton } from "@/components/logout-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { ArrowUpRight, LayoutDashboard, Rocket, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import styles from "./dashboard-shell.module.css";
@@ -19,7 +18,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <span>Личный кабинет</span>
           </div>
           <div className={styles.actions}>
-            <ThemeSwitcher />
             <LogoutButton />
           </div>
         </div>

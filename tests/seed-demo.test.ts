@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { startupSchema } from "../lib/validations";
+import { demoStartups } from "../scripts/demo-startups.mjs";
 
 const seedScript = fileURLToPath(new URL("../scripts/seed-demo.mjs", import.meta.url));
 
@@ -48,5 +50,36 @@ describe("demo seed safeguards", () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("Demo seed target mismatch");
+  });
+});
+
+describe("demo startup catalog", () => {
+  it("contains 15 valid synthetic startups", () => {
+    expect(demoStartups).toHaveLength(15);
+
+    for (const startup of demoStartups) {
+      expect(startupSchema.safeParse(startup).success, startup.slug).toBe(true);
+    }
+  });
+
+  it("keeps unique slugs and the application workflow fixtures", () => {
+    const slugs = demoStartups.map((startup) => startup.slug);
+
+    expect(new Set(slugs).size).toBe(slugs.length);
+    expect(slugs).toEqual(
+      expect.arrayContaining([
+        "flowpilot-operations-ai",
+        "greenledger-climate-reporting",
+        "carebridge-remote-care",
+      ]),
+    );
+  });
+
+  it("covers a varied set of stages and niches", () => {
+    const stages = new Set(demoStartups.map((startup) => startup.stage));
+    const niches = new Set(demoStartups.flatMap((startup) => startup.niche));
+
+    expect(stages.size).toBeGreaterThanOrEqual(5);
+    expect(niches.size).toBeGreaterThanOrEqual(20);
   });
 });

@@ -4,7 +4,12 @@
 }
 
 .header {
+  position: sticky;
+  z-index: 40;
+  top: 0;
   border-bottom: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--sz-dark-panel) 94%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .nav,
@@ -50,12 +55,13 @@
 }
 
 .documentLink {
-  color: var(--mantine-color-anchor);
+  color: var(--sz-muted);
   text-decoration: none;
+  transition: color 120ms ease;
 }
 
 .documentLink:hover {
-  text-decoration: underline;
+  color: var(--sz-accent);
 }
 
 .main {

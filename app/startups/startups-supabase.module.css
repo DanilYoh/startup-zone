@@ -10,6 +10,7 @@
   position: sticky;
   z-index: 40;
   top: 0;
+  isolation: isolate;
   border-bottom: 1px solid #292c2a;
   background: color-mix(in srgb, var(--sz-dark-panel) 95%, transparent);
   color: var(--sz-on-dark);
@@ -92,8 +93,15 @@
 .pageContainer { max-width: 74rem; }
 .narrowContainer { max-width: 48rem; }
 .heroIntro { max-width: 43rem; margin-bottom: 2.7rem; }
+.heroIntro h1 { letter-spacing: -0.045em; }
 .textBalance { text-wrap: balance; }
-.filterPanel { background: var(--sz-panel-subtle); }
+.filterPanel {
+  position: relative;
+  border-color: var(--sz-line-strong);
+  background:
+    linear-gradient(90deg, rgb(62 207 142 / 5%), transparent 30%),
+    var(--sz-panel-subtle);
+}
 
 .filterGrid {
   display: grid;
@@ -101,8 +109,56 @@
 }
 
 .startupCard {
+  position: relative;
+  overflow: hidden;
   background: var(--sz-panel);
-  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.startupCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: transparent;
+  content: "";
+  transition: background 160ms ease;
+}
+
+.cardHeading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.startupMark {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #315d48;
+  border-radius: 0.4rem;
+  background: #153126;
+  color: var(--sz-accent);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.startupSummary {
+  display: -webkit-box;
+  min-height: 4.95rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.metricLabel {
+  font-family: var(--mantine-font-family-monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .startupCard:hover {
@@ -110,6 +166,8 @@
   background: var(--sz-elevated);
   transform: translateY(-1px);
 }
+
+.startupCard:hover::before { background: var(--sz-accent); }
 
 .cardFooter {
   margin-top: auto;

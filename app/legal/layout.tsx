@@ -1,4 +1,3 @@
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Group, Text } from "@mantine/core";
 import Link from "next/link";
 import styles from "./legal.module.css";
@@ -15,7 +14,6 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <Group className={styles.links} wrap="nowrap">
             <Link className={styles.documentLink} href="/legal/privacy">Политика</Link>
             <Link className={styles.documentLink} href="/legal/consent">Согласие</Link>
-            <ThemeSwitcher />
           </Group>
         </nav>
       </header>

@@ -1,6 +1,5 @@
 import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import { Skeleton } from "@mantine/core";
 import Link from "next/link";
@@ -34,7 +33,6 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
             </Link>
           </div>
           <div className={styles.navActions}>
-            <ThemeSwitcher />
             {!hasEnvVars ? (
               <EnvVarWarning />
             ) : (
