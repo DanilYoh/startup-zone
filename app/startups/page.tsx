@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/link-button";
 import { PaginationNav } from "@/components/pagination-nav";
+import { isReadOnlyDemoEnabled } from "@/lib/env";
 import { formatMarketCurrency, russianPlural } from "@/lib/market";
 import {
   hasStartupDirectoryFilters,
@@ -24,7 +25,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { ArrowRight, MapPin, Rocket, Search, SearchX, ServerOff } from "lucide-react";
+import { ArrowRight, MapPin, Rocket, Search, SearchX, ServerOff, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -41,12 +42,16 @@ type StartupsPageProps = {
 
 function DirectorySkeleton() {
   return (
-    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" aria-label="Загрузка стартапов">
-      {[1, 2, 3, 4].map((item) => (
+    <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg" aria-label="Загрузка стартапов">
+      {[1, 2, 3, 4, 5, 6].map((item) => (
         <Skeleton key={item} height={250} radius="lg" />
       ))}
     </SimpleGrid>
   );
+}
+
+function startupMark(title: string) {
+  return Array.from(title).slice(0, 2).join("").toLocaleUpperCase("ru-RU");
 }
 
 function DirectoryNotice({
@@ -169,30 +174,35 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
             </div>
           </Group>
 
-          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg">
             {result.data.items.map((startup) => (
               <Paper component="article" key={startup.id} withBorder radius="md" p="lg" className={styles.startupCard}>
                 <Stack gap="md" h="100%">
                   <Group justify="space-between" align="flex-start" wrap="nowrap">
-                    <div>
-                      <Title order={3} size="h4">
-                        <Link
-                          href={`/startups/${startup.slug}`}
-                          className={styles.startupLink}
-                        >
-                          {startup.title}
-                        </Link>
-                      </Title>
-                      {startup.founder?.full_name && (
-                        <Text mt={4} size="sm" c="dimmed">
-                          Основатель: {startup.founder.full_name}
-                        </Text>
-                      )}
+                    <div className={styles.cardHeading}>
+                      <span className={styles.startupMark} aria-hidden="true">
+                        {startupMark(startup.title)}
+                      </span>
+                      <div>
+                        <Title order={3} size="h4">
+                          <Link
+                            href={`/startups/${startup.slug}`}
+                            className={styles.startupLink}
+                          >
+                            {startup.title}
+                          </Link>
+                        </Title>
+                        {startup.founder?.full_name && (
+                          <Text mt={4} size="xs" c="dimmed">
+                            {startup.founder.full_name}
+                          </Text>
+                        )}
+                      </div>
                     </div>
                     <Badge variant="light">{startupStageLabels[startup.stage]}</Badge>
                   </Group>
 
-                  <Text c="dimmed" lh={1.65}>
+                  <Text c="dimmed" lh={1.65} className={styles.startupSummary}>
                     {startup.one_pager}
                   </Text>
 
@@ -208,9 +218,10 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                     <Group justify="space-between" align="center">
                       <div>
                         {startup.funding_ask !== null && (
-                          <Text size="sm" fw={600}>
-                            Требуется {formatMarketCurrency(startup.funding_ask)}
-                          </Text>
+                          <div>
+                            <Text size="xs" c="dimmed" className={styles.metricLabel}>Раунд</Text>
+                            <Text size="sm" fw={650}>{formatMarketCurrency(startup.funding_ask)}</Text>
+                          </div>
                         )}
                         {startup.founder?.location && (
                           <Group gap={5} mt={4} wrap="nowrap">
@@ -226,7 +237,7 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
                         variant="subtle"
                         rightSection={<ArrowRight size={15} aria-hidden="true" />}
                       >
-                        Открыть проект
+                        Подробнее
                       </LinkButton>
                     </Group>
                   </div>
@@ -257,18 +268,25 @@ async function DirectoryContent({ searchParams }: StartupsPageProps) {
 }
 
 export default function StartupsPage({ searchParams }: StartupsPageProps) {
+  const readOnlyDemoEnabled = isReadOnlyDemoEnabled();
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.heroIntro}>
-        <Badge variant="light" size="lg">
-          Стартапы и инвесторы
+        <Badge
+          variant="light"
+          size="lg"
+          leftSection={readOnlyDemoEnabled ? <Sparkles size={13} aria-hidden="true" /> : undefined}
+        >
+          {readOnlyDemoEnabled ? "Демо-каталог" : "Стартапы и инвесторы"}
         </Badge>
         <Title order={1} mt="md" className={styles.textBalance} fz={{ base: 40, sm: 52 }} lh={1.08}>
           Найдите стартап, который соответствует вашей стратегии.
         </Title>
         <Text mt="lg" size="lg" c="dimmed" lh={1.7}>
-          Изучайте активные проекты, оценивайте стадию и нишу, а затем открывайте полную карточку
-          перед отправкой инвестиционной заявки.
+          {readOnlyDemoEnabled
+            ? "Изучайте синтетические проекты, сравнивайте стадии и ниши и оцените работу площадки без входа в аккаунт."
+            : "Изучайте активные проекты, оценивайте стадию и нишу, а затем открывайте полную карточку перед отправкой инвестиционной заявки."}
         </Text>
       </div>
 

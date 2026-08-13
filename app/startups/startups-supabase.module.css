@@ -124,6 +124,43 @@
   transition: background 160ms ease;
 }
 
+.cardHeading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.startupMark {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #315d48;
+  border-radius: 0.4rem;
+  background: #153126;
+  color: var(--sz-accent);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.startupSummary {
+  display: -webkit-box;
+  min-height: 4.95rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.metricLabel {
+  font-family: var(--mantine-font-family-monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .startupCard:hover {
   border-color: var(--sz-line-strong);
   background: var(--sz-elevated);
