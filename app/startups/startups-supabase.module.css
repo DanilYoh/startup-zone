@@ -10,6 +10,7 @@
   position: sticky;
   z-index: 40;
   top: 0;
+  isolation: isolate;
   border-bottom: 1px solid #292c2a;
   background: color-mix(in srgb, var(--sz-dark-panel) 95%, transparent);
   color: var(--sz-on-dark);
@@ -92,8 +93,15 @@
 .pageContainer { max-width: 74rem; }
 .narrowContainer { max-width: 48rem; }
 .heroIntro { max-width: 43rem; margin-bottom: 2.7rem; }
+.heroIntro h1 { letter-spacing: -0.045em; }
 .textBalance { text-wrap: balance; }
-.filterPanel { background: var(--sz-panel-subtle); }
+.filterPanel {
+  position: relative;
+  border-color: var(--sz-line-strong);
+  background:
+    linear-gradient(90deg, rgb(62 207 142 / 5%), transparent 30%),
+    var(--sz-panel-subtle);
+}
 
 .filterGrid {
   display: grid;
@@ -101,8 +109,19 @@
 }
 
 .startupCard {
+  position: relative;
+  overflow: hidden;
   background: var(--sz-panel);
-  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.startupCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: transparent;
+  content: "";
+  transition: background 160ms ease;
 }
 
 .startupCard:hover {
@@ -110,6 +129,8 @@
   background: var(--sz-elevated);
   transform: translateY(-1px);
 }
+
+.startupCard:hover::before { background: var(--sz-accent); }
 
 .cardFooter {
   margin-top: auto;

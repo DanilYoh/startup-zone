@@ -7,6 +7,7 @@
   position: sticky;
   z-index: 50;
   top: 0;
+  isolation: isolate;
   border-bottom: 1px solid var(--sz-line);
   background: color-mix(in srgb, var(--sz-dark-panel) 96%, transparent);
   color: var(--sz-on-dark);
