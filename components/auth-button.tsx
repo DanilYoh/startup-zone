@@ -1,10 +1,14 @@
 import { Group, Text } from "@mantine/core";
+import { hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
+import { EnvVarWarning } from "./env-var-warning";
 import { LinkButton } from "./link-button";
 import { LogoutButton } from "./logout-button";
 import styles from "./auth-button.module.css";
 
 export async function AuthButton() {
+  if (!hasEnvVars) return <EnvVarWarning />;
+
   const supabase = await createClient();
 
   // You can also use getUser() which will be slower.
