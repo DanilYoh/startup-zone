@@ -30,6 +30,7 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
             <Link
               href="/startups"
               className={styles.directoryLink}
+              aria-current="page"
             >
               <LayoutGrid size={14} aria-hidden="true" />
               Каталог стартапов
