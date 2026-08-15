@@ -3,6 +3,7 @@ import { EnvVarWarning } from "@/components/env-var-warning";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import { Skeleton } from "@mantine/core";
+import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import styles from "./startups-supabase.module.css";
@@ -30,6 +31,7 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
               href="/startups"
               className={styles.directoryLink}
             >
+              <LayoutGrid size={14} aria-hidden="true" />
               Каталог стартапов
             </Link>
           </div>
@@ -50,7 +52,7 @@ export default function StartupsLayout({ children }: { children: React.ReactNode
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <p>Startup Zone · Реальные проекты для подходящих инвесторов.</p>
+          <p>Startup Zone · Структурированные проекты для предметных решений.</p>
           <div className={styles.footerLinks}>
             <Link className={styles.footerLink} href="/">О продукте</Link>
             <Link className={styles.footerLink} href="/legal/privacy">

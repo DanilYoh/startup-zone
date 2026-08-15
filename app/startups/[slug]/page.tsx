@@ -9,16 +9,24 @@ import {
   Alert,
   Badge,
   Button,
-  Group,
   Paper,
-  SimpleGrid,
   Skeleton,
   Stack,
   Text,
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { ArrowLeft, ExternalLink, FileText, MapPin, ServerOff, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ExternalLink,
+  FileText,
+  Landmark,
+  Link2,
+  MapPin,
+  ServerOff,
+  UserRound,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import styles from "../startups-supabase.module.css";
@@ -79,130 +87,123 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
   const startup = result.data;
   if (!startup) notFound();
 
-  return (
-    <Stack gap="xl">
-      <div>
-        <Group gap="xs" mb="lg">
-          <LinkButton
-            href="/startups"
-            variant="subtle"
-            leftSection={<ArrowLeft size={16} aria-hidden="true" />}
-          >
-            Все стартапы
-          </LinkButton>
-        </Group>
+  const hasRoundData = startup.funding_ask !== null || startup.equity_offered !== null;
+  const hasProjectLinks = Boolean(startup.website_url || startup.deck_url);
+  const hasSidebar = hasRoundData || hasProjectLinks;
 
-        <Group gap="sm" mb="md">
+  return (
+    <>
+      <div className={styles.detailBack}>
+        <LinkButton
+          href="/startups"
+          variant="subtle"
+          leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+        >
+          Все стартапы
+        </LinkButton>
+      </div>
+
+      <article>
+        <header className={styles.detailHero}>
+          <div className={styles.detailMeta}>
           <Badge size="lg" variant="light">
             {startupStageLabels[startup.stage]}
           </Badge>
-          <Text size="sm" c="dimmed">
+            <span className={styles.detailDate}>
+              <CalendarDays size={13} aria-hidden="true" />
             Опубликовано {dateFormatter.format(new Date(startup.created_at))}
-          </Text>
-        </Group>
+            </span>
+          </div>
 
-        <Title order={1} className={styles.textBalance} fz={{ base: 42, sm: 58 }} lh={1.05}>
+          <Title order={1} className={`${styles.textBalance} ${styles.detailTitle}`} fz={{ base: 44, sm: 64 }} lh={0.98}>
           {startup.title}
-        </Title>
-        <Text mt="lg" size="xl" c="dimmed" lh={1.6} maw={820}>
+          </Title>
+          <p className={styles.detailLead}>
           {startup.one_pager}
-        </Text>
-        <Group mt="lg" gap="xs">
+          </p>
+          <div className={styles.detailNiches}>
           {startup.niche.map((item) => (
             <Badge key={item} variant="outline" color="gray" size="lg">
               {item}
             </Badge>
           ))}
-        </Group>
-      </div>
+          </div>
+        </header>
 
-      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
-        <Paper
-          component="article"
-          withBorder
-          radius="lg"
-          p={{ base: "lg", sm: "xl" }}
-          className={styles.detailMain}
-        >
-          <Title order={2} size="h3">
-            О проекте
-          </Title>
-          <Text mt="lg" lh={1.8} className={styles.preWrap}>
-            {startup.description}
-          </Text>
-        </Paper>
+        <div className={`${styles.detailGrid} ${!hasSidebar ? styles.detailGridWide : ""}`}>
+          <div className={styles.detailStory}>
+            <section className={styles.storyPanel} aria-labelledby="about-project-heading">
+              <span className={styles.sectionIndex}>01 / Проект</span>
+              <Title order={2} size="h2" id="about-project-heading">О проекте</Title>
+              <p className={`${styles.storyCopy} ${styles.preWrap}`}>{startup.description}</p>
+            </section>
 
-        <Stack gap="lg">
-          <Paper withBorder radius="lg" p="lg">
-            <Title order={2} size="h4">
+            <section className={styles.founderPanel} aria-labelledby="founder-heading">
+              <span className={styles.sectionIndex}>02 / Команда</span>
+              <Title order={2} size="h3" id="founder-heading">
               Основатель
-            </Title>
-            <Group mt="md" gap="sm" align="flex-start" wrap="nowrap">
-              <ThemeIcon variant="light" color="gray" size={38} radius="md">
+              </Title>
+              <div className={styles.founderIdentity}>
+                <span className={styles.founderMark} aria-hidden="true">
                 <UserRound size={18} aria-hidden="true" />
-              </ThemeIcon>
-              <div>
-                <Text fw={600}>{startup.founder?.full_name ?? "Основатель Startup Zone"}</Text>
+                </span>
+                <div>
+                  <Text fw={650}>{startup.founder?.full_name ?? "Основатель Startup Zone"}</Text>
                 {startup.founder?.headline && (
                   <Text size="sm" c="dimmed" mt={2}>
                     {startup.founder.headline}
                   </Text>
                 )}
                 {startup.founder?.location && (
-                  <Group gap={5} mt={4} wrap="nowrap">
+                    <span className={styles.founderLocation}>
                     <MapPin size={14} aria-hidden="true" />
-                    <Text size="sm" c="dimmed">
                       {startup.founder.location}
-                    </Text>
-                  </Group>
+                    </span>
                 )}
+                </div>
               </div>
-            </Group>
             {startup.founder?.founder_experience && (
-              <Text size="sm" mt="md" lh={1.6} className={styles.preWrap}>
+                <p className={`${styles.founderExperience} ${styles.preWrap}`}>
                 {startup.founder.founder_experience}
-              </Text>
+                </p>
             )}
-          </Paper>
+            </section>
+          </div>
 
-          {(startup.funding_ask !== null || startup.equity_offered !== null) && (
-            <Paper withBorder radius="lg" p="lg">
-              <Title order={2} size="h4">
-                Раунд
-              </Title>
-              <Stack mt="md" gap="sm">
+          {hasSidebar && (
+            <aside className={styles.detailSidebar} aria-label="Параметры и ссылки проекта">
+              {hasRoundData && (
+                <section className={styles.sidePanel} aria-labelledby="round-heading">
+                  <div className={styles.sidePanelHeader}>
+                    <h2 id="round-heading">Параметры раунда</h2>
+                    <Landmark size={16} aria-hidden="true" />
+                  </div>
+                  <div className={styles.dealMetrics}>
                 {startup.funding_ask !== null && (
                   <div>
-                    <Text size="xs" tt="uppercase" c="dimmed" fw={600}>
-                      Требуемая сумма
-                    </Text>
-                    <Text mt={3} fw={600}>
-                      {formatMarketCurrency(startup.funding_ask)}
-                    </Text>
+                        <span>Сумма</span>
+                        <strong>{formatMarketCurrency(startup.funding_ask)}</strong>
                   </div>
                 )}
                 {startup.equity_offered !== null && (
                   <div>
-                    <Text size="xs" tt="uppercase" c="dimmed" fw={600}>
-                      Предлагаемая доля
-                    </Text>
-                    <Text mt={3} fw={600}>
-                      {startup.equity_offered}%
-                    </Text>
+                        <span>Доля</span>
+                        <strong>{startup.equity_offered}%</strong>
                   </div>
                 )}
-              </Stack>
-            </Paper>
-          )}
+                  </div>
+                </section>
+              )}
 
-          {(startup.website_url || startup.deck_url) && (
-            <Paper withBorder radius="lg" p="lg">
-              <Title order={2} size="h4">
-                Ссылки проекта
-              </Title>
-              <Stack mt="md" gap="sm">
+              {hasProjectLinks && (
+                <section className={styles.sidePanel} aria-labelledby="links-heading">
+                  <div className={styles.sidePanelHeader}>
+                    <h2 id="links-heading">Материалы проекта</h2>
+                    <Link2 size={16} aria-hidden="true" />
+                  </div>
+                  <div className={styles.projectLinks}>
                 {startup.website_url && (
-                  <Stack gap={4}>
+                      <div className={styles.projectLinkItem}>
                     <Button
                       component="a"
                       href={startup.website_url}
@@ -214,10 +215,10 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                       Открыть {externalHostname(startup.website_url)}
                     </Button>
                     <ReportLinkForm startupId={startup.id} linkKind="website" />
-                  </Stack>
+                      </div>
                 )}
                 {startup.deck_url && (
-                  <Stack gap={4}>
+                      <div className={styles.projectLinkItem}>
                     <Button
                       component="a"
                       href={startup.deck_url}
@@ -229,24 +230,34 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
                       Презентация на {externalHostname(startup.deck_url)}
                     </Button>
                     <ReportLinkForm startupId={startup.id} linkKind="deck" />
-                  </Stack>
+                      </div>
                 )}
-              </Stack>
-            </Paper>
+                    <p className={styles.linkHint}>Внешние ссылки открываются в новой вкладке</p>
+                  </div>
+                </section>
+              )}
+            </aside>
           )}
-        </Stack>
-      </SimpleGrid>
+        </div>
+      </article>
 
-      <Paper withBorder radius="xl" p={{ base: "lg", sm: "xl" }}>
-        <ApplicationPanel startupId={startup.id} founderId={startup.founder_id} />
-      </Paper>
-    </Stack>
+      <section className={styles.applicationSection} aria-labelledby="application-heading">
+        <div className={styles.applicationIntro}>
+          <span className={styles.sectionIndex}>03 / Контакт</span>
+          <Title order={2} size="h2" id="application-heading">Начать предметный разговор</Title>
+          <p>Отправьте основателю краткое сообщение. Контакты откроются после принятия заявки.</p>
+        </div>
+        <div className={styles.applicationPanel}>
+          <ApplicationPanel startupId={startup.id} founderId={startup.founder_id} />
+        </div>
+      </section>
+    </>
   );
 }
 
 export default function StartupDetailPage({ params }: StartupDetailPageProps) {
   return (
-    <div className={styles.pageContainer}>
+    <div className={styles.detailPage}>
       <Suspense fallback={<DetailSkeleton />}>
         <StartupDetail params={params} />
       </Suspense>

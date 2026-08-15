@@ -1,21 +1,25 @@
 import { LinkButton } from "@/components/link-button";
-import { Paper, Stack, Text, Title } from "@mantine/core";
-import styles from "../startups.module.css";
+import { ArrowLeft } from "lucide-react";
+import styles from "../startups-supabase.module.css";
 
 export default function StartupNotFound() {
   return (
     <div className={styles.narrowContainer}>
-      <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
-        <Stack gap="md" align="flex-start">
-          <Title order={1} size="h2">
-            Стартап не найден
-          </Title>
-          <Text c="dimmed">
+      <section className={styles.notFoundPanel} aria-labelledby="not-found-heading">
+        <div className={styles.notFoundContent}>
+          <p className={styles.notFoundCode}>404 / Карточка недоступна</p>
+          <h1 id="not-found-heading">Стартап не найден</h1>
+          <p>
             Проект не существует или больше не опубликован в каталоге.
-          </Text>
-          <LinkButton href="/startups">Смотреть активные стартапы</LinkButton>
-        </Stack>
-      </Paper>
+          </p>
+          <LinkButton
+            href="/startups"
+            leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+          >
+            Смотреть активные стартапы
+          </LinkButton>
+        </div>
+      </section>
     </div>
   );
 }

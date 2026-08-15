@@ -129,46 +129,56 @@ export default function Home() {
                   Создать профиль
                 </LinkButton>
               </div>
+              <p className={styles.heroNote}>
+                <LockKeyhole size={14} aria-hidden="true" />
+                Регистрация по приглашению. Контакты открываются только после принятия заявки.
+              </p>
               <div className={styles.proofRow} aria-label="Возможности продукта">
-                <div><strong>2</strong><span>понятные роли</span></div>
-                <div><strong>1</strong><span>процесс принятия решения</span></div>
+                <div><strong>02</strong><span>ролевых профиля</span></div>
+                <div><strong>01</strong><span>заявка до обмена контактами</span></div>
                 <div><strong>RLS</strong><span>защита на уровне данных</span></div>
               </div>
             </div>
 
             <div className={styles.signalBoard} aria-label="Соответствие профилей основателя и инвестора">
-              <div className={`${styles.signalCard} ${styles.founderSignal}`}>
-                <div className={styles.signalHeader}>
-                  <span className={styles.signalIcon}><Building2 size={20} aria-hidden="true" /></span>
-                  <span className={styles.signalStatus}>Публикация</span>
-                </div>
-                <p className={styles.signalKicker}>Сигнал основателя</p>
-                <h2>Покажите возможность ясно.</h2>
-                <div className={styles.signalLines}>
-                  <span style={{ "--line-width": "92%" } as React.CSSProperties} />
-                  <span style={{ "--line-width": "68%" } as React.CSSProperties} />
-                  <span style={{ "--line-width": "81%" } as React.CSSProperties} />
-                </div>
-                <div className={styles.signalTags}><span>Стадия</span><span>Прогресс</span><span>Раунд</span></div>
+              <div className={styles.signalToolbar} aria-hidden="true">
+                <span><i /> Пространство сделки</span>
+                <span>Сопоставление · 03</span>
               </div>
-
-              <div className={styles.matchRail} aria-hidden="true">
-                <span />
-                <div><Radar size={18} /></div>
-                <span />
-              </div>
-
-              <div className={`${styles.signalCard} ${styles.investorSignal}`}>
-                <div className={styles.signalHeader}>
-                  <span className={styles.signalIcon}><Landmark size={20} aria-hidden="true" /></span>
-                  <span className={styles.signalStatus}>Оценка</span>
+              <div className={styles.signalCanvas}>
+                <div className={`${styles.signalCard} ${styles.founderSignal}`}>
+                  <div className={styles.signalHeader}>
+                    <span className={styles.signalIcon}><Building2 size={20} aria-hidden="true" /></span>
+                    <span className={styles.signalStatus}>Публикация</span>
+                  </div>
+                  <p className={styles.signalKicker}>Сигнал основателя</p>
+                  <h2>Покажите возможность ясно.</h2>
+                  <div className={styles.signalLines}>
+                    <span style={{ "--line-width": "92%" } as React.CSSProperties} />
+                    <span style={{ "--line-width": "68%" } as React.CSSProperties} />
+                    <span style={{ "--line-width": "81%" } as React.CSSProperties} />
+                  </div>
+                  <div className={styles.signalTags}><span>Стадия</span><span>Прогресс</span><span>Раунд</span></div>
                 </div>
-                <p className={styles.signalKicker}>Интерес инвестора</p>
-                <h2>Инвестируйте в то, во что верите.</h2>
-                <div className={styles.fitGrid}>
-                  <div><span>Стратегия</span><strong>Совпадает</strong></div>
-                  <div><span>Стадия</span><strong>Seed</strong></div>
-                  <div><span>Чек</span><strong>Подходит</strong></div>
+
+                <div className={styles.matchRail} aria-hidden="true">
+                  <span />
+                  <div><Radar size={18} /></div>
+                  <span />
+                </div>
+
+                <div className={`${styles.signalCard} ${styles.investorSignal}`}>
+                  <div className={styles.signalHeader}>
+                    <span className={styles.signalIcon}><Landmark size={20} aria-hidden="true" /></span>
+                    <span className={styles.signalStatus}>Оценка</span>
+                  </div>
+                  <p className={styles.signalKicker}>Интерес инвестора</p>
+                  <h2>Инвестируйте в то, во что верите.</h2>
+                  <div className={styles.fitGrid}>
+                    <div><span>Стратегия</span><strong>Совпадает</strong></div>
+                    <div><span>Стадия</span><strong>Seed</strong></div>
+                    <div><span>Чек</span><strong>Подходит</strong></div>
+                  </div>
                 </div>
               </div>
             </div>
