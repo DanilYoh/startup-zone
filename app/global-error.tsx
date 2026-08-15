@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import styles from "./global-error.module.css";
 
 export default function GlobalError({
   error,
@@ -16,21 +17,22 @@ export default function GlobalError({
 
   return (
     <html lang="ru">
-      <body>
-        <main
-          style={{
-            margin: "0 auto",
-            maxWidth: 640,
-            minHeight: "100vh",
-            padding: "4rem 1.25rem",
-            fontFamily: "system-ui, sans-serif",
-          }}
-        >
-          <h1>Startup Zone временно недоступен</h1>
-          <p>Попробуйте загрузить приложение ещё раз. Эта страница не отправляла данные форм.</p>
-          <button type="button" onClick={reset} style={{ padding: "0.6rem 1rem" }}>
-            Повторить
-          </button>
+      <body className={styles.body}>
+        <main className={styles.page}>
+          <section className={styles.panel} aria-labelledby="global-error-title">
+            <div className={styles.brand}>
+              <span className={styles.brandMark}>SZ</span>
+              <span>Startup Zone</span>
+            </div>
+            <p className={styles.eyebrow}>Сервис временно недоступен</p>
+            <h1 id="global-error-title" className={styles.title}>Не удалось открыть площадку</h1>
+            <p className={styles.description}>
+              Попробуйте загрузить приложение ещё раз. Эта страница не отправляла данные форм.
+            </p>
+            <button type="button" onClick={reset} className={styles.button}>
+              Повторить
+            </button>
+          </section>
         </main>
       </body>
     </html>
