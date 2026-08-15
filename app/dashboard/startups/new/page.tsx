@@ -22,7 +22,7 @@ async function NewStartupContent() {
 
   if (error || !profile) {
     return (
-      <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
+      <Paper withBorder shadow="xs" radius="md" p="xl" className={`${styles.formCard} ${styles.permissionState}`}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Профиль основателя недоступен</Title>
           <Text size="sm" c="dimmed">
@@ -38,7 +38,7 @@ async function NewStartupContent() {
 
   if (profile.role !== "founder") {
     return (
-      <Paper withBorder shadow="xs" radius="lg" p="xl" className={styles.formCard}>
+      <Paper withBorder shadow="xs" radius="md" p="xl" className={`${styles.formCard} ${styles.permissionState}`}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Требуется профиль основателя</Title>
           <Text size="sm" c="dimmed">Публиковать стартапы могут только основатели.</Text>
@@ -52,7 +52,7 @@ async function NewStartupContent() {
 
   return (
     <div className={styles.formPage}>
-      <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
+      <LinkButton href="/dashboard" variant="subtle" className={styles.formBack}>
         Назад в кабинет
       </LinkButton>
       <StartupForm />

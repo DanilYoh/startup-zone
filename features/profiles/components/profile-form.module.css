@@ -1,41 +1,77 @@
-.card {
+.card,
+.contactCard {
   overflow: hidden;
   background: var(--sz-panel);
+  box-shadow: var(--sz-shadow-soft);
 }
 
 .profileHero {
   display: grid;
-  margin: -1rem -1rem 0;
   padding: 1.25rem;
-  gap: 1.25rem;
+  gap: 1rem;
   border-bottom: 1px solid var(--sz-line);
-  background: var(--sz-panel-subtle);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sz-accent) 7%, transparent), transparent 45%),
+    var(--sz-panel-subtle);
 }
 
 .roleLabel,
-.blueprintLabel {
+.blueprintLabel,
+.contactEyebrow {
   color: var(--sz-accent);
 }
 
-.roleLabel {
+.roleLabel,
+.contactEyebrow {
   margin-bottom: 0.2rem;
-  font-size: 0.75rem;
   font-family: var(--mantine-font-family-monospace);
-  font-weight: 550;
-  letter-spacing: 0.07em;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.075em;
   text-transform: uppercase;
 }
 
 .blueprint {
-  padding: 0.85rem;
+  position: relative;
+  padding: 0.85rem 0.9rem 0.85rem 1rem;
   border: 1px solid var(--sz-line);
   border-radius: 0.35rem;
-  background: var(--sz-panel);
+  background: color-mix(in srgb, var(--sz-panel) 92%, transparent);
+}
+
+.blueprint::before {
+  position: absolute;
+  inset: 0.65rem auto 0.65rem 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--sz-accent);
+  content: "";
+}
+
+.blueprintLabel {
+  margin-bottom: 0.25rem;
+  font-family: var(--mantine-font-family-monospace);
+  letter-spacing: 0.045em;
+}
+
+.form {
+  display: grid;
 }
 
 .formSection {
   display: grid;
+  padding: 1.25rem;
   gap: 1rem;
+}
+
+.formSection + .formSection {
+  border-top: 1px solid var(--sz-line);
+}
+
+.sectionIntro {
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
 }
 
 .stageFieldset {
@@ -49,7 +85,7 @@
 .stageFieldset legend {
   padding-inline: 0.35rem;
   font-size: var(--mantine-font-size-sm);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .stageGrid {
@@ -57,19 +93,101 @@
   gap: 0.75rem;
 }
 
+.formFooter,
+.contactFooter {
+  display: grid;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--sz-line);
+  background: var(--sz-panel-subtle);
+  gap: 0.75rem;
+}
+
 .submit {
-  align-self: flex-start;
+  justify-self: start;
+}
+
+.contactHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--sz-line);
+  background: var(--sz-panel-subtle);
+  gap: 0.85rem;
+}
+
+.privacyNote {
+  display: flex;
+  align-items: flex-start;
+  max-width: 23rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--sz-accent) 26%, var(--sz-line));
+  border-radius: 0.35rem;
+  background: var(--sz-accent-soft);
+  color: var(--sz-accent-strong);
+  gap: 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.privacyDot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  margin-top: 0.28rem;
+  border-radius: 50%;
+  background: var(--sz-accent);
+}
+
+.contactBody {
+  display: grid;
+  padding: 1.25rem;
+  gap: 1.15rem;
+}
+
+.sharingControl {
+  padding: 0.85rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.35rem;
+  background: var(--sz-panel-subtle);
 }
 
 @media (min-width: 40rem) {
-  .profileHero {
-    margin: -2rem -2rem 0;
-    padding: 2rem;
-    grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr);
+  .stageGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .contactHeader {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .formFooter,
+  .contactFooter {
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
 
-  .stageGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .formFooter > :only-child,
+  .contactFooter > :only-child {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 56rem) {
+  .profileHero {
+    padding: 1.5rem;
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+    align-items: center;
+  }
+
+  .formSection {
+    padding: 1.5rem;
+    grid-template-columns: minmax(10rem, 0.42fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .formSection > :not(:first-child) {
+    grid-column: 2;
   }
 }

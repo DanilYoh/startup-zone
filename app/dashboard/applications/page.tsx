@@ -4,10 +4,11 @@ import { AcceptedContactCard } from "@/features/applications/components/accepted
 import { listMyApplications } from "@/features/applications/server/queries";
 import { parsePage } from "@/lib/pagination";
 import { russianPlural } from "@/lib/market";
-import { Alert, Badge, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { Alert, Badge, Paper, Stack, Text, Title } from "@mantine/core";
 import styles from "../dashboard.module.css";
 
 const statusLabels = { pending: "На рассмотрении", accepted: "Принята", rejected: "Отклонена" } as const;
+const statusColors = { pending: "yellow", accepted: "teal", rejected: "red" } as const;
 
 type MyApplicationsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,11 +19,12 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
   const result = await listMyApplications(page);
 
   return (
-    <Stack gap="xl" className={styles.fullWidth}>
-      <div>
+    <Stack gap="xl" className={styles.pageStack}>
+      <header className={styles.pageHeader}>
+        <Text className={styles.eyebrow}>Deal room / Outgoing</Text>
         <Title order={1}>Мои инвестиционные заявки</Title>
-        <Text c="dimmed" mt={6}>Следите за статусом каждого обращения к основателям.</Text>
-      </div>
+        <Text className={styles.pageDescription}>Следите за статусом каждого обращения к основателям.</Text>
+      </header>
 
       {result.status === "ready" && result.contactStatus === "ready" && !result.ownContactReady && (
         <Alert color="yellow" variant="light" title="Включите обмен контактами">
@@ -40,7 +42,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
       {result.status === "error" ? (
         <Alert color="red" role="alert">Не удалось загрузить заявки. Обновите страницу.</Alert>
       ) : result.data.length === 0 ? (
-        <Paper withBorder radius="lg" p="xl">
+        <Paper withBorder radius="md" p="xl" className={styles.emptyState}>
           <Stack gap="md" align="flex-start">
             <Title order={2} size="h4">
               {result.total > 0 ? "На этой странице нет заявок" : "Вы ещё не отправляли заявки"}
@@ -56,37 +58,66 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
           </Stack>
         </Paper>
       ) : (
-        <>
-          <SimpleGrid cols={{ base: 1, md: 2 }}>
+        <div className={styles.dealRoom}>
+          <div className={styles.dealSummary}>
+            <strong>APPLICATION PIPELINE</strong>
+            <Text size="xs" c="dimmed">{result.total} всего</Text>
+          </div>
+          <div className={styles.dealGroup}>
+            <div className={styles.panelHeader}>
+              <Text size="xs" fw={650}>История обращений</Text>
+              <span className={styles.panelHeaderText}>актуальные статусы</span>
+            </div>
+            <div className={styles.dealGroupList}>
             {result.data.map((application) => (
-              <Paper key={application.id} component="article" withBorder radius="lg" p="lg">
-                <Stack gap="md" align="flex-start">
-                  <Badge variant="light">{statusLabels[application.status]}</Badge>
-                  <div>
-                    <Title order={2} size="h4">{application.startup.title}</Title>
-                    <Text size="sm" c="dimmed" mt={4}>
-                      Инвестиционная заявка
-                    </Text>
+              <Paper
+                key={application.id}
+                component="article"
+                className={styles.dealCard}
+                data-status={application.status}
+              >
+                <div className={styles.dealCardInner}>
+                  <div className={styles.dealMain}>
+                    <div className={styles.dealCardHeader}>
+                      <div className={styles.dealIdentity}>
+                        <Title order={2} size="h4">{application.startup.title}</Title>
+                        <div className={styles.dealMeta}>
+                          <span>Инвестиционная заявка</span>
+                          <span>#{application.id}</span>
+                        </div>
+                      </div>
+                      <Badge variant="light" color={statusColors[application.status]}>
+                        {statusLabels[application.status]}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className={styles.dataLabel}>Ваше сообщение</span>
+                      <Paper radius="sm" p="md" className={styles.messagePanel}>
+                        <Text className={styles.preWrap}>{application.message}</Text>
+                      </Paper>
+                    </div>
                   </div>
-                  <Text className={styles.preWrap}>{application.message}</Text>
-                  {application.status === "accepted" && (
-                    <AcceptedContactCard
-                      contact={result.contacts[application.startup.founder_id]}
-                      contactStatus={result.contactStatus}
-                      counterpartLabel="founder"
-                    />
-                  )}
-                  {application.startup.is_active ? (
-                    <LinkButton href={`/startups/${application.startup.slug}`} variant="subtle" px={0}>
-                      Открыть стартап
-                    </LinkButton>
-                  ) : (
-                    <Text size="sm" c="dimmed">Стартап сейчас неактивен.</Text>
-                  )}
-                </Stack>
+                  <aside className={styles.dealAside}>
+                    {application.status === "accepted" && (
+                      <AcceptedContactCard
+                        contact={result.contacts[application.startup.founder_id]}
+                        contactStatus={result.contactStatus}
+                        counterpartLabel="founder"
+                      />
+                    )}
+                    {application.startup.is_active ? (
+                      <LinkButton href={`/startups/${application.startup.slug}`} variant="default" size="compact-sm">
+                        Открыть стартап
+                      </LinkButton>
+                    ) : (
+                      <Text size="sm" c="dimmed">Стартап сейчас неактивен.</Text>
+                    )}
+                  </aside>
+                </div>
               </Paper>
             ))}
-          </SimpleGrid>
+            </div>
+          </div>
           <PaginationNav
             page={result.page}
             pageCount={result.pageCount}
@@ -101,7 +132,7 @@ export default async function MyApplicationsPage({ searchParams }: MyApplication
                 : undefined
             }
           />
-        </>
+        </div>
       )}
     </Stack>
   );

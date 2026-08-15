@@ -5,7 +5,7 @@ import styles from "../dashboard.module.css";
 
 export default function ApplicationsError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Заявки временно недоступны" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Заявки временно недоступны" role="alert" className={`${styles.fullWidth} ${styles.errorState}`}>
       <Stack gap="md">
         При загрузке ваших заявок произошла ошибка.
         <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Повторить</Button>

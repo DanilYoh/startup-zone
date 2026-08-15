@@ -3,9 +3,10 @@ import styles from "../../dashboard.module.css";
 
 export default function InboxLoading() {
   return (
-    <Stack gap="lg" className={styles.fullWidth} aria-label="Загрузка заявок инвесторов">
-      <Skeleton height={48} width="50%" />
-      <Skeleton height={360} radius="lg" />
+    <Stack gap="md" className={styles.pageSkeleton} aria-label="Загрузка заявок инвесторов">
+      <Skeleton height={12} width={170} />
+      <Skeleton height={42} className={styles.skeletonHeader} />
+      <Skeleton height={420} radius="md" />
     </Stack>
   );
 }

@@ -4,8 +4,9 @@ import {
   moderateApplication,
   type ModerationActionState,
 } from "@/features/applications/server/actions";
-import { Alert, Button, Group, Stack } from "@mantine/core";
+import { Alert, Button, Stack } from "@mantine/core";
 import { useActionState } from "react";
+import styles from "./applications.module.css";
 
 const initialState: ModerationActionState = { status: "idle" };
 
@@ -13,10 +14,10 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: numb
   const [state, formAction, pending] = useActionState(moderateApplication, initialState);
 
   return (
-    <Stack gap="xs" align="flex-start">
-      <form action={formAction}>
+    <Stack gap="xs" align="flex-start" className={styles.decisionForm}>
+      <form action={formAction} className={styles.decisionForm}>
         <input type="hidden" name="application_id" value={applicationId} />
-        <Group gap="sm">
+        <div className={styles.decisionToolbar}>
           <Button type="submit" name="decision" value="accepted" color="teal" loading={pending}>
             Принять
           </Button>
@@ -30,7 +31,8 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: numb
           >
             Отклонить
           </Button>
-        </Group>
+          <span className={styles.decisionHint}>Решение окончательное</span>
+        </div>
       </form>
       {state.message && (
         <Alert

@@ -8,13 +8,14 @@ export default async function ProfilePage() {
   const result = await getCurrentProfile();
 
   return (
-    <Stack gap="xl" className={styles.fullWidth}>
-      <div>
+    <Stack gap="xl" className={styles.pageStack}>
+      <header className={styles.pageHeader}>
+        <Text className={styles.eyebrow}>Account / Profile</Text>
         <Title order={1}>Профиль</Title>
-        <Text c="dimmed" mt={6}>
+        <Text className={styles.pageDescription}>
           Поддерживайте в актуальном состоянии данные, по которым оценивают будущий разговор.
         </Text>
-      </div>
+      </header>
 
       {result.status === "ready" ? (
         <>
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
           <ProfileContactForm accountEmail={result.email} contact={result.contact} />
         </>
       ) : (
-        <Alert color="red" variant="light" role="alert" title="Профиль недоступен">
+        <Alert color="red" variant="light" role="alert" title="Профиль недоступен" className={styles.errorState}>
           {result.status === "missing"
             ? "У аккаунта нет профиля на площадке. Выйдите и обратитесь в поддержку."
             : result.status === "retired"

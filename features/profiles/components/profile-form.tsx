@@ -12,7 +12,6 @@ import {
   Avatar,
   Button,
   Checkbox,
-  Divider,
   Group,
   NumberInput,
   Paper,
@@ -63,8 +62,8 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
   const fieldError = (field: keyof ProfileInput) => state.errors?.[field]?.[0];
 
   return (
-    <Paper withBorder radius="md" p={{ base: "md", sm: "xl" }} className={styles.card}>
-      <Stack gap="xl">
+    <Paper withBorder radius="md" p={0} className={styles.card}>
+      <Stack gap={0}>
         <div className={styles.profileHero}>
           <Group align="center" wrap="nowrap">
             <Avatar
@@ -93,10 +92,10 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
           </div>
         </div>
 
-        <form action={formAction}>
-          <Stack gap="xl">
+        <form action={formAction} className={styles.form}>
+          <Stack gap={0}>
             <section className={styles.formSection} aria-labelledby="profile-identity-heading">
-              <div>
+              <div className={styles.sectionIntro}>
                 <Title order={3} size="h4" id="profile-identity-heading">Основная информация</Title>
                 <Text size="sm" c="dimmed" mt={4}>Факты, по которым другие участники понимают, кто вы.</Text>
               </div>
@@ -148,11 +147,9 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
               />
             </section>
 
-            <Divider />
-
             {profile.role === "founder" ? (
               <section className={styles.formSection} aria-labelledby="founder-credibility-heading">
-                <div>
+                <div className={styles.sectionIntro}>
                   <Title order={3} size="h4" id="founder-credibility-heading">Опыт основателя</Title>
                   <Text size="sm" c="dimmed" mt={4}>Добавьте контекст, которого нет в карточке стартапа.</Text>
                 </div>
@@ -174,7 +171,7 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
               </section>
             ) : (
               <section className={styles.formSection} aria-labelledby="investor-fit-heading">
-                <div>
+                <div className={styles.sectionIntro}>
                   <Title order={3} size="h4" id="investor-fit-heading">Инвестиционный профиль</Title>
                   <Text size="sm" c="dimmed" mt={4}>Помогите основателям оценить соответствие до начала разговора.</Text>
                 </div>
@@ -255,10 +252,8 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
               </section>
             )}
 
-            <Divider />
-
             <section className={styles.formSection} aria-labelledby="profile-links-heading">
-              <div>
+              <div className={styles.sectionIntro}>
                 <Title order={3} size="h4" id="profile-links-heading">Проверяемые ссылки</Title>
                 <Text size="sm" c="dimmed" mt={4}>Добавьте публичные ссылки, которые подтверждают вашу личность.</Text>
               </div>
@@ -284,19 +279,21 @@ export function ProfileForm({ email, profile }: ProfileFormProps) {
               </SimpleGrid>
             </section>
 
-            {state.message && (
-              <Alert
-                color={state.status === "success" ? "teal" : "red"}
-                variant="light"
-                role={state.status === "error" ? "alert" : "status"}
-              >
-                {state.message}
-              </Alert>
-            )}
+            <div className={styles.formFooter}>
+              {state.message && (
+                <Alert
+                  color={state.status === "success" ? "teal" : "red"}
+                  variant="light"
+                  role={state.status === "error" ? "alert" : "status"}
+                >
+                  {state.message}
+                </Alert>
+              )}
 
-            <Button type="submit" loading={pending} className={styles.submit}>
-              Сохранить профиль
-            </Button>
+              <Button type="submit" loading={pending} className={styles.submit}>
+                Сохранить профиль
+              </Button>
+            </div>
           </Stack>
         </form>
       </Stack>

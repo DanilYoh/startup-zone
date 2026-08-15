@@ -13,7 +13,6 @@ import {
   NativeSelect,
   NumberInput,
   Paper,
-  Stack,
   Text,
   Textarea,
   TextInput,
@@ -45,18 +44,32 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
   const fieldError = (field: keyof StartupInput) => state.errors?.[field]?.[0];
 
   return (
-    <Paper withBorder radius="md" p={{ base: "md", sm: "xl" }}>
-      <Stack gap="xl">
+    <Paper withBorder radius="md" p={0} className={styles.card}>
+      <header className={styles.header}>
         <div>
+          <Text className={styles.eyebrow}>{startup ? "Startup / Edit" : "Startup / New"}</Text>
           <Title order={1} size="h2">
             {startup ? "Редактирование стартапа" : "Публикация стартапа"}
           </Title>
-          <Text c="dimmed" size="sm" mt={4}>
+          <Text c="dimmed" size="sm" mt={5} maw={620}>
             Добавьте ключевую информацию, по которой инвестор сможет оценить проект.
           </Text>
         </div>
-        <form action={formAction} className={styles.form}>
-          {startup && <input type="hidden" name="startup_id" value={startup.id} />}
+        <div className={styles.headerMeta}>
+          <span className={styles.headerDot} aria-hidden="true" />
+          {startup ? "Изменения применятся к карточке" : "После сохранения проект появится в каталоге"}
+        </div>
+      </header>
+
+      <form action={formAction} className={styles.form}>
+        {startup && <input type="hidden" name="startup_id" value={startup.id} />}
+
+        <section className={styles.formSection} aria-labelledby="startup-basics-heading">
+          <div className={styles.sectionIntro}>
+            <span className={styles.sectionIndex}>01</span>
+            <Title order={2} size="h4" id="startup-basics-heading">Основное</Title>
+            <Text size="sm" c="dimmed">Название, адрес и текущая стадия проекта.</Text>
+          </div>
           <div className={styles.fields}>
             <TextInput
               className={styles.wideField}
@@ -97,6 +110,16 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               required
               error={fieldError("stage")}
             />
+          </div>
+        </section>
+
+        <section className={styles.formSection} aria-labelledby="startup-positioning-heading">
+          <div className={styles.sectionIntro}>
+            <span className={styles.sectionIndex}>02</span>
+            <Title order={2} size="h4" id="startup-positioning-heading">Позиционирование</Title>
+            <Text size="sm" c="dimmed">Проблема, решение и рынок — от краткого тезиса к деталям.</Text>
+          </div>
+          <div className={styles.fields}>
             <TextInput
               className={styles.wideField}
               id={startup ? "edit-one_pager" : "one_pager"}
@@ -131,6 +154,16 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               required
               error={fieldError("niche")}
             />
+          </div>
+        </section>
+
+        <section className={styles.formSection} aria-labelledby="startup-round-heading">
+          <div className={styles.sectionIntro}>
+            <span className={styles.sectionIndex}>03</span>
+            <Title order={2} size="h4" id="startup-round-heading">Раунд</Title>
+            <Text size="sm" c="dimmed">Ориентиры по сумме и предлагаемой доле.</Text>
+          </div>
+          <div className={styles.fields}>
             <NumberInput
               id="funding_ask"
               name="funding_ask"
@@ -155,6 +188,16 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               rightSection="%"
               error={fieldError("equity_offered")}
             />
+          </div>
+        </section>
+
+        <section className={styles.formSection} aria-labelledby="startup-materials-heading">
+          <div className={styles.sectionIntro}>
+            <span className={styles.sectionIndex}>04</span>
+            <Title order={2} size="h4" id="startup-materials-heading">Материалы</Title>
+            <Text size="sm" c="dimmed">Публичные ссылки для проверки проекта.</Text>
+          </div>
+          <div className={styles.fields}>
             <TextInput
               id="website_url"
               name="website_url"
@@ -175,18 +218,21 @@ export function StartupForm({ startup }: { startup?: EditableStartup }) {
               error={fieldError("deck_url")}
             />
           </div>
-          {state.status === "error" && (
+        </section>
+
+        <div className={styles.actions}>
+          {state.status === "error" ? (
             <Alert color="red" variant="light" role="alert">
               {state.message}
             </Alert>
+          ) : (
+            <Text className={styles.submitHint}>Проверьте публичные ссылки перед сохранением.</Text>
           )}
-          <div className={styles.actions}>
-            <Button type="submit" size="md" loading={pending}>
-              {startup ? "Сохранить изменения" : "Опубликовать стартап"}
-            </Button>
-          </div>
-        </form>
-      </Stack>
+          <Button type="submit" size="md" loading={pending}>
+            {startup ? "Сохранить изменения" : "Опубликовать стартап"}
+          </Button>
+        </div>
+      </form>
     </Paper>
   );
 }

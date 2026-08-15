@@ -17,7 +17,7 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
 
   if (result.status === "forbidden") {
     return (
-      <Paper withBorder radius="lg" p="xl" className={styles.formCard}>
+      <Paper withBorder radius="md" p="xl" className={`${styles.formCard} ${styles.permissionState}`}>
         <Stack gap="md" align="flex-start">
           <Title order={1} size="h3">Требуется профиль основателя</Title>
           <Text c="dimmed">Редактировать стартапы могут только основатели.</Text>
@@ -29,7 +29,7 @@ async function EditStartupContent({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className={styles.formPage}>
-      <LinkButton href="/dashboard" variant="subtle" className={styles.fitWidth}>
+      <LinkButton href="/dashboard" variant="subtle" className={styles.formBack}>
         Назад в кабинет
       </LinkButton>
       <StartupForm startup={result.startup} />

@@ -5,7 +5,7 @@ import styles from "../../dashboard.module.css";
 
 export default function InboxError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Заявки инвесторов временно недоступны" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Заявки инвесторов временно недоступны" role="alert" className={`${styles.fullWidth} ${styles.errorState}`}>
       <Stack gap="md">
         При загрузке заявок инвесторов произошла ошибка.
         <Button color="red" variant="light" onClick={reset} className={styles.alignStart}>Повторить</Button>

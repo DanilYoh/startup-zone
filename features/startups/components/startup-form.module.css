@@ -1,6 +1,75 @@
+.card {
+  overflow: hidden;
+  background: var(--sz-panel);
+  box-shadow: var(--sz-shadow-soft);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--sz-line);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sz-accent) 7%, transparent), transparent 45%),
+    var(--sz-panel-subtle);
+  gap: 0.75rem;
+}
+
+.eyebrow {
+  color: var(--sz-accent);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.42rem 0.62rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.35rem;
+  background: var(--sz-panel);
+  color: var(--sz-muted);
+  gap: 0.45rem;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.65rem;
+}
+
+.headerDot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--sz-accent);
+}
+
 .form {
   display: grid;
-  gap: 1.35rem;
+}
+
+.formSection {
+  display: grid;
+  padding: 1.25rem;
+  gap: 1rem;
+}
+
+.formSection + .formSection {
+  border-top: 1px solid var(--sz-line);
+}
+
+.sectionIntro {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+
+.sectionIndex {
+  color: var(--sz-accent);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.62rem;
+  font-weight: 650;
 }
 
 .fields {
@@ -13,16 +82,49 @@
 }
 
 .actions {
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--sz-line);
+  background: var(--sz-panel-subtle);
+  gap: 0.75rem;
+}
+
+.submitHint {
+  color: var(--sz-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 @media (min-width: 40rem) {
+  .header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.5rem;
+  }
+
   .fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .wideField {
     grid-column: span 2 / span 2;
+  }
+
+  .actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .actions > :only-child {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 56rem) {
+  .formSection {
+    padding: 1.5rem;
+    grid-template-columns: minmax(10rem, 0.42fr) minmax(0, 1fr);
+    gap: 1.5rem;
   }
 }

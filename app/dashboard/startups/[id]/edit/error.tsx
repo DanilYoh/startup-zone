@@ -5,7 +5,7 @@ import styles from "../../../dashboard.module.css";
 
 export default function EditStartupError({ reset }: { reset: () => void }) {
   return (
-    <Alert color="red" title="Стартап временно недоступен" role="alert" className={styles.fullWidth}>
+    <Alert color="red" title="Стартап временно недоступен" role="alert" className={`${styles.fullWidth} ${styles.errorState}`}>
       <Stack gap="md">
         При загрузке стартапа произошла ошибка.
         <Button variant="light" color="red" onClick={reset} className={styles.alignStart}>

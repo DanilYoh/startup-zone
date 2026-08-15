@@ -3,9 +3,10 @@ import styles from "../dashboard.module.css";
 
 export default function ApplicationsLoading() {
   return (
-    <Stack gap="lg" className={styles.fullWidth} aria-label="Загрузка инвестиционных заявок">
-      <Skeleton height={48} width="45%" />
-      <Skeleton height={240} radius="lg" />
+    <Stack gap="md" className={styles.pageSkeleton} aria-label="Загрузка инвестиционных заявок">
+      <Skeleton height={12} width={170} />
+      <Skeleton height={42} className={styles.skeletonHeader} />
+      <Skeleton height={300} radius="md" />
     </Stack>
   );
 }

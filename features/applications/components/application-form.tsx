@@ -18,11 +18,11 @@ export function ApplicationForm({
   const [state, formAction, pending] = useActionState(createApplication, initialState);
 
   if (state.status === "success") {
-    return <Alert color="teal" role="status">{state.message}</Alert>;
+    return <Alert color="teal" role="status" className={styles.successState}>{state.message}</Alert>;
   }
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className={styles.applicationForm}>
       <input type="hidden" name="startup_id" value={startupId} />
       <Stack gap="md" align="flex-start">
         <Textarea
@@ -35,12 +35,15 @@ export function ApplicationForm({
           minLength={20}
           maxLength={2_000}
           error={state.errors?.message?.[0]}
-          className={styles.fullWidth}
+          className={`${styles.fullWidth} ${styles.messageField}`}
         />
         {state.message && <Alert color="red" role="alert">{state.message}</Alert>}
-        <Button type="submit" loading={pending}>
-          Отправить заявку
-        </Button>
+        <div className={styles.formFooter}>
+          <span className={styles.formHint}>20–2000 символов · контакты откроются после принятия</span>
+          <Button type="submit" loading={pending}>
+            Отправить заявку
+          </Button>
+        </div>
       </Stack>
     </form>
   );

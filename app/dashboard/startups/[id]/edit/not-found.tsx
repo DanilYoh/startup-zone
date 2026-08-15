@@ -4,7 +4,7 @@ import styles from "../../../dashboard.module.css";
 
 export default function StartupNotFound() {
   return (
-    <Paper withBorder radius="lg" p="xl" className={styles.formCard}>
+    <Paper withBorder radius="md" p="xl" className={`${styles.formCard} ${styles.emptyState}`}>
       <Stack gap="md" align="flex-start">
         <Title order={1} size="h3">Стартап не найден</Title>
         <Text c="dimmed">Такого стартапа нет или он не принадлежит вашей учётной записи.</Text>
