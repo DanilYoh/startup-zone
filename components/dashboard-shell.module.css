@@ -1,6 +1,10 @@
 .shell {
   min-height: 100vh;
-  background: var(--sz-surface);
+  background:
+    linear-gradient(var(--sz-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sz-grid) 1px, transparent 1px),
+    var(--sz-surface);
+  background-size: 48px 48px;
 }
 
 .header {
@@ -16,8 +20,8 @@
 .topbar {
   display: flex;
   align-items: center;
-  min-height: 3rem;
-  padding-inline: 0.75rem;
+  min-height: 3.25rem;
+  padding-inline: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .brand {
@@ -121,6 +125,18 @@
   color: var(--sz-ink);
 }
 
+.navLinkActive,
+.navLinkActive:hover {
+  border-color: color-mix(in srgb, var(--sz-accent) 24%, var(--sz-line));
+  background: var(--sz-accent-soft);
+  color: var(--sz-accent-strong);
+  box-shadow: inset 2px 0 0 var(--sz-accent);
+}
+
+.navLinkActive svg {
+  color: var(--sz-accent);
+}
+
 .backLink {
   display: none;
 }
@@ -143,11 +159,11 @@
   }
 
   .sidebar {
-    top: 3rem;
+    top: 3.25rem;
     flex-direction: column;
     justify-content: space-between;
     width: 13.5rem;
-    height: calc(100vh - 3rem);
+    height: calc(100vh - 3.25rem);
     padding: 1.1rem 0.75rem 0.8rem;
     border-right: 1px solid var(--sz-line);
     border-bottom: 0;

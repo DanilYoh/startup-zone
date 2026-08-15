@@ -55,9 +55,11 @@ const theme = createTheme({
   primaryColor: "brand",
   primaryShade: { light: 8, dark: 5 },
   defaultRadius: "sm",
+  cursorType: "pointer",
   fontFamily: "var(--font-geist-sans), sans-serif",
   headings: {
     fontFamily: "var(--font-geist-sans), sans-serif",
+    fontWeight: "500",
   },
 });
 

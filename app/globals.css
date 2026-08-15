@@ -14,6 +14,13 @@
   --sz-on-dark: #ededed;
   --sz-danger-soft: #fbe9e8;
   --sz-grid: rgb(28 28 28 / 5%);
+  --sz-success: #16744f;
+  --sz-success-soft: #e4f5ed;
+  --sz-warning: #8a6418;
+  --sz-warning-soft: #fff4d6;
+  --sz-danger: #b33838;
+  --sz-shadow-soft: 0 1px 2px rgb(20 33 27 / 4%), 0 10px 32px rgb(20 33 27 / 5%);
+  --sz-shadow-raised: 0 18px 60px rgb(20 33 27 / 10%);
 }
 
 [data-mantine-color-scheme="dark"] {
@@ -32,6 +39,13 @@
   --sz-on-dark: #ededed;
   --sz-danger-soft: #351b1b;
   --sz-grid: rgb(255 255 255 / 4%);
+  --sz-success: #3ecf8e;
+  --sz-success-soft: #15382a;
+  --sz-warning: #e6b95c;
+  --sz-warning-soft: #352a15;
+  --sz-danger: #ff8787;
+  --sz-shadow-soft: 0 1px 2px rgb(0 0 0 / 18%), 0 12px 34px rgb(0 0 0 / 14%);
+  --sz-shadow-raised: 0 22px 70px rgb(0 0 0 / 30%);
 }
 
 *,
@@ -42,14 +56,18 @@
 }
 
 html {
+  min-width: 20rem;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background: var(--sz-surface);
+  background:
+    radial-gradient(circle at 10% -10%, color-mix(in srgb, var(--sz-accent) 7%, transparent), transparent 28rem),
+    var(--sz-surface);
   color: var(--mantine-color-text);
   font-size: 0.9375rem;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -76,6 +94,11 @@ select {
   font: inherit;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 :focus-visible {
   outline: 2px solid var(--sz-accent);
   outline-offset: 2px;
@@ -92,11 +115,21 @@ select {
 .mantine-Button-root {
   font-weight: 550;
   letter-spacing: -0.01em;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.mantine-Button-root:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .mantine-Input-input {
   background-color: var(--sz-panel-subtle);
   border-color: var(--sz-line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sz-ink) 2%, transparent);
 }
 
 .mantine-Input-input:focus,
@@ -107,4 +140,40 @@ select {
 .mantine-Badge-root {
   letter-spacing: 0;
   text-transform: none;
+}
+
+.mantine-Input-label,
+.mantine-Fieldset-legend {
+  color: var(--sz-ink);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.mantine-Input-description {
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.mantine-Alert-root {
+  border: 1px solid color-mix(in srgb, currentColor 18%, var(--sz-line));
+}
+
+.mantine-Skeleton-root::before {
+  background: var(--sz-panel-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

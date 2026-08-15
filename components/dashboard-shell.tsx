@@ -1,3 +1,4 @@
+import { DashboardNavLink } from "@/components/dashboard-nav-link";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { ArrowUpRight, LayoutDashboard, Rocket, ShieldCheck, UserRound } from "lucide-react";
@@ -29,20 +30,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <aside className={styles.sidebar}>
           <nav aria-label="Навигация по личному кабинету" className={styles.sideNav}>
             <p className={styles.navLabel}>Рабочая область</p>
-            <Link href="/dashboard" className={styles.navLink}>
+            <DashboardNavLink
+              href="/dashboard"
+              exact
+              className={styles.navLink}
+              activeClassName={styles.navLinkActive}
+            >
               <LayoutDashboard size={16} aria-hidden="true" /> Обзор
-            </Link>
+            </DashboardNavLink>
             <p className={styles.navLabel}>Площадка</p>
-            <Link href="/startups" className={styles.navLink}>
+            <DashboardNavLink
+              href="/startups"
+              className={styles.navLink}
+              activeClassName={styles.navLinkActive}
+            >
               <Rocket size={16} aria-hidden="true" /> Каталог стартапов
-            </Link>
+            </DashboardNavLink>
             <p className={styles.navLabel}>Аккаунт</p>
-            <Link href="/dashboard/profile" className={styles.navLink}>
+            <DashboardNavLink
+              href="/dashboard/profile"
+              className={styles.navLink}
+              activeClassName={styles.navLinkActive}
+            >
               <UserRound size={16} aria-hidden="true" /> Профиль
-            </Link>
-            <Link href="/dashboard/account" className={styles.navLink}>
+            </DashboardNavLink>
+            <DashboardNavLink
+              href="/dashboard/account"
+              className={styles.navLink}
+              activeClassName={styles.navLinkActive}
+            >
               <ShieldCheck size={16} aria-hidden="true" /> Данные аккаунта
-            </Link>
+            </DashboardNavLink>
           </nav>
           <Link href="/" className={styles.backLink}>
             Публичный сайт <ArrowUpRight size={14} aria-hidden="true" />
