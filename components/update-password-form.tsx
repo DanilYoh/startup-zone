@@ -12,8 +12,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { ArrowRight, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import styles from "@/features/auth/components/auth-form.module.css";
 
 export function UpdatePasswordForm({
   className,
@@ -56,18 +58,24 @@ export function UpdatePasswordForm({
 
   return (
     <div className={className} {...props}>
-      <Paper withBorder shadow="sm" radius="lg" p="xl">
-        <Stack gap="lg">
-          <div>
-            <Title order={1} size="h2">Новый пароль</Title>
-            <Text c="dimmed" size="sm" mt={4}>Введите новый пароль.</Text>
+      <Paper withBorder radius="md" p={0} className={styles.authCard}>
+        <div className={styles.cardBody}>
+          <span className={styles.statusIcon}>
+            <KeyRound size={20} aria-hidden="true" />
+          </span>
+          <div className={styles.authHeader}>
+            <Text className={styles.eyebrow}>Безопасность аккаунта</Text>
+            <Title order={1} className={styles.authTitle}>Новый пароль</Title>
+            <Text className={styles.authDescription}>Введите новый пароль.</Text>
           </div>
-          <form onSubmit={handleUpdatePassword}>
-            <Stack gap="md">
+          <form onSubmit={handleUpdatePassword} className={styles.form}>
+            <Stack gap="sm">
               <PasswordInput
                 id="password"
+                name="password"
                 label="Новый пароль"
                 placeholder="Новый пароль"
+                autoComplete="new-password"
                 visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                 required
                 minLength={8}
@@ -75,13 +83,24 @@ export function UpdatePasswordForm({
                 value={password}
                 onChange={(event) => setPassword(event.currentTarget.value)}
               />
-              {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
-              <Button type="submit" fullWidth loading={isLoading}>
+              <Text className={styles.passwordHint}>От 8 до 72 символов</Text>
+              {error && (
+                <Alert className={styles.formAlert} color="red" variant="light" role="alert">
+                  {error}
+                </Alert>
+              )}
+              <Button
+                className={styles.submitButton}
+                type="submit"
+                fullWidth
+                loading={isLoading}
+                rightSection={<ArrowRight size={15} aria-hidden="true" />}
+              >
                 Сохранить пароль
               </Button>
             </Stack>
           </form>
-        </Stack>
+        </div>
       </Paper>
     </div>
   );

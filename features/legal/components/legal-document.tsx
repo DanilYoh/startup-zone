@@ -1,7 +1,9 @@
 "use client";
 
+import styles from "@/app/legal/legal.module.css";
 import type { PublicLegalConfig } from "@/features/legal/types";
 import { Alert, Anchor, List, Paper, Stack, Text, Title } from "@mantine/core";
+import { ArrowUpRight, Clock3, FileText, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 type LegalDocumentProps = {
@@ -11,18 +13,39 @@ type LegalDocumentProps = {
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long" });
 
+const documentSections = {
+  privacy: [
+    { id: "privacy-operator", label: "Оператор и область действия" },
+    { id: "privacy-data", label: "Данные и цели обработки" },
+    { id: "privacy-grounds", label: "Основания и способы" },
+    { id: "privacy-processors", label: "Обработчики и хранение" },
+    { id: "privacy-rights", label: "Сроки, права и отзыв" },
+    { id: "privacy-security", label: "Защита и изменения" },
+  ],
+  consent: [
+    { id: "consent-operator", label: "Кому предоставляется" },
+    { id: "consent-data", label: "Состав данных и цели" },
+    { id: "consent-processing", label: "Способы обработки" },
+    { id: "consent-withdrawal", label: "Срок и отзыв" },
+    { id: "consent-record", label: "Фиксация согласия" },
+  ],
+} as const;
+
 function EffectiveVersion({ config }: { config: PublicLegalConfig }) {
   return (
-    <Text size="sm" c="dimmed">
-      Версия: {config.documentVersion} · Действует с{" "}
-      {dateFormatter.format(new Date(`${config.effectiveDate}T00:00:00Z`))}
-    </Text>
+    <div className={styles.version}>
+      <Clock3 size={14} aria-hidden="true" />
+      <Text component="span" inherit>
+        Версия: {config.documentVersion} · Действует с{" "}
+        {dateFormatter.format(new Date(`${config.effectiveDate}T00:00:00Z`))}
+      </Text>
+    </div>
   );
 }
 
 function OperatorDetails({ config }: { config: PublicLegalConfig }) {
   return (
-    <Stack gap={4}>
+    <Stack gap={4} className={styles.operatorCard}>
       <Text><strong>Оператор:</strong> {config.operatorName}</Text>
       <Text><strong>Адрес:</strong> {config.operatorAddress}</Text>
       <Text>
@@ -38,7 +61,9 @@ function DocumentNotice({ config }: { config: PublicLegalConfig }) {
 
   return (
     <Alert
+      className={styles.documentNotice}
       color={config.mode === "blocked" ? "red" : "yellow"}
+      variant="light"
       title={config.mode === "blocked" ? "Документ ещё не опубликован" : "Черновик для разработки"}
       role={config.mode === "blocked" ? "alert" : "status"}
     >
@@ -51,9 +76,9 @@ function DocumentNotice({ config }: { config: PublicLegalConfig }) {
 
 function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
   return (
-    <Stack gap="xl">
-      <section>
-        <Title order={2} size="h3">1. Оператор и область действия</Title>
+    <Stack gap={0} className={styles.legalSections}>
+      <section id="privacy-operator" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>1. Оператор и область действия</Title>
         <Text mt="sm">
           Настоящая политика описывает обработку персональных данных при использовании
           сайта и личного кабинета Startup Zone.
@@ -61,8 +86,8 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
         <OperatorDetails config={config} />
       </section>
 
-      <section>
-        <Title order={2} size="h3">2. Данные и цели обработки</Title>
+      <section id="privacy-data" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>2. Данные и цели обработки</Title>
         <List mt="sm" spacing="xs">
           <List.Item>имя, электронная почта, роль и данные учётной записи — для регистрации и входа;</List.Item>
           <List.Item>
@@ -76,8 +101,8 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
         </List>
       </section>
 
-      <section>
-        <Title order={2} size="h3">3. Основания, способы и действия</Title>
+      <section id="privacy-grounds" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>3. Основания, способы и действия</Title>
         <Text mt="sm">
           Обработка выполняется на основании согласия, действий пользователя по заключению и
           исполнению соглашения с площадкой, а также иных оснований, предусмотренных законом.
@@ -87,8 +112,8 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
         </Text>
       </section>
 
-      <section>
-        <Title order={2} size="h3">4. Обработчики и место хранения</Title>
+      <section id="privacy-processors" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>4. Обработчики и место хранения</Title>
         <Text mt="sm">
           Для работы сервиса оператор привлекает следующих обработчиков и поставщиков
           инфраструктуры:
@@ -102,8 +127,8 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
         </Text>
       </section>
 
-      <section>
-        <Title order={2} size="h3">5. Сроки, права и отзыв согласия</Title>
+      <section id="privacy-rights" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>5. Сроки, права и отзыв согласия</Title>
         <Text mt="sm">
           Данные обрабатываются до достижения заявленных целей, удаления аккаунта или истечения
           обязательного срока хранения. Субъект вправе запросить сведения об обработке, исправление,
@@ -125,8 +150,8 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
         </Text>
       </section>
 
-      <section>
-        <Title order={2} size="h3">6. Защита и изменение политики</Title>
+      <section id="privacy-security" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>6. Защита и изменение политики</Title>
         <Text mt="sm">
           Оператор применяет организационные и технические меры защиты, ограничивает доступ по
           ролям и сохраняет историю значимых действий. Новая редакция публикуется с отдельным
@@ -139,14 +164,14 @@ function PrivacyPolicy({ config }: { config: PublicLegalConfig }) {
 
 function PersonalDataConsent({ config }: { config: PublicLegalConfig }) {
   return (
-    <Stack gap="xl">
-      <section>
-        <Title order={2} size="h3">Кому предоставляется согласие</Title>
+    <Stack gap={0} className={styles.legalSections}>
+      <section id="consent-operator" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>Кому предоставляется согласие</Title>
         <OperatorDetails config={config} />
       </section>
 
-      <section>
-        <Title order={2} size="h3">Состав данных и цели</Title>
+      <section id="consent-data" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>Состав данных и цели</Title>
         <Text mt="sm">
           Пользователь свободно, своей волей и в своём интересе соглашается на обработку имени,
           электронной почты, выбранной роли, сведений о приглашении, сведений профиля,
@@ -157,8 +182,8 @@ function PersonalDataConsent({ config }: { config: PublicLegalConfig }) {
         </Text>
       </section>
 
-      <section>
-        <Title order={2} size="h3">Действия, способы и порученная обработка</Title>
+      <section id="consent-processing" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>Действия, способы и порученная обработка</Title>
         <Text mt="sm">
           Согласие распространяется на сбор, запись, систематизацию, накопление, хранение,
           уточнение, извлечение, использование, предусмотренное интерфейсом предоставление,
@@ -170,8 +195,8 @@ function PersonalDataConsent({ config }: { config: PublicLegalConfig }) {
         </List>
       </section>
 
-      <section>
-        <Title order={2} size="h3">Срок и отзыв</Title>
+      <section id="consent-withdrawal" className={styles.documentSection}>
+        <Title order={2} className={styles.sectionTitle}>Срок и отзыв</Title>
         <Text mt="sm">
           Согласие действует до достижения целей обработки или его отзыва, если закон не допускает
           продолжение обработки по иному основанию. Поскольку без данных аккаунта сервис не может
@@ -183,7 +208,13 @@ function PersonalDataConsent({ config }: { config: PublicLegalConfig }) {
         </Text>
       </section>
 
-      <Alert color="blue" title="Как фиксируется согласие">
+      <Alert
+        id="consent-record"
+        className={styles.recordNotice}
+        color="blue"
+        variant="light"
+        title="Как фиксируется согласие"
+      >
         При регистрации пользователь отмечает отдельный обязательный флажок. Startup Zone сохраняет
         идентификатор аккаунта, электронную почту, версию этого документа и серверное время принятия.
         Код приглашения хранится только в виде одностороннего SHA-256-хеша и после успешной регистрации
@@ -194,30 +225,86 @@ function PersonalDataConsent({ config }: { config: PublicLegalConfig }) {
   );
 }
 
+function DocumentNavigation({ kind }: { kind: LegalDocumentProps["kind"] }) {
+  return (
+    <aside className={styles.toc}>
+      <div className={styles.tocInner}>
+        <Text className={styles.tocLabel}>Содержание</Text>
+        <nav aria-label="Содержание документа">
+          <ul className={styles.tocList}>
+            {documentSections[kind].map((section) => (
+              <li key={section.id}>
+                <a className={styles.tocLink} href={`#${section.id}`}>
+                  {section.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className={styles.tocNote}>
+          <ShieldCheck size={15} aria-hidden="true" />
+          <span>Контакты раскрываются только после принятой заявки.</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export function LegalDocument({ config, kind }: LegalDocumentProps) {
   const title = kind === "privacy"
     ? "Политика обработки персональных данных"
     : "Согласие на обработку персональных данных";
 
+  const statusLabel = config.mode === "approved"
+    ? "Утверждён"
+    : config.mode === "blocked"
+      ? "Не опубликован"
+      : "Черновик";
+  const statusClassName = config.mode === "approved"
+    ? styles.statusBadge
+    : `${styles.statusBadge} ${config.mode === "blocked" ? styles.statusBlocked : styles.statusDraft}`;
+  const linkedDocument = kind === "privacy" ? "/legal/consent" : "/legal/privacy";
+
   return (
-    <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
-      <Stack gap="xl">
-        <div>
-          <Title order={1}>{title}</Title>
-          {config.mode !== "blocked" && <EffectiveVersion config={config} />}
+    <Paper component="article" withBorder radius="md" p={0} className={styles.documentFrame}>
+      <header className={styles.documentHeader}>
+        <span className={styles.documentEyebrow}>
+          <FileText size={14} aria-hidden="true" />
+          Юридические документы
+        </span>
+        <div className={styles.titleRow}>
+          <Title order={1} className={styles.documentTitle}>{title}</Title>
+          <span className={statusClassName}>{statusLabel}</span>
         </div>
-        <DocumentNotice config={config} />
-        {config.mode !== "blocked" && (
-          kind === "privacy" ? <PrivacyPolicy config={config} /> : <PersonalDataConsent config={config} />
-        )}
-        <Text size="sm" c="dimmed">
-          <Anchor component={Link} href={kind === "privacy" ? "/legal/consent" : "/legal/privacy"}>
+        {config.mode !== "blocked" && <EffectiveVersion config={config} />}
+      </header>
+
+      {config.mode !== "approved" && (
+        <div className={styles.noticeSlot}>
+          <DocumentNotice config={config} />
+        </div>
+      )}
+
+      {config.mode !== "blocked" && (
+        <div className={styles.documentGrid}>
+          <DocumentNavigation kind={kind} />
+          <div className={styles.documentBody}>
             {kind === "privacy"
-              ? "Открыть согласие на обработку персональных данных"
-              : "Открыть политику обработки персональных данных"}
-          </Anchor>
-        </Text>
-      </Stack>
+              ? <PrivacyPolicy config={config} />
+              : <PersonalDataConsent config={config} />}
+          </div>
+        </div>
+      )}
+
+      <footer className={styles.documentFooter}>
+        <span>Связанный документ</span>
+        <Anchor component={Link} href={linkedDocument} className={styles.crossLink}>
+          {kind === "privacy"
+            ? "Открыть согласие на обработку персональных данных"
+            : "Открыть политику обработки персональных данных"}
+          <ArrowUpRight size={14} aria-hidden="true" />
+        </Anchor>
+      </footer>
     </Paper>
   );
 }

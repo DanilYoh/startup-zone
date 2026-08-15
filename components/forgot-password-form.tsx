@@ -13,8 +13,10 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { ArrowLeft, ArrowRight, MailCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import styles from "@/features/auth/components/auth-form.module.css";
 
 export function ForgotPasswordForm({
   className,
@@ -61,49 +63,78 @@ export function ForgotPasswordForm({
   return (
     <div className={className} {...props}>
       {success ? (
-        <Paper withBorder shadow="sm" radius="lg" p="xl">
-          <Stack gap="md">
-            <div>
-              <Title order={1} size="h2">Проверьте почту</Title>
-              <Text c="dimmed" size="sm" mt={4}>Инструкция по восстановлению отправлена</Text>
-            </div>
-            <Text size="sm" c="dimmed">
-              Если аккаунт зарегистрирован по электронной почте, вы получите
-              письмо со ссылкой для смены пароля.
-            </Text>
-          </Stack>
+        <Paper withBorder radius="md" p={0} className={styles.authCard}>
+          <div className={styles.cardBody}>
+            <Stack gap="lg">
+              <span className={styles.statusIcon}>
+                <MailCheck size={20} aria-hidden="true" />
+              </span>
+              <div className={styles.authHeader}>
+                <Text className={styles.eyebrow}>Восстановление доступа</Text>
+                <Title order={1} className={styles.authTitle}>Проверьте почту</Title>
+                <Text className={styles.authDescription}>Инструкция по восстановлению отправлена</Text>
+              </div>
+              <Text className={styles.statusText}>
+                Если аккаунт зарегистрирован по электронной почте, вы получите
+                письмо со ссылкой для смены пароля.
+              </Text>
+              <Button
+                component={Link}
+                href="/auth/login"
+                variant="default"
+                className={styles.secondaryAction}
+                leftSection={<ArrowLeft size={15} aria-hidden="true" />}
+                fullWidth
+              >
+                Вернуться ко входу
+              </Button>
+            </Stack>
+          </div>
         </Paper>
       ) : (
-        <Paper withBorder shadow="sm" radius="lg" p="xl">
-          <Stack gap="lg">
-            <div>
-              <Title order={1} size="h2">Восстановление пароля</Title>
-              <Text c="dimmed" size="sm" mt={4}>
+        <Paper withBorder radius="md" p={0} className={styles.authCard}>
+          <div className={styles.cardBody}>
+            <div className={styles.authHeader}>
+              <Text className={styles.eyebrow}>Восстановление доступа</Text>
+              <Title order={1} className={styles.authTitle}>Восстановление пароля</Title>
+              <Text className={styles.authDescription}>
                 Введите электронную почту, и мы отправим ссылку для смены пароля.
               </Text>
             </div>
-            <form onSubmit={handleForgotPassword}>
-              <Stack gap="md">
+            <form onSubmit={handleForgotPassword} className={styles.form}>
+              <Stack gap="sm">
                 <TextInput
                   id="email"
+                  name="email"
                   type="email"
                   label="Электронная почта"
                   placeholder="m@example.com"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(event) => setEmail(event.currentTarget.value)}
                 />
-                {error && <Alert color="red" variant="light" role="alert">{error}</Alert>}
-                <Button type="submit" fullWidth loading={isLoading}>
+                {error && (
+                  <Alert className={styles.formAlert} color="red" variant="light" role="alert">
+                    {error}
+                  </Alert>
+                )}
+                <Button
+                  className={styles.submitButton}
+                  type="submit"
+                  fullWidth
+                  loading={isLoading}
+                  rightSection={<ArrowRight size={15} aria-hidden="true" />}
+                >
                   Отправить ссылку
                 </Button>
               </Stack>
-              <Text mt="md" ta="center" size="sm">
+              <div className={styles.formFooter}>
                 Уже есть аккаунт?{" "}
                 <Anchor component={Link} href="/auth/login">Войти</Anchor>
-              </Text>
+              </div>
             </form>
-          </Stack>
+          </div>
         </Paper>
       )}
     </div>

@@ -1,7 +1,10 @@
+import { AuthShell } from "@/app/auth/auth-shell";
 import { getAuthErrorMessage } from "@/features/auth/errors";
-import { Paper, Stack, Text, Title } from "@mantine/core";
+import authStyles from "@/features/auth/components/auth-form.module.css";
+import { Button, Paper, Stack, Text, Title } from "@mantine/core";
+import { ArrowLeft, CircleAlert } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
-import styles from "../auth-layout.module.css";
 
 async function ErrorContent({
   searchParams,
@@ -11,7 +14,7 @@ async function ErrorContent({
   const params = await searchParams;
 
   return (
-    <Text size="sm" c="dimmed">
+    <Text className={authStyles.statusText}>
       {getAuthErrorMessage(params.code)}
     </Text>
   );
@@ -23,19 +26,35 @@ export default function Page({
   searchParams: Promise<{ code?: string | string[] }>;
 }) {
   return (
-    <div className={styles.page}>
-      <div className={styles.narrow}>
-        <Stack gap="lg">
-          <Paper withBorder shadow="sm" radius="lg" p="xl">
-            <Stack gap="md">
-              <Title order={1} size="h2">Не удалось завершить действие</Title>
-              <Suspense>
-                <ErrorContent searchParams={searchParams} />
-              </Suspense>
-            </Stack>
-          </Paper>
-        </Stack>
-      </div>
-    </div>
+    <AuthShell>
+      <Paper withBorder radius="md" p={0} className={authStyles.authCard}>
+        <div className={authStyles.cardBody}>
+          <Stack gap="md">
+            <span className={`${authStyles.statusIcon} ${authStyles.statusIconDanger}`}>
+              <CircleAlert size={20} aria-hidden="true" />
+            </span>
+            <div className={authStyles.authHeader}>
+              <Text className={authStyles.eyebrow}>Ошибка доступа</Text>
+              <Title order={1} className={authStyles.authTitle}>
+                Не удалось завершить действие
+              </Title>
+            </div>
+            <Suspense>
+              <ErrorContent searchParams={searchParams} />
+            </Suspense>
+            <Button
+              component={Link}
+              href="/auth/login"
+              variant="default"
+              className={authStyles.secondaryAction}
+              leftSection={<ArrowLeft size={15} aria-hidden="true" />}
+              fullWidth
+            >
+              Вернуться ко входу
+            </Button>
+          </Stack>
+        </div>
+      </Paper>
+    </AuthShell>
   );
 }

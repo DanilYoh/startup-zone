@@ -1,22 +1,33 @@
 .page {
+  display: grid;
   min-height: 100svh;
-  background: var(--mantine-color-body);
+  grid-template-rows: auto 1fr auto;
+  background:
+    linear-gradient(var(--sz-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sz-grid) 1px, transparent 1px),
+    var(--sz-surface);
+  background-size: 48px 48px;
 }
 
 .header {
-  border-bottom: 1px solid var(--mantine-color-default-border);
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  border-bottom: 1px solid var(--sz-line);
+  background: color-mix(in srgb, var(--sz-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .nav,
 .main,
-.footer {
-  width: min(100% - 2rem, 72rem);
+.footerInner {
+  width: min(100% - 2rem, 78rem);
   margin-inline: auto;
 }
 
 .nav {
   display: flex;
-  min-height: 4rem;
+  min-height: 3.65rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -25,55 +36,397 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  color: var(--mantine-color-text);
-  font-weight: 700;
+  gap: 0.55rem;
+  color: var(--sz-ink);
+  font-size: 0.82rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
   text-decoration: none;
 }
 
 .brandMark {
   display: grid;
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.75rem;
+  height: 1.75rem;
   place-items: center;
-  border-radius: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--sz-accent) 35%, var(--sz-line));
+  border-radius: 0.32rem;
   background: var(--sz-accent);
   color: #09291b;
   font-family: var(--mantine-font-family-monospace);
-  font-size: 0.6rem;
+  font-size: 0.56rem;
 }
 
 .links {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.6rem;
+}
+
+.documentNav {
+  display: flex;
+  padding: 0.2rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.42rem;
+  gap: 0.1rem;
+  background: var(--sz-panel-subtle);
 }
 
 .documentLink {
-  color: var(--mantine-color-anchor);
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.28rem;
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+  font-weight: 540;
   text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 .documentLink:hover {
-  text-decoration: underline;
+  background: var(--sz-elevated);
+  color: var(--sz-ink);
+}
+
+.themeControl {
+  display: inline-grid;
+  border-radius: 0.4rem;
+  background: var(--sz-dark-panel);
 }
 
 .main {
-  padding-block: 3rem 4rem;
+  padding-block: clamp(1.5rem, 4vw, 3rem) clamp(3rem, 7vw, 5rem);
 }
 
 .footer {
-  padding-block: 1.5rem;
-  border-top: 1px solid var(--mantine-color-default-border);
+  border-top: 1px solid var(--sz-line);
+  background: color-mix(in srgb, var(--sz-panel) 72%, transparent);
+}
+
+.footerInner {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.footerMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+}
+
+.footerDot {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--sz-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sz-accent) 12%, transparent);
+}
+
+.documentFrame {
+  overflow: hidden;
+  border-color: var(--sz-line);
+  background: var(--sz-panel);
+  box-shadow: var(--sz-shadow-soft);
+}
+
+.documentHeader {
+  position: relative;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border-bottom: 1px solid var(--sz-line);
+  background:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--sz-accent) 10%, transparent), transparent 16rem),
+    var(--sz-panel);
+}
+
+.documentEyebrow {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  gap: 0.45rem;
+  color: var(--sz-accent);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.documentTitle {
+  max-width: 48rem;
+  color: var(--sz-ink);
+  font-size: clamp(1.7rem, 4vw, 2.65rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.statusBadge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--sz-success) 25%, var(--sz-line));
+  border-radius: 999px;
+  gap: 0.4rem;
+  background: var(--sz-success-soft);
+  color: var(--sz-success);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.62rem;
+}
+
+.statusBadge::before {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.statusDraft {
+  border-color: color-mix(in srgb, var(--sz-warning) 25%, var(--sz-line));
+  background: var(--sz-warning-soft);
+  color: var(--sz-warning);
+}
+
+.statusBlocked {
+  border-color: color-mix(in srgb, var(--sz-danger) 25%, var(--sz-line));
+  background: var(--sz-danger-soft);
+  color: var(--sz-danger);
+}
+
+.version {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+  gap: 0.45rem;
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+}
+
+.noticeSlot {
+  padding: 1.25rem clamp(1.5rem, 4vw, 2.75rem) 0;
+}
+
+.documentNotice {
+  border-radius: 0.45rem;
+  font-size: 0.74rem;
+}
+
+.documentGrid {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  gap: clamp(2rem, 5vw, 4.5rem);
+}
+
+.toc {
+  align-self: start;
+}
+
+.tocInner {
+  position: sticky;
+  top: 5.25rem;
+}
+
+.tocLabel {
+  color: var(--sz-muted);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tocList {
+  display: grid;
+  margin-top: 0.75rem;
+  gap: 0.15rem;
+  list-style: none;
+}
+
+.tocLink {
+  display: block;
+  padding: 0.42rem 0.55rem;
+  border-left: 1px solid var(--sz-line);
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.tocLink:hover {
+  border-left-color: var(--sz-accent);
+  background: color-mix(in srgb, var(--sz-accent-soft) 45%, transparent);
+  color: var(--sz-ink);
+}
+
+.tocNote {
+  display: flex;
+  margin-top: 1.25rem;
+  padding: 0.7rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.4rem;
+  gap: 0.5rem;
+  background: var(--sz-panel-subtle);
+  color: var(--sz-muted);
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.tocNote svg {
+  flex: 0 0 auto;
+  color: var(--sz-accent);
+}
+
+.documentBody {
+  min-width: 0;
+  max-width: 48rem;
+}
+
+.legalSections {
+  color: var(--sz-ink);
+}
+
+.documentSection {
+  scroll-margin-top: 5.5rem;
+  padding-block: 1.75rem;
+  border-bottom: 1px solid var(--sz-line);
+}
+
+.documentSection:first-child {
+  padding-top: 0;
+}
+
+.documentSection:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sectionTitle {
+  color: var(--sz-ink);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  font-weight: 580;
+  letter-spacing: -0.018em;
+}
+
+.documentSection p,
+.documentSection li {
+  color: color-mix(in srgb, var(--sz-ink) 82%, var(--sz-muted));
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+
+.documentSection ul {
+  padding-left: 1.15rem;
+}
+
+.documentSection li::marker {
+  color: var(--sz-accent);
+}
+
+.operatorCard {
+  display: grid;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--sz-line);
+  border-radius: 0.45rem;
+  gap: 0.4rem;
+  background: var(--sz-panel-subtle);
+}
+
+.operatorCard p {
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.recordNotice {
+  margin-top: 1.75rem;
+  border-radius: 0.45rem;
+  font-size: 0.74rem;
+  line-height: 1.65;
+}
+
+.blockedBody {
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+.documentFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem clamp(1.5rem, 4vw, 2.75rem);
+  border-top: 1px solid var(--sz-line);
+  gap: 1rem;
+  background: var(--sz-panel-subtle);
+  color: var(--sz-muted);
+  font-size: 0.7rem;
+}
+
+.crossLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--sz-ink);
+  font-weight: 560;
+}
+
+.crossLink:hover {
+  color: var(--sz-accent);
+}
+
+.documentSkeleton {
+  border: 1px solid var(--sz-line);
+  box-shadow: var(--sz-shadow-soft);
 }
 
 @media (max-width: 40rem) {
-  .links {
-    gap: 0.65rem;
-    font-size: 0.8rem;
+  .nav,
+  .main,
+  .footerInner {
+    width: min(100% - 1.25rem, 78rem);
   }
 
-  .main {
-    padding-block: 1.5rem 2.5rem;
+  .links {
+    gap: 0.4rem;
+  }
+
+  .documentNav {
+    padding: 0.15rem;
+  }
+
+  .documentLink {
+    padding-inline: 0.4rem;
+    font-size: 0.65rem;
+  }
+
+  .titleRow,
+  .documentFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footerInner {
+    min-height: 3.5rem;
+  }
+}
+
+@media (max-width: 54rem) {
+  .documentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .toc {
+    display: none;
   }
 }

@@ -1,5 +1,4 @@
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Group, Text } from "@mantine/core";
 import Link from "next/link";
 import styles from "./legal.module.css";
 
@@ -12,16 +11,25 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <span className={styles.brandMark}>SZ</span>
             <span>Startup Zone</span>
           </Link>
-          <Group className={styles.links} wrap="nowrap">
-            <Link className={styles.documentLink} href="/legal/privacy">Политика</Link>
-            <Link className={styles.documentLink} href="/legal/consent">Согласие</Link>
-            <ThemeSwitcher />
-          </Group>
+          <div className={styles.links}>
+            <div className={styles.documentNav}>
+              <Link className={styles.documentLink} href="/legal/privacy">Политика</Link>
+              <Link className={styles.documentLink} href="/legal/consent">Согласие</Link>
+            </div>
+            <span className={styles.themeControl}>
+              <ThemeSwitcher />
+            </span>
+          </div>
         </nav>
       </header>
       <main className={styles.main}>{children}</main>
       <footer className={styles.footer}>
-        <Text size="sm" c="dimmed">Startup Zone · Документы об обработке персональных данных.</Text>
+        <div className={styles.footerInner}>
+          <span className={styles.footerMeta}>
+            <span className={styles.footerDot} aria-hidden="true" />
+            Startup Zone · Документы об обработке персональных данных.
+          </span>
+        </div>
       </footer>
     </div>
   );

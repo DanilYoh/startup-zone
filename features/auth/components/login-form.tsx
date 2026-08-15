@@ -13,6 +13,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import styles from "./auth-form.module.css";
@@ -28,14 +29,15 @@ export function LoginForm({
 
   return (
     <div className={className} {...props}>
-      <Paper withBorder radius="md" p="xl" className={styles.authCard}>
-        <Stack gap="lg">
-          <div>
-            <Title order={1} size="h2">Вход</Title>
-            <Text c="dimmed" size="sm" mt={4}>Введите email, чтобы открыть личный кабинет.</Text>
+      <Paper withBorder radius="md" p={0} className={styles.authCard}>
+        <div className={styles.cardBody}>
+          <div className={styles.authHeader}>
+            <Text className={styles.eyebrow}>Личный кабинет</Text>
+            <Title order={1} className={styles.authTitle}>Вход</Title>
+            <Text className={styles.authDescription}>Введите email, чтобы открыть личный кабинет.</Text>
           </div>
-          <form action={formAction}>
-            <Stack gap="md">
+          <form action={formAction} className={styles.form}>
+            <Stack gap="sm">
               <TextInput
                 id="email"
                 name="email"
@@ -46,49 +48,74 @@ export function LoginForm({
                 required
                 error={fieldError("email")}
               />
-              <Stack gap={6}>
+              <div>
+                <div className={styles.passwordRow}>
+                  <Text component="span" size="xs" fw={600}>
+                    Пароль
+                  </Text>
+                  <Anchor component={Link} href="/auth/forgot-password">
+                    Забыли пароль?
+                  </Anchor>
+                </div>
                 <PasswordInput
                   id="password"
                   name="password"
-                  label="Пароль"
+                  aria-label="Пароль"
                   autoComplete="current-password"
                   visibilityToggleButtonProps={{ "aria-label": "Показать или скрыть пароль" }}
                   required
                   error={fieldError("password")}
                 />
-                <Anchor component={Link} href="/auth/forgot-password" size="sm" ta="right">
-                  Забыли пароль?
-                </Anchor>
-              </Stack>
-              {state.message && <Alert color="red" variant="light" role="alert">{state.message}</Alert>}
-              <Button type="submit" fullWidth loading={pending}>Войти</Button>
+              </div>
+              {state.message && (
+                <Alert className={styles.formAlert} color="red" variant="light" role="alert">
+                  {state.message}
+                </Alert>
+              )}
+              <Button
+                className={styles.submitButton}
+                type="submit"
+                fullWidth
+                loading={pending}
+                rightSection={<ArrowRight size={15} aria-hidden="true" />}
+              >
+                Войти
+              </Button>
             </Stack>
-            <Text mt="md" ta="center" size="sm">
+            <div className={styles.formFooter}>
               Нет аккаунта?{" "}
               <Anchor component={Link} href="/auth/sign-up">Зарегистрироваться</Anchor>
-            </Text>
+            </div>
           </form>
-          {readOnlyDemoEnabled && (
-            <Stack gap="sm">
-              <Text c="dimmed" size="sm" ta="center">
-                Демо открывается без аккаунта и не создаёт пользовательскую сессию
-              </Text>
-              <Stack gap="sm">
-                <Button component={Link} href="/startups" variant="outline" fullWidth>
-                  Открыть демо-каталог
-                </Button>
-                <Button
-                  component={Link}
-                  href="/startups/flowpilot-operations-ai"
-                  variant="outline"
-                  fullWidth
-                >
-                  Открыть демо-проект
-                </Button>
-              </Stack>
-            </Stack>
-          )}
-        </Stack>
+        </div>
+        {readOnlyDemoEnabled && (
+          <section className={styles.demoPanel} aria-label="Демонстрационная версия">
+            <div className={styles.demoHeader}>
+              <div>
+                <Text className={styles.demoLabel}>Посмотреть без входа</Text>
+                <Text className={styles.demoDescription} mt={2}>
+                  Демо открывается без аккаунта и не создаёт пользовательскую сессию
+                </Text>
+              </div>
+              <span className={styles.demoBadge}>read only</span>
+            </div>
+            <div className={styles.demoActions}>
+              <Button component={Link} href="/startups" variant="default" size="xs" fullWidth>
+                Открыть демо-каталог
+              </Button>
+              <Button
+                component={Link}
+                href="/startups/flowpilot-operations-ai"
+                variant="default"
+                size="xs"
+                fullWidth
+                rightSection={<ExternalLink size={13} aria-hidden="true" />}
+              >
+                Открыть демо-проект
+              </Button>
+            </div>
+          </section>
+        )}
       </Paper>
     </div>
   );

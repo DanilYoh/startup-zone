@@ -4,6 +4,7 @@ import { Skeleton } from "@mantine/core";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import styles from "../legal.module.css";
 
 export const metadata: Metadata = { title: "Политика обработки персональных данных" };
 
@@ -14,7 +15,7 @@ async function PrivacyContent() {
 
 export default function PrivacyPage() {
   return (
-    <Suspense fallback={<Skeleton height="42rem" radius="lg" />}>
+    <Suspense fallback={<Skeleton className={styles.documentSkeleton} height="42rem" radius="md" />}>
       <PrivacyContent />
     </Suspense>
   );
