@@ -9,6 +9,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  agentRules: false,
   allowedDevOrigins: ["127.0.0.1"],
   // Vercel creates and traces its own runtime output. Standalone is reserved
   // for the self-hosted Docker image assembled from .next/standalone.
