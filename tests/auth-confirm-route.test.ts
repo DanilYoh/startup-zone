@@ -99,6 +99,23 @@ describe("email confirmation callback", () => {
     });
   });
 
+  it("fails closed when a confirmation link mixes PKCE and token-hash credentials", async () => {
+    const response = await GET(
+      new NextRequest(
+        "https://startup.example/auth/confirm?code=pkce-secret&token_hash=otp-secret&type=signup&next=/dashboard",
+      ),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://startup.example/auth/error?code=invalid_confirmation_link",
+    );
+    expect(response.headers.get("location")).not.toContain("pkce-secret");
+    expect(response.headers.get("location")).not.toContain("otp-secret");
+    expect(createClientMock).not.toHaveBeenCalled();
+    expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
+    expect(verifyOtpMock).not.toHaveBeenCalled();
+  });
+
   it("rejects incomplete links and unsafe redirect destinations", async () => {
     exchangeCodeForSessionMock.mockResolvedValue({ error: null });
 
