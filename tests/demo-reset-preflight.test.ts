@@ -1,5 +1,8 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { missingDemoResetConfiguration } from "../scripts/demo-reset-preflight.mjs";
 
 const completeEnvironment = {
   DEMO_SEED_PROJECT_REF: "demo-project",
@@ -12,18 +15,76 @@ const completeEnvironment = {
   DEMO_INVESTOR_PASSWORD: "investor-password",
 };
 
-describe("demo reset preflight", () => {
-  it("accepts a complete Demo environment", () => {
-    expect(missingDemoResetConfiguration(completeEnvironment)).toEqual([]);
-  });
+const requiredNames = Object.keys(
+  completeEnvironment,
+) as (keyof typeof completeEnvironment)[];
 
-  it("reports missing values without reading or printing their contents", () => {
-    expect(
-      missingDemoResetConfiguration({
-        ...completeEnvironment,
-        SUPABASE_SERVICE_ROLE_KEY: "",
-        DEMO_INVESTOR_PASSWORD: " ",
-      }),
-    ).toEqual(["SUPABASE_SERVICE_ROLE_KEY", "DEMO_INVESTOR_PASSWORD"]);
+function runPreflight(missingName?: keyof typeof completeEnvironment) {
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), "demo-reset-preflight-"));
+  const githubOutput = join(temporaryDirectory, "github-output.txt");
+  const environment = {
+    ...process.env,
+    ...completeEnvironment,
+    GITHUB_OUTPUT: githubOutput,
+  };
+
+  if (missingName) delete environment[missingName];
+
+  try {
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/demo-reset-preflight.mjs"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: environment,
+      },
+    );
+
+    return {
+      githubOutput: readFileSync(githubOutput, "utf8"),
+      result,
+    };
+  } finally {
+    rmSync(temporaryDirectory, { force: true, recursive: true });
+  }
+}
+
+describe("demo reset preflight", () => {
+  it.each(requiredNames)(
+    "fails closed when %s is absent",
+    (missingName) => {
+      const { githubOutput, result } = runPreflight(missingName);
+      const output = `${result.stdout}${result.stderr}`.trim();
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(1);
+      expect(githubOutput).toBe("configured=false\n");
+      expect(output).toBe(
+        `::error::Demo reset configuration is incomplete. Missing GitHub Demo configuration: ${missingName}.`,
+      );
+
+      for (const value of Object.values(completeEnvironment)) {
+        expect(output).not.toContain(value);
+      }
+    },
+  );
+
+  it("succeeds without logging secret values when configuration is complete", () => {
+    const { githubOutput, result } = runPreflight();
+    const output = `${result.stdout}${result.stderr}`;
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(githubOutput).toBe("configured=true\n");
+    expect(output).toContain("Demo reset configuration is complete.");
+
+    for (const value of [
+      completeEnvironment.SUPABASE_SERVICE_ROLE_KEY,
+      completeEnvironment.DEMO_FOUNDER_PASSWORD,
+      completeEnvironment.DEMO_INVESTOR_PASSWORD,
+    ]) {
+      expect(output).not.toContain(value);
+    }
   });
 });

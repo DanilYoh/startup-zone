@@ -28,8 +28,8 @@ export function runDemoResetPreflight(environment = process.env) {
   if (configured) {
     console.log("Demo reset configuration is complete.");
   } else {
-    console.log(
-      `::notice::Demo reset skipped. Missing GitHub Demo configuration: ${missing.join(", ")}.`,
+    console.error(
+      `::error::Demo reset configuration is incomplete. Missing GitHub Demo configuration: ${missing.join(", ")}.`,
     );
   }
 
@@ -40,4 +40,8 @@ const entrypoint = process.argv[1]
   ? pathToFileURL(resolve(process.argv[1])).href
   : undefined;
 
-if (entrypoint === import.meta.url) runDemoResetPreflight();
+if (entrypoint === import.meta.url) {
+  const { configured } = runDemoResetPreflight();
+
+  if (!configured) process.exitCode = 1;
+}
