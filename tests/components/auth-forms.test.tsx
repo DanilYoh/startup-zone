@@ -57,7 +57,7 @@ describe("authentication forms", () => {
     });
     const user = userEvent.setup();
 
-    render(<LoginForm />);
+    render(<LoginForm returnTo="/startups/climate-lens" />);
 
     await user.type(screen.getByRole("textbox", { name: "Электронная почта" }), "founder@example.test");
     await user.type(screen.getByLabelText(/^Пароль/), "correct-horse-battery-staple");
@@ -72,6 +72,7 @@ describe("authentication forms", () => {
     expect(submitted).toBeInstanceOf(FormData);
     expect(submitted.get("email")).toBe("founder@example.test");
     expect(submitted.get("password")).toBe("correct-horse-battery-staple");
+    expect(submitted.get("next")).toBe("/startups/climate-lens");
   });
 
   it("submits the selected marketplace role and exposes field errors", async () => {

@@ -21,8 +21,12 @@ const initialState: SignInActionState = { status: "idle" };
 export function LoginForm({
   className,
   readOnlyDemoEnabled = false,
+  returnTo = "/dashboard",
   ...props
-}: React.ComponentPropsWithoutRef<"div"> & { readOnlyDemoEnabled?: boolean }) {
+}: React.ComponentPropsWithoutRef<"div"> & {
+  readOnlyDemoEnabled?: boolean;
+  returnTo?: string;
+}) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
   const fieldError = (field: keyof SignInInput) => state.errors?.[field]?.[0];
 
@@ -35,6 +39,7 @@ export function LoginForm({
             <Text c="dimmed" size="sm" mt={4}>Введите email, чтобы открыть личный кабинет.</Text>
           </div>
           <form action={formAction}>
+            <input type="hidden" name="next" value={returnTo} />
             <Stack gap="md">
               <TextInput
                 id="email"

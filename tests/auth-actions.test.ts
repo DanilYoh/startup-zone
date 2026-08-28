@@ -205,6 +205,31 @@ describe("auth Server Actions", () => {
     });
   });
 
+  it("returns a signed-in investor to the selected startup", async () => {
+    signInWithPasswordMock.mockResolvedValue({ error: null });
+    const formData = validSignInForm();
+    formData.set("next", "/startups/climate-lens");
+
+    await expect(signIn(initialSignInState, formData)).rejects.toThrow(
+      "REDIRECT:/startups/climate-lens",
+    );
+  });
+
+  it.each([
+    "https://phishing.example/startups/climate-lens",
+    "//phishing.example/startups/climate-lens",
+    "/startups/climate-lens/team",
+    "/startups/climate-lens?ref=login",
+  ])("does not redirect to an unsafe sign-in destination %s", async (destination) => {
+    signInWithPasswordMock.mockResolvedValue({ error: null });
+    const formData = validSignInForm();
+    formData.set("next", destination);
+
+    await expect(signIn(initialSignInState, formData)).rejects.toThrow(
+      "REDIRECT:/dashboard",
+    );
+  });
+
   it("returns a stable sign-in error instead of exposing Auth details", async () => {
     signInWithPasswordMock.mockResolvedValue({
       error: { code: "invalid_credentials", status: 400 },

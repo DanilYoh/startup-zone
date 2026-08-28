@@ -238,7 +238,11 @@ async function StartupDetail({ params }: StartupDetailPageProps) {
       </SimpleGrid>
 
       <Paper withBorder radius="xl" p={{ base: "lg", sm: "xl" }}>
-        <ApplicationPanel startupId={startup.id} founderId={startup.founder_id} />
+        <ApplicationPanel
+          startupId={startup.id}
+          founderId={startup.founder_id}
+          startupSlug={startup.slug}
+        />
       </Paper>
     </Stack>
   );

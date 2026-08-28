@@ -9,9 +9,11 @@ const statusLabels = { pending: "На рассмотрении", accepted: "Пр
 export async function ApplicationPanel({
   startupId,
   founderId,
+  startupSlug,
 }: {
   startupId: number;
   founderId: string;
+  startupSlug: string;
 }) {
   const context = await getApplicationContext(startupId, founderId);
 
@@ -21,7 +23,12 @@ export async function ApplicationPanel({
       {context.status === "signed_out" ? (
         <>
           <Text c="dimmed">Войдите как инвестор, чтобы связаться с основателем.</Text>
-          <LinkButton href="/auth/login" className={styles.fitWidth}>Войти и откликнуться</LinkButton>
+          <LinkButton
+            href={`/auth/login?next=${encodeURIComponent(`/startups/${startupSlug}`)}`}
+            className={styles.fitWidth}
+          >
+            Войти и откликнуться
+          </LinkButton>
         </>
       ) : context.status === "owner" ? (
         <Text c="dimmed">Это ваш стартап. Заявки инвесторов появятся в личном кабинете.</Text>
