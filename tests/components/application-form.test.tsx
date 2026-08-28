@@ -33,6 +33,10 @@ describe("ApplicationForm", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Заявка отправлена основателю.",
     );
+    expect(screen.getByRole("link", { name: "Посмотреть мои заявки" })).toHaveAttribute(
+      "href",
+      "/dashboard/applications",
+    );
     expect(screen.queryByRole("textbox", { name: "Сообщение основателю" })).not.toBeInTheDocument();
     expect(createApplicationMock).toHaveBeenCalledOnce();
 
