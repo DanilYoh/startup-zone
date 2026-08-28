@@ -88,21 +88,18 @@ export async function GET(request: NextRequest) {
     return redirectToAuthError(request, "confirmation_failed");
   }
 
-  if (credential.flow === "otp") {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
-      type: credential.type,
-      token_hash: credential.tokenHash,
-    });
-    if (!error) return redirectWithoutAuthSecrets(request, next);
+  const { error } = await supabase.auth.verifyOtp({
+    type: credential.type,
+    token_hash: credential.tokenHash,
+  });
+  if (!error) return redirectWithoutAuthSecrets(request, next);
 
-    await logRequestError("auth.confirm_failed", {
-      code: error.code,
-      status: error.status,
-      flow: "otp",
-    });
-    return redirectToAuthError(request, "confirmation_failed");
-  }
-
+  await logRequestError("auth.confirm_failed", {
+    code: error.code,
+    status: error.status,
+    flow: "otp",
+  });
+  return redirectToAuthError(request, "confirmation_failed");
 }
