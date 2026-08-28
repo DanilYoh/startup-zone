@@ -3,6 +3,8 @@ FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a55
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
+RUN apk upgrade --no-cache
+
 FROM base AS dependencies
 
 COPY package.json package-lock.json ./
@@ -30,7 +32,7 @@ COPY . .
 RUN mkdir -p public \
   && npm run build
 
-FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS runner
+FROM base AS runner
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
