@@ -14,6 +14,10 @@ beforeEach(() => {
 });
 
 describe("proxy matcher", () => {
+  it("keeps AGENTS.md under repository control", () => {
+    expect(nextConfig.agentRules).toBe(false);
+  });
+
   it("keeps liveness checks independent from Supabase", () => {
     expect(
       unstable_doesMiddlewareMatch({ config, nextConfig, url: "/healthz" }),
