@@ -52,6 +52,29 @@ describe("Supabase request proxy", () => {
     expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/u);
   });
 
+  it("defers confirmation authentication to the callback route", async () => {
+    environmentState.configured = true;
+    getClaimsMock.mockResolvedValue({ data: { claims: null } });
+
+    const response = await updateSession(
+      new NextRequest(
+        "https://startup-zone.example/auth/confirm?code=pkce-secret&token_hash=otp-secret&type=signup",
+        {
+          headers: {
+            cookie: "existing-session=unchanged",
+            "x-request-id": "request-confirmation",
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-request-id")).toBe("request-confirmation");
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(createServerClientMock).not.toHaveBeenCalled();
+    expect(getClaimsMock).not.toHaveBeenCalled();
+  });
+
   it("forwards authenticated requests and propagates request id to Supabase", async () => {
     environmentState.configured = true;
     getClaimsMock.mockResolvedValue({ data: { claims: { sub: "user-id" } } });

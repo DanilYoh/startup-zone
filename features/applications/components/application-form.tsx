@@ -1,5 +1,6 @@
 "use client";
 
+import { LinkButton } from "@/components/link-button";
 import {
   createApplication,
   type ApplicationActionState,
@@ -18,7 +19,14 @@ export function ApplicationForm({
   const [state, formAction, pending] = useActionState(createApplication, initialState);
 
   if (state.status === "success") {
-    return <Alert color="teal" role="status">{state.message}</Alert>;
+    return (
+      <Stack gap="sm" align="flex-start">
+        <Alert color="teal" role="status">{state.message}</Alert>
+        <LinkButton href="/dashboard/applications" variant="outline">
+          Посмотреть мои заявки
+        </LinkButton>
+      </Stack>
+    );
   }
 
   return (

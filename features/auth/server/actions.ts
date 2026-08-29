@@ -9,6 +9,7 @@ import {
 import { logRequestError } from "@/lib/logger";
 import { getSiteOrigin } from "@/lib/env";
 import { getPublicLegalConfig } from "@/features/legal/server/config";
+import { getSafeSignInRedirectPath } from "@/lib/routing";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { createHash } from "node:crypto";
@@ -137,6 +138,10 @@ export async function signIn(
     return { status: "error", message: "Вход недоступен: публичная демоверсия не подключена к базе данных." };
   }
 
+  const nextValue = formData.get("next");
+  const returnTo = getSafeSignInRedirectPath(
+    typeof nextValue === "string" ? nextValue : null,
+  );
   const validated = parseSignInForm(formData);
   if (!validated.success) {
     return {
@@ -160,5 +165,5 @@ export async function signIn(
     };
   }
 
-  redirect("/dashboard");
+  redirect(returnTo);
 }

@@ -60,36 +60,30 @@ test("an investor submits and tracks investment interest", async ({ page }) => {
     });
     expect(startupError).toBeNull();
 
-    await page.goto("/auth/login");
+    await page.goto("/startups");
+    const startupLink = page.getByRole("link", { name: title, exact: true });
+    await expect(startupLink).toBeVisible();
+    await startupLink.click();
+    await expect(page).toHaveURL(new RegExp(`/startups/${slug}$`));
+
+    await page.getByRole("link", { name: "Войти и откликнуться" }).click();
     await page.getByLabel("Электронная почта").fill(investorEmail);
     await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Войти" }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/startups/${slug}$`));
 
-    await page.goto(`/startups/${slug}`);
     await page.getByLabel("Сообщение основателю").fill(message);
     await page.getByRole("button", { name: "Отправить заявку" }).click();
-    await expect(page.getByText("Вы уже отправили заявку по этому проекту.", { exact: true })).toBeVisible();
-    await expect(page.getByText("На рассмотрении", { exact: true })).toBeVisible();
+    const applicationsLink = page.getByRole("link", { name: "Посмотреть мои заявки" });
+    await expect(applicationsLink).toBeVisible();
+    await applicationsLink.click();
 
-    await page.goto("/dashboard/applications");
+    await expect(page).toHaveURL(/\/dashboard\/applications$/);
     await expect(page.getByRole("heading", { level: 1, name: "Мои инвестиционные заявки" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
-    await expect(page.getByText(message, { exact: true })).toBeVisible();
-
-    const { data: application, error: applicationError } = await admin
-      .from("applications")
-      .select("applicant_id, type, status, message")
-      .eq("applicant_id", investorId)
-      .single();
-
-    expect(applicationError).toBeNull();
-    expect(application).toEqual({
-      applicant_id: investorId,
-      type: "investor",
-      status: "pending",
-      message,
-    });
+    const applicationCard = page.locator("article").filter({ hasText: title });
+    await expect(applicationCard.getByRole("heading", { level: 2, name: title })).toBeVisible();
+    await expect(applicationCard.getByText(message, { exact: true })).toBeVisible();
+    await expect(applicationCard.getByText("На рассмотрении", { exact: true })).toBeVisible();
   } finally {
     if (investorId) await admin.auth.admin.deleteUser(investorId);
     if (founderId) await admin.auth.admin.deleteUser(founderId);

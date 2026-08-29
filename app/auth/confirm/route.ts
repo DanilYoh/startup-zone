@@ -24,6 +24,32 @@ function isEmailOtpType(value: string | null): value is EmailOtpType {
   return emailOtpTypes.some((type) => type === value);
 }
 
+type ConfirmationCredential =
+  | { flow: "pkce"; code: string }
+  | { flow: "otp"; tokenHash: string; type: EmailOtpType };
+
+function parseConfirmationCredential(searchParams: URLSearchParams): ConfirmationCredential | null {
+  const codes = searchParams.getAll("code");
+  const tokenHashes = searchParams.getAll("token_hash");
+  const types = searchParams.getAll("type");
+
+  if (codes.length === 1 && codes[0] && tokenHashes.length === 0 && types.length === 0) {
+    return { flow: "pkce", code: codes[0] };
+  }
+
+  if (
+    codes.length === 0 &&
+    tokenHashes.length === 1 &&
+    tokenHashes[0] &&
+    types.length === 1 &&
+    isEmailOtpType(types[0])
+  ) {
+    return { flow: "otp", tokenHash: tokenHashes[0], type: types[0] };
+  }
+
+  return null;
+}
+
 function redirectWithoutAuthSecrets(request: NextRequest, pathname: string) {
   const destination = request.nextUrl.clone();
   destination.pathname = pathname;
@@ -41,14 +67,16 @@ function redirectToAuthError(request: NextRequest, code: AuthErrorCode) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
-  const token_hash = searchParams.get("token_hash");
-  const type = searchParams.get("type");
+  const credential = parseConfirmationCredential(searchParams);
   const next = getSafeAuthRedirectPath(searchParams.get("next"));
 
-  if (code) {
+  if (!credential) {
+    return redirectToAuthError(request, "invalid_confirmation_link");
+  }
+
+  if (credential.flow === "pkce") {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(credential.code);
 
     if (!error) return redirectWithoutAuthSecrets(request, next);
 
@@ -60,22 +88,18 @@ export async function GET(request: NextRequest) {
     return redirectToAuthError(request, "confirmation_failed");
   }
 
-  if (token_hash && isEmailOtpType(type)) {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash,
-    });
-    if (!error) return redirectWithoutAuthSecrets(request, next);
+  const { error } = await supabase.auth.verifyOtp({
+    type: credential.type,
+    token_hash: credential.tokenHash,
+  });
+  if (!error) return redirectWithoutAuthSecrets(request, next);
 
-    await logRequestError("auth.confirm_failed", {
-      code: error.code,
-      status: error.status,
-      flow: "otp",
-    });
-    return redirectToAuthError(request, "confirmation_failed");
-  }
-
-  return redirectToAuthError(request, "invalid_confirmation_link");
+  await logRequestError("auth.confirm_failed", {
+    code: error.code,
+    status: error.status,
+    flow: "otp",
+  });
+  return redirectToAuthError(request, "confirmation_failed");
 }

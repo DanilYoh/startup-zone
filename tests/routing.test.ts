@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getSafeAuthRedirectPath, isProtectedPathname } from "../lib/routing";
+import {
+  getSafeAuthRedirectPath,
+  getSafeSignInRedirectPath,
+  isProtectedPathname,
+} from "../lib/routing";
 
 describe("isProtectedPathname", () => {
   it("protects the dashboard route tree", () => {
@@ -35,5 +39,28 @@ describe("getSafeAuthRedirectPath", () => {
     expect(getSafeAuthRedirectPath("//phishing.example/reset")).toBe("/");
     expect(getSafeAuthRedirectPath("/protectedness")).toBe("/");
     expect(getSafeAuthRedirectPath(null)).toBe("/");
+  });
+});
+
+describe("getSafeSignInRedirectPath", () => {
+  it("returns investors only to a well-formed startup detail route", () => {
+    expect(getSafeSignInRedirectPath("/startups/climate-lens")).toBe(
+      "/startups/climate-lens",
+    );
+  });
+
+  it.each([
+    null,
+    "https://phishing.example/startups/climate-lens",
+    "//phishing.example/startups/climate-lens",
+    "/startups",
+    "/startups/",
+    "/startups/climate-lens/team",
+    "/startups/climate-lens?ref=login",
+    "/startups/climate-lens#team",
+    "/startups/Climate-Lens",
+    "/startups/climate%2Flens",
+  ])("falls back to the dashboard for unsafe destination %s", (destination) => {
+    expect(getSafeSignInRedirectPath(destination)).toBe("/dashboard");
   });
 });

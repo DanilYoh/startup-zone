@@ -79,7 +79,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
-          RELEASE_VERSION: staging-check
+          RELEASE_VERSION: ${{ github.sha }}
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium

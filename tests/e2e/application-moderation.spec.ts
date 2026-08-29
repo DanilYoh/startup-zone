@@ -123,6 +123,8 @@ test("a founder accepts a pending application to their startup", async ({ page }
     await expect(page.getByText("Yekaterinburg", { exact: false })).toBeVisible();
 
     await page.getByRole("button", { name: "Принять" }).click();
+    await expect(page.getByText("После подтверждения решение нельзя изменить.", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Да, принять заявку" }).click();
     await expect(page.getByText("Принята", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Отклонить" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Продолжите общение напрямую" })).toBeVisible();
