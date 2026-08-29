@@ -471,6 +471,23 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("keeps escaped backtick runs literal inside suffix code spans", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered anchor](docs/literals.md#show-a-span-b)",
+        "[Premature closer](docs/literals.md#show-a-b)",
+      ].join("\n"),
+      "docs/literals.md": "# Show \\```A \\``` <span> B``",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #show-a-b in docs/literals.md",
+      ],
+    });
+  });
+
   it("decodes heading entities outside code spans", () => {
     const root = createProject({
       "README.md": [
@@ -675,6 +692,29 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("accepts arbitrarily indented next-line reference titles", () => {
+    const root = createProject({
+      "README.md": [
+        "[Chained reference](docs/references.md#outer-innertarget)",
+        "[Truncated chain](docs/references.md#outer-innerref)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "[first]: /url",
+        "     'title'",
+        "[ref]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innerref in docs/references.md",
+      ],
+    });
+  });
+
   it("rejects junk after angle reference destinations", () => {
     const root = createProject({
       "README.md": [
@@ -857,6 +897,29 @@ describe("Markdown link checker", () => {
         "-",
         " ",
         "    [ref]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
+  it("uses marker width plus one for empty list items", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "-",
+        " text",
+        "2. [ref]: /not-a-definition",
       ].join("\n"),
     });
 
@@ -1114,21 +1177,24 @@ describe("Markdown link checker", () => {
     expect(child.stdout).toBe('{"checkedFileCount":2,"failureCount":1}');
   });
 
-  it("groups backtick delimiters after consuming escapes", () => {
+  it("groups escaped backtick delimiters with full raw closers", () => {
     const root = createProject({
       "README.md": [
         "[Escaped opening run](docs/literals.md#show-span)",
-        "[Escaped closing run](docs/literals.md#show-span-1)",
+        "[Unclosed escaped run](docs/literals.md#show-after)",
+        "[Escaped suffix closer](docs/literals.md#show-span-1)",
       ].join("\n"),
       "docs/literals.md": [
         "# Show \\```<span>``",
-        "# Show \\```<span>\\```",
+        "# Show \\```<span>\\``` After",
       ].join("\n"),
     });
 
     expect(checkMarkdownLinks(root)).toEqual({
       checkedFileCount: 2,
-      failures: [],
+      failures: [
+        "README.md: missing anchor #show-span-1 in docs/literals.md",
+      ],
     });
   });
 

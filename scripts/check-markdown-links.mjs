@@ -319,7 +319,6 @@ function backtickRunsByStart(value) {
   const closerEntries = new Int32Array(entryCount);
   closerEntries.fill(-1);
   const fullRunNextByLength = new Map();
-  const outsideNextByLength = new Map();
   for (let index = entryCount - 1; index >= 0;) {
     const suffixIndex = suffixes[index] ? index : -1;
     const rawIndex = suffixIndex === -1 ? index : index - 1;
@@ -327,11 +326,9 @@ function backtickRunsByStart(value) {
     closerEntries[rawIndex] = fullRunNextByLength.get(rawLength) ?? -1;
     if (suffixIndex !== -1) {
       const suffixLength = ends[suffixIndex] - starts[suffixIndex];
-      closerEntries[suffixIndex] = outsideNextByLength.get(suffixLength) ?? -1;
-      outsideNextByLength.set(suffixLength, suffixIndex);
+      closerEntries[suffixIndex] = fullRunNextByLength.get(suffixLength) ?? -1;
     }
     fullRunNextByLength.set(rawLength, rawIndex);
-    outsideNextByLength.set(rawLength, rawIndex);
     index = rawIndex - 1;
   }
 
@@ -1029,7 +1026,7 @@ function referenceDefinitionAt(value, start) {
   if (value[index] === "\n") {
     const nextLine = index + 1;
     let titleStart = nextLine;
-    while (value[titleStart] === " " && titleStart - nextLine < 4) titleStart += 1;
+    while (value[titleStart] === " " || value[titleStart] === "\t") titleStart += 1;
     if (!"\"'(".includes(value[titleStart])) {
       return { end: nextLine, label };
     }
@@ -1138,7 +1135,7 @@ function listItemAt(value, start) {
 
   if (value[index] === undefined) {
     return {
-      contentIndent: index - start,
+      contentIndent: index - start + 1,
       contentStart: index,
       marker,
       orderedStart,
