@@ -1046,6 +1046,44 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("treats only spaces and tabs as block whitespace", () => {
+    const root = createProject({
+      "README.md": [
+        "[ATX paragraph](docs/references.md#outer-atxatx)",
+        "[Invented ATX reference](docs/references.md#outer-atxtarget)",
+        "[Nonblank paragraph](docs/references.md#outer-blankblank)",
+        "[Invented blank reference](docs/references.md#outer-blanktarget)",
+        "[Setext paragraph](docs/references.md#outer-setextsetext)",
+        "[Invented Setext reference](docs/references.md#outer-setexttarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [ATX][atx]](target)",
+        "# [Outer [Blank][blank]](target)",
+        "# [Outer [Setext][setext]](target)",
+        "",
+        "#\u00a0not-an-atx-heading",
+        "[atx]: /not-a-definition",
+        "",
+        "paragraph",
+        "\u00a0",
+        "[blank]: /not-a-definition",
+        "",
+        "paragraph",
+        "===\u00a0",
+        "[setext]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-atxtarget in docs/references.md",
+        "README.md: missing anchor #outer-blanktarget in docs/references.md",
+        "README.md: missing anchor #outer-setexttarget in docs/references.md",
+      ],
+    });
+  });
+
   it("does not open backtick fences with backticks in their info strings", () => {
     const root = createProject({
       "README.md": "[Reference](docs/references.md#outer-fencetarget)",
@@ -1189,6 +1227,7 @@ describe("Markdown link checker", () => {
     ["backtick run", "`".repeat(1_000_000)],
     ["dense backticks", "`a".repeat(500_000)],
     ["dense brackets", "[".repeat(1_000_000)],
+    ["balanced brackets", `${"[".repeat(500_000)}${"]".repeat(500_000)}`],
     ["dense inline links", "[]()".repeat(250_000)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({

@@ -815,7 +815,7 @@ function inlineLinkTailEndsByStart(
         }
       }
 
-      if (active) {
+      if (active && index - bracketStart <= 1000) {
         let referenceEnd = index + 1;
         let referenceLabel = value.slice(bracketStart + 1, index);
 
@@ -1364,7 +1364,11 @@ function isAtxHeadingAt(value, start) {
     markerCount += 1;
   }
   return markerCount > 0
-    && (value[index] === undefined || /\s/u.test(value[index]));
+    && (
+      value[index] === undefined
+      || value[index] === " "
+      || value[index] === "\t"
+    );
 }
 
 function lineInterruptsParagraph(value, start) {
@@ -1597,7 +1601,7 @@ function markdownReferenceDefinitions(markdown) {
         continue;
       }
       const visibleLine = line.value.slice(line.start);
-      if (/^\s*$/u.test(visibleLine)) {
+      if (isBlankFrom(visibleLine, 0)) {
         flushParagraph();
         continue;
       }
@@ -1605,11 +1609,11 @@ function markdownReferenceDefinitions(markdown) {
         if (paragraph.length > 0) paragraph.push(visibleLine);
         continue;
       }
-      if (/^ {0,3}#{1,6}(?:\s|$)/u.test(visibleLine)) {
+      if (isAtxHeadingAt(visibleLine, 0)) {
         flushParagraph();
         continue;
       }
-      if (/^ {0,3}(?:=+|-+)\s*$/u.test(visibleLine)) {
+      if (/^ {0,3}(?:=+|-+)[ \t]*$/u.test(visibleLine)) {
         consumeLeadingDefinitions();
         if (paragraph.length > 0) {
           flushParagraph();
@@ -1630,7 +1634,7 @@ function githubHeadingAnchors(markdown) {
   const references = markdownReferenceDefinitions(markdown);
 
   for (const line of markdown.split(/\r?\n/u)) {
-    const match = /^(?: {0,3})#{1,6}\s+(.+?)\s*#*\s*$/u.exec(line);
+    const match = /^(?: {0,3})#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/u.exec(line);
     if (!match) continue;
 
     const base = headingInlineText(match[1], references)
