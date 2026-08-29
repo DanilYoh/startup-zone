@@ -700,23 +700,41 @@ function inlineLinkTailEndsByStart(
   htmlEnds,
   references,
 ) {
+  let bracketCapacity = 0;
+  let hasClosingBracket = false;
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "[") bracketCapacity += 1;
+    if (value[index] === "]") hasClosingBracket = true;
+  }
+  if (!hasClosingBracket) return new Map();
+
   const escaped = escapedPunctuationIndexes(value);
-  const parenthesisMatches = matchingParentheses(value, escaped);
-  const tables = {
-    angleDestinationEnd: angleDestinationEndsByStart(value, escaped),
-    bareDestinationEnd: bareDestinationEnds(
-      value,
-      escaped,
-      parenthesisMatches,
-    ),
-    nextCloseParenthesis: nextUnescapedIndexes(value, ")", escaped),
-    nextDoubleQuote: nextUnescapedIndexes(value, "\"", escaped),
-    nextOpenParenthesis: nextUnescapedIndexes(value, "(", escaped),
-    nextSingleQuote: nextUnescapedIndexes(value, "'", escaped),
-    tagSpaceEnd: tagSpaceEnds(value),
-  };
+  let tables = null;
+
+  function destinationTables() {
+    if (tables) return tables;
+    const parenthesisMatches = matchingParentheses(value, escaped);
+    tables = {
+      angleDestinationEnd: angleDestinationEndsByStart(value, escaped),
+      bareDestinationEnd: bareDestinationEnds(
+        value,
+        escaped,
+        parenthesisMatches,
+      ),
+      nextCloseParenthesis: nextUnescapedIndexes(value, ")", escaped),
+      nextDoubleQuote: nextUnescapedIndexes(value, "\"", escaped),
+      nextOpenParenthesis: nextUnescapedIndexes(value, "(", escaped),
+      nextSingleQuote: nextUnescapedIndexes(value, "'", escaped),
+      tagSpaceEnd: tagSpaceEnds(value),
+    };
+    return tables;
+  }
+
   const endsByStart = new Map();
-  const brackets = [];
+  const bracketStarts = new Uint32Array(bracketCapacity);
+  const bracketEpochs = new Uint32Array(bracketCapacity);
+  const bracketImages = new Uint8Array(bracketCapacity);
+  let bracketCount = 0;
   let linkEpoch = 0;
 
   for (let index = 0; index < value.length;) {
@@ -748,23 +766,26 @@ function inlineLinkTailEndsByStart(
     }
 
     if (value[index] === "[") {
-      brackets.push({
-        image: value[index - 1] === "!" && !escaped[index - 1],
-        linkEpoch,
-        start: index,
-      });
+      bracketStarts[bracketCount] = index;
+      bracketEpochs[bracketCount] = linkEpoch;
+      bracketImages[bracketCount] = value[index - 1] === "!" && !escaped[index - 1]
+        ? 1
+        : 0;
+      bracketCount += 1;
       index += 1;
       continue;
     }
 
-    if (value[index] === "]" && brackets.length > 0) {
-      const bracket = brackets.pop();
-      const active = bracket.image || bracket.linkEpoch === linkEpoch;
+    if (value[index] === "]" && bracketCount > 0) {
+      bracketCount -= 1;
+      const bracketStart = bracketStarts[bracketCount];
+      const bracketImage = bracketImages[bracketCount] === 1;
+      const active = bracketImage || bracketEpochs[bracketCount] === linkEpoch;
       if (active && value[index + 1] === "(") {
-        const end = inlineLinkEnd(value, index + 1, tables);
+        const end = inlineLinkEnd(value, index + 1, destinationTables());
         if (end !== -1) {
           endsByStart.set(index + 1, end);
-          if (!bracket.image) linkEpoch += 1;
+          if (!bracketImage) linkEpoch += 1;
           index = end;
           continue;
         }
@@ -772,7 +793,7 @@ function inlineLinkTailEndsByStart(
 
       if (active) {
         let referenceEnd = index + 1;
-        let referenceLabel = value.slice(bracket.start + 1, index);
+        let referenceLabel = value.slice(bracketStart + 1, index);
 
         if (value[index + 1] === "[") {
           const labelEnd = referenceLabelEnd(value, index + 1, escaped);
@@ -792,7 +813,7 @@ function inlineLinkTailEndsByStart(
           if (referenceEnd > index + 1) {
             endsByStart.set(index + 1, referenceEnd);
           }
-          if (!bracket.image) linkEpoch += 1;
+          if (!bracketImage) linkEpoch += 1;
           index = referenceEnd;
           continue;
         }
@@ -1365,9 +1386,8 @@ function markdownReferenceDefinitions(markdown) {
     let fence = null;
     let htmlBlock = null;
 
-    function flushParagraph() {
+    function consumeLeadingDefinitions() {
       const value = paragraph.join("\n");
-      paragraph.length = 0;
       let index = 0;
       while (index < value.length) {
         const definition = referenceDefinitionAt(value, index);
@@ -1375,6 +1395,14 @@ function markdownReferenceDefinitions(markdown) {
         references.add(definition.label);
         index = definition.end;
       }
+      if (index === 0) return;
+      paragraph.length = 0;
+      if (index < value.length) paragraph.push(value.slice(index));
+    }
+
+    function flushParagraph() {
+      consumeLeadingDefinitions();
+      paragraph.length = 0;
     }
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
@@ -1426,6 +1454,7 @@ function markdownReferenceDefinitions(markdown) {
         }
 
         const listItem = listItemAt(line.value, line.start);
+        if (listItem) consumeLeadingDefinitions();
         const interruptsParagraph = paragraph.length === 0 || (
           !isBlankFrom(line.value, listItem?.contentStart ?? line.value.length)
           && (listItem?.orderedStart === null || listItem?.orderedStart === 1)
@@ -1441,7 +1470,10 @@ function markdownReferenceDefinitions(markdown) {
             while (continuation.value[continuation.start + leadingSpaces] === " ") {
               leadingSpaces += 1;
             }
-            if (availableLength === 0 || leadingSpaces >= listItem.contentIndent) {
+            if (
+              isBlankFrom(continuation.value, continuation.start)
+              || leadingSpaces >= listItem.contentIndent
+            ) {
               const continuationStart = continuation.start
                 + Math.min(listItem.contentIndent, availableLength);
               const continuationLine = lineView(
@@ -1516,9 +1548,12 @@ function markdownReferenceDefinitions(markdown) {
         flushParagraph();
         continue;
       }
-      if (/^ {0,3}(?:=+|-+)\s*$/u.test(visibleLine) && paragraph.length > 0) {
-        flushParagraph();
-        continue;
+      if (/^ {0,3}(?:=+|-+)\s*$/u.test(visibleLine)) {
+        consumeLeadingDefinitions();
+        if (paragraph.length > 0) {
+          flushParagraph();
+          continue;
+        }
       }
       paragraph.push(visibleLine);
     }
@@ -1559,6 +1594,32 @@ function parseDestination(rawDestination) {
     path: decodeURIComponent(hashIndex === -1 ? target : target.slice(0, hashIndex)),
     anchor: decodeURIComponent(hashIndex === -1 ? "" : target.slice(hashIndex + 1)),
   };
+}
+
+function* markdownLinkDestinations(markdown) {
+  let labelStart = -1;
+
+  for (let index = 0; index < markdown.length; index += 1) {
+    if (labelStart === -1) {
+      if (markdown[index] === "[") labelStart = index;
+      continue;
+    }
+
+    if (markdown[index] !== "]") continue;
+    if (markdown[index + 1] !== "(") {
+      labelStart = -1;
+      continue;
+    }
+
+    const destinationStart = index + 2;
+    const destinationEnd = markdown.indexOf(")", destinationStart);
+    if (destinationEnd === -1) return;
+    if (destinationEnd > destinationStart) {
+      yield markdown.slice(destinationStart, destinationEnd);
+    }
+    labelStart = -1;
+    index = destinationEnd;
+  }
 }
 
 function inspectRegularFile(path, readContents) {
@@ -1605,10 +1666,9 @@ export function checkMarkdownLinks(repositoryRoot = process.cwd()) {
     }
 
     const markdown = source.contents;
-    const links = markdown.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/gu);
+    const links = markdownLinkDestinations(markdown);
 
-    for (const link of links) {
-      const rawDestination = link[1];
+    for (const rawDestination of links) {
       if (/^(?:https?:|mailto:|tel:)/iu.test(rawDestination)) {
         if (/^https?:/iu.test(rawDestination)) {
           try {

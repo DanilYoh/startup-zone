@@ -579,6 +579,29 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("keeps Setext markers after reference-only paragraphs", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "[first]: /definition",
+        "===",
+        "[ref]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
   it("accepts multiline reference titles without accepting blank lines", () => {
     const root = createProject({
       "README.md": [
@@ -733,6 +756,29 @@ describe("Markdown link checker", () => {
     expect(checkMarkdownLinks(root)).toEqual({
       checkedFileCount: 2,
       failures: [],
+    });
+  });
+
+  it("keeps whitespace-only lines inside list items", () => {
+    const root = createProject({
+      "README.md": [
+        "[List reference](docs/references.md#outer-innertarget)",
+        "[Unresolved label](docs/references.md#outer-innerref)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "- text",
+        " ",
+        "    [ref]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innerref in docs/references.md",
+      ],
     });
   });
 
@@ -906,6 +952,7 @@ describe("Markdown link checker", () => {
     ["HTML-decorated", `${"a".repeat(500_000)}<span>${"b".repeat(500_000)}`],
     ["backtick run", "`".repeat(1_000_000)],
     ["dense backticks", "`a".repeat(500_000)],
+    ["dense brackets", "[".repeat(1_000_000)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",
