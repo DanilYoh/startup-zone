@@ -162,21 +162,8 @@ function advanceHtmlTag(state, character) {
   return "invalid";
 }
 
-function nextDelimiterIndexes(value, delimiter) {
-  const indexes = new Array(value.length + 1).fill(-1);
-  let nextIndex = -1;
-
-  for (let index = value.length - 1; index >= 0; index -= 1) {
-    if (value.startsWith(delimiter, index)) nextIndex = index;
-    indexes[index] = nextIndex;
-  }
-
-  return indexes;
-}
-
-function htmlTagEndsByState(value) {
+function htmlTagEndsByStart(value) {
   const states = [
-    "open-tag-name-start",
     "open-tag-name",
     "before-attribute-or-end",
     "attribute-name",
@@ -187,66 +174,102 @@ function htmlTagEndsByState(value) {
     "double-quoted-attribute-value",
     "after-quoted-attribute-value",
     "expect-end",
-    "closing-tag-name-start",
     "closing-tag-name",
     "closing-tag-end",
   ];
-  const endsByState = new Map(
-    states.map((state) => [state, new Array(value.length + 1).fill(-1)]),
-  );
+  const stateIndex = new Map(states.map((state, index) => [state, index]));
+  const nextStart = new Int32Array(value.length);
+  nextStart.fill(-1);
+  let heads = new Int32Array(states.length).fill(-1);
+  let tails = new Int32Array(states.length).fill(-1);
+  const endsByStart = new Map();
+  let nextHeads = new Int32Array(states.length).fill(-1);
+  let nextTails = new Int32Array(states.length).fill(-1);
 
-  for (let index = value.length - 1; index >= 0; index -= 1) {
-    for (const state of states) {
-      const nextState = advanceHtmlTag(state, value[index]);
-      let end = -1;
-      if (nextState === "complete") {
-        end = index + 1;
-      } else if (nextState !== "invalid") {
-        end = endsByState.get(nextState)[index + 1];
-      }
-      endsByState.get(state)[index] = end;
+  function appendList(targetHeads, targetTails, state, head, tail) {
+    const index = stateIndex.get(state);
+    if (targetHeads[index] === -1) {
+      targetHeads[index] = head;
+    } else {
+      nextStart[targetTails[index]] = head;
     }
+    targetTails[index] = tail;
   }
 
-  return endsByState;
+  for (let index = 0; index < value.length; index += 1) {
+    nextHeads.fill(-1);
+    nextTails.fill(-1);
+
+    for (let state = 0; state < states.length; state += 1) {
+      const head = heads[state];
+      if (head === -1) continue;
+      const nextState = advanceHtmlTag(states[state], value[index]);
+
+      if (nextState === "complete") {
+        for (let start = head; start !== -1; start = nextStart[start]) {
+          endsByStart.set(start, index + 1);
+        }
+      } else if (nextState !== "invalid") {
+        appendList(nextHeads, nextTails, nextState, head, tails[state]);
+      }
+    }
+
+    if (isAsciiLetter(value[index]) && value[index - 1] === "<") {
+      appendList(nextHeads, nextTails, "open-tag-name", index - 1, index - 1);
+    }
+    if (
+      isAsciiLetter(value[index])
+      && value[index - 1] === "/"
+      && value[index - 2] === "<"
+    ) {
+      appendList(nextHeads, nextTails, "closing-tag-name", index - 2, index - 2);
+    }
+
+    [heads, nextHeads] = [nextHeads, heads];
+    [tails, nextTails] = [nextTails, tails];
+  }
+
+  return endsByStart;
 }
 
 function htmlConstructEndsByStart(value) {
   const endsByStart = new Map();
-  const tagEnds = htmlTagEndsByState(value);
-  const nextCommentEnd = nextDelimiterIndexes(value, "-->");
-  const nextProcessingEnd = nextDelimiterIndexes(value, "?>");
-  const nextCdataEnd = nextDelimiterIndexes(value, "]]>");
-  const nextDeclarationEnd = nextDelimiterIndexes(value, ">");
+  const tagEnds = /<[A-Za-z]|<\/[A-Za-z]/u.test(value)
+    ? htmlTagEndsByStart(value)
+    : new Map();
+  const pendingComments = [];
+  const pendingProcessing = [];
+  const pendingCdata = [];
+  const pendingDeclarations = [];
+
+  function completePending(pending, end) {
+    for (const start of pending) endsByStart.set(start, end);
+    pending.length = 0;
+  }
 
   for (let index = 0; index < value.length; index += 1) {
+    if (value.startsWith("-->", index)) completePending(pendingComments, index + 3);
+    if (value.startsWith("?>", index)) completePending(pendingProcessing, index + 2);
+    if (value.startsWith("]]>", index)) completePending(pendingCdata, index + 3);
+    if (value[index] === ">") completePending(pendingDeclarations, index + 1);
+
     if (value[index] !== "<") continue;
-
-    let end = -1;
     if (value.startsWith("<!-->", index)) {
-      end = index + "<!-->".length;
+      endsByStart.set(index, index + 5);
     } else if (value.startsWith("<!--->", index)) {
-      end = index + "<!--->".length;
+      endsByStart.set(index, index + 6);
     } else if (value.startsWith("<!--", index)) {
-      const terminator = nextCommentEnd[index + "<!--".length];
-      if (terminator !== -1) end = terminator + "-->".length;
+      pendingComments.push(index);
     } else if (value.startsWith("<?", index)) {
-      const terminator = nextProcessingEnd[index + "<?".length];
-      if (terminator !== -1) end = terminator + "?>".length;
+      pendingProcessing.push(index);
     } else if (value.startsWith("<![CDATA[", index)) {
-      const terminator = nextCdataEnd[index + "<![CDATA[".length];
-      if (terminator !== -1) end = terminator + "]]>".length;
+      pendingCdata.push(index);
     } else if (value.startsWith("<!", index) && isAsciiLetter(value[index + 2])) {
-      const terminator = nextDeclarationEnd[index + 3];
-      if (terminator !== -1) end = terminator + 1;
-    } else if (isAsciiLetter(value[index + 1])) {
-      end = tagEnds.get("open-tag-name-start")[index + 1];
-    } else if (value[index + 1] === "/" && isAsciiLetter(value[index + 2])) {
-      end = tagEnds.get("closing-tag-name-start")[index + 2];
+      pendingDeclarations.push(index);
     }
-
-    if (end !== -1) endsByStart.set(index, end);
   }
+
+  for (const [start, end] of tagEnds) endsByStart.set(start, end);
 
   return endsByStart;
 }
@@ -579,11 +602,49 @@ function inlineLinkEnd(value, openParenthesis, tables) {
   return value[afterTitle] === ")" ? afterTitle + 1 : -1;
 }
 
+function normalizeReferenceLabel(label) {
+  let normalized = "";
+
+  for (let index = 0; index < label.length;) {
+    if (label[index] === "\\" && isAsciiPunctuation(label[index + 1])) {
+      normalized += label[index + 1];
+      index += 2;
+    } else {
+      normalized += label[index];
+      index += 1;
+    }
+  }
+
+  normalized = normalized
+    .replace(/^[ \t\r\n]+|[ \t\r\n]+$/gu, "")
+    .replace(/[ \t\r\n]+/gu, " ");
+
+  let folded = "";
+  for (const character of normalized) {
+    folded += character === "ı"
+      ? character
+      : character.toLowerCase().toUpperCase().toLowerCase();
+  }
+  return folded;
+}
+
+function referenceLabelEnd(value, start, escaped) {
+  for (let index = start + 1; index < value.length && index - start <= 1000; index += 1) {
+    if (escaped[index]) continue;
+    if (value[index] === "[") return -1;
+    if (value[index] === "]") return index;
+    if (value[index] === "\n" || value[index] === "\r") return -1;
+  }
+
+  return -1;
+}
+
 function inlineLinkTailEndsByStart(
   value,
   backtickRuns,
   autolinkEnds,
   htmlEnds,
+  references,
 ) {
   const escaped = escapedPunctuationIndexes(value);
   const parenthesisMatches = matchingParentheses(value, escaped);
@@ -636,6 +697,7 @@ function inlineLinkTailEndsByStart(
       brackets.push({
         image: value[index - 1] === "!" && !escaped[index - 1],
         linkEpoch,
+        start: index,
       });
       index += 1;
       continue;
@@ -653,6 +715,34 @@ function inlineLinkTailEndsByStart(
           continue;
         }
       }
+
+      if (active) {
+        let referenceEnd = index + 1;
+        let referenceLabel = value.slice(bracket.start + 1, index);
+
+        if (value[index + 1] === "[") {
+          const labelEnd = referenceLabelEnd(value, index + 1, escaped);
+          if (labelEnd !== -1) {
+            const explicitLabel = value.slice(index + 2, labelEnd);
+            if (explicitLabel) referenceLabel = explicitLabel;
+            referenceEnd = labelEnd + 1;
+          } else {
+            referenceLabel = "";
+          }
+        }
+
+        if (
+          referenceLabel
+          && references.has(normalizeReferenceLabel(referenceLabel))
+        ) {
+          if (referenceEnd > index + 1) {
+            endsByStart.set(index + 1, referenceEnd);
+          }
+          if (!bracket.image) linkEpoch += 1;
+          index = referenceEnd;
+          continue;
+        }
+      }
     }
 
     index += 1;
@@ -661,76 +751,295 @@ function inlineLinkTailEndsByStart(
   return endsByStart;
 }
 
-function headingInlineText(value) {
+function headingInlineText(value, references) {
+  if (!/[\\`<[\]]/u.test(value)) return value;
+
   const output = [];
   const backtickRuns = backtickRunsByStart(value);
   const autolinkEnds = autolinkEndsByStart(value);
   const htmlEnds = htmlConstructEndsByStart(value);
-  const inlineLinkEnds = inlineLinkTailEndsByStart(
-    value,
-    backtickRuns,
-    autolinkEnds,
-    htmlEnds,
-  );
+  const inlineLinkEnds = value.includes("[")
+    ? inlineLinkTailEndsByStart(
+      value,
+      backtickRuns,
+      autolinkEnds,
+      htmlEnds,
+      references,
+    )
+    : new Map();
+  let literalStart = 0;
+
+  function appendLiteral(end) {
+    if (end > literalStart) output.push(value.slice(literalStart, end));
+  }
 
   for (let index = 0; index < value.length;) {
     const character = value[index];
     if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
+      appendLiteral(index);
       output.push(value[index + 1]);
       index += 2;
+      literalStart = index;
       continue;
     }
 
     const backtickRun = backtickRuns.get(index);
     if (backtickRun?.closer) {
+      appendLiteral(index);
       output.push(codeSpanText(
         value.slice(backtickRun.end, backtickRun.closer.start),
       ));
       index = backtickRun.closer.end;
+      literalStart = index;
       continue;
     }
 
     if (backtickRun) {
-      output.push(value.slice(backtickRun.start, backtickRun.end));
       index = backtickRun.end;
       continue;
     }
 
     const autolinkEnd = autolinkEnds.get(index);
     if (autolinkEnd !== undefined) {
+      appendLiteral(index);
       output.push(value.slice(index + 1, autolinkEnd - 1));
       index = autolinkEnd;
+      literalStart = index;
       continue;
     }
 
     const htmlEnd = htmlEnds.get(index);
     if (htmlEnd !== undefined) {
+      appendLiteral(index);
       index = htmlEnd;
+      literalStart = index;
       continue;
     }
 
     const inlineLinkEnd = inlineLinkEnds.get(index);
     if (inlineLinkEnd !== undefined) {
+      appendLiteral(index);
       index = inlineLinkEnd;
+      literalStart = index;
       continue;
     }
 
-    output.push(character);
     index += 1;
   }
 
+  appendLiteral(value.length);
+
   return output.join("");
+}
+
+function referenceDefinitionAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 4) {
+    indentation += 1;
+    index += 1;
+  }
+  if (indentation > 3 || value[index] !== "[") return null;
+
+  const labelStart = index + 1;
+  let lineBreaks = 0;
+  index = labelStart;
+  for (; index < value.length && index - labelStart <= 999; index += 1) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      index += 1;
+      continue;
+    }
+    if (value[index] === "[") return null;
+    if (value[index] === "]") break;
+    if (value[index] === "\n") {
+      lineBreaks += 1;
+      if (lineBreaks > 1) return null;
+    }
+  }
+  if (value[index] !== "]" || index === labelStart || value[index + 1] !== ":") {
+    return null;
+  }
+
+  const label = normalizeReferenceLabel(value.slice(labelStart, index));
+  if (!label) return null;
+  index += 2;
+
+  let destinationLineBreaks = 0;
+  while (value[index] === " " || value[index] === "\t" || value[index] === "\n") {
+    if (value[index] === "\n") {
+      destinationLineBreaks += 1;
+      if (destinationLineBreaks > 1) return null;
+    }
+    index += 1;
+  }
+
+  if (value[index] === "<") {
+    index += 1;
+    for (; index < value.length; index += 1) {
+      if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+        index += 1;
+        continue;
+      }
+      if (value[index] === ">") break;
+      if (value[index] === "<" || value[index] === "\n") return null;
+    }
+    if (value[index] !== ">") return null;
+    index += 1;
+  } else {
+    const destinationStart = index;
+    let depth = 0;
+    for (; index < value.length; index += 1) {
+      if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+        index += 1;
+        continue;
+      }
+      if (value[index] === "(" && depth < 32) {
+        depth += 1;
+      } else if (value[index] === ")" && depth > 0) {
+        depth -= 1;
+      } else if (value[index] === " " || value[index] === "\t" || value[index] === "\n") {
+        break;
+      } else if (isAsciiControlOrSpace(value[index])) {
+        return null;
+      }
+    }
+    if (index === destinationStart || depth !== 0) return null;
+  }
+
+  const destinationEnd = index;
+  while (value[index] === " " || value[index] === "\t") index += 1;
+  if (value[index] === "\n") {
+    const nextLine = index + 1;
+    let titleStart = nextLine;
+    while (value[titleStart] === " " && titleStart - nextLine < 4) titleStart += 1;
+    if (!"\"'(".includes(value[titleStart])) {
+      return { end: nextLine, label };
+    }
+    index = titleStart;
+  } else if (index === destinationEnd || index >= value.length) {
+    return { end: index, label };
+  }
+
+  const opener = value[index];
+  const closer = opener === "(" ? ")" : opener;
+  if (opener !== "\"" && opener !== "'" && opener !== "(") return null;
+  index += 1;
+  for (; index < value.length; index += 1) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      index += 1;
+      continue;
+    }
+    if (value[index] === closer) break;
+    if (value[index] === "\n") return null;
+  }
+  if (value[index] !== closer) return null;
+  index += 1;
+  while (value[index] === " " || value[index] === "\t") index += 1;
+  if (index < value.length && value[index] !== "\n") return null;
+  return { end: value[index] === "\n" ? index + 1 : index, label };
+}
+
+function markdownReferenceDefinitions(markdown) {
+  const references = new Set();
+  const paragraph = [];
+  let fence = null;
+  const lines = markdown.split(/\r?\n/u);
+
+  function flushParagraph() {
+    const value = paragraph.join("\n");
+    paragraph.length = 0;
+    let index = 0;
+    while (index < value.length) {
+      const definition = referenceDefinitionAt(value, index);
+      if (!definition) break;
+      references.add(definition.label);
+      index = definition.end;
+    }
+  }
+
+  function addContainerReferences(containerLines) {
+    for (const reference of markdownReferenceDefinitions(containerLines.join("\n"))) {
+      references.add(reference);
+    }
+  }
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
+    if (!fence) {
+      const quoteMatch = /^ {0,3}>[ \t]?(.*)$/u.exec(line);
+      if (quoteMatch) {
+        flushParagraph();
+        const containerLines = [quoteMatch[1]];
+        while (lineIndex + 1 < lines.length) {
+          const continuation = /^ {0,3}>[ \t]?(.*)$/u.exec(lines[lineIndex + 1]);
+          if (!continuation) break;
+          containerLines.push(continuation[1]);
+          lineIndex += 1;
+        }
+        addContainerReferences(containerLines);
+        continue;
+      }
+
+      const listMatch = /^( {0,3})([*+-]|\d{1,9}[.)])([ \t]+)(.*)$/u.exec(line);
+      if (listMatch) {
+        flushParagraph();
+        const contentIndent = listMatch[1].length
+          + listMatch[2].length
+          + listMatch[3].length;
+        const containerLines = [listMatch[4]];
+        while (lineIndex + 1 < lines.length) {
+          const continuation = lines[lineIndex + 1];
+          const leadingSpaces = /^ */u.exec(continuation)[0].length;
+          if (continuation && leadingSpaces < contentIndent) break;
+          containerLines.push(continuation.slice(Math.min(contentIndent, continuation.length)));
+          lineIndex += 1;
+        }
+        addContainerReferences(containerLines);
+        continue;
+      }
+    }
+
+    const fenceMatch = /^ {0,3}(`{3,}|~{3,})/u.exec(line);
+    if (fence) {
+      if (fenceMatch && fenceMatch[1][0] === fence.character && fenceMatch[1].length >= fence.length) {
+        fence = null;
+      }
+      continue;
+    }
+    if (fenceMatch) {
+      flushParagraph();
+      fence = { character: fenceMatch[1][0], length: fenceMatch[1].length };
+      continue;
+    }
+    if (/^\s*$/u.test(line)) {
+      flushParagraph();
+      continue;
+    }
+    if (/^(?: {4}|\t)/u.test(line)) {
+      if (paragraph.length > 0) paragraph.push(line);
+      continue;
+    }
+    if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(line)) {
+      flushParagraph();
+      continue;
+    }
+    paragraph.push(line);
+  }
+  flushParagraph();
+
+  return references;
 }
 
 function githubHeadingAnchors(markdown) {
   const seen = new Map();
   const anchors = new Set();
+  const references = markdownReferenceDefinitions(markdown);
 
   for (const line of markdown.split(/\r?\n/u)) {
     const match = /^(?: {0,3})#{1,6}\s+(.+?)\s*#*\s*$/u.exec(line);
     if (!match) continue;
 
-    const base = headingInlineText(match[1])
+    const base = headingInlineText(match[1], references)
       .trim()
       .toLowerCase()
       .replace(/[^\p{L}\p{N}\s_-]/gu, "")

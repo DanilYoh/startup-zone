@@ -317,6 +317,111 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("deactivates outer links around resolved reference links", () => {
+    const root = createProject({
+      "README.md": [
+        "[Full](docs/references.md#outer-fulltarget)",
+        "[Collapsed](docs/references.md#outer-collapsedtarget)",
+        "[Shortcut](docs/references.md#outer-shortcuttarget)",
+        "[Normalized](docs/references.md#outer-normalizedtarget)",
+        "[Empty destination](docs/references.md#outer-emptytarget)",
+        "[Block quote](docs/references.md#outer-quotedtarget)",
+        "[List](docs/references.md#outer-listedtarget)",
+        "[Unicode fold](docs/references.md#outer-sharp-starget)",
+        "[Unresolved](docs/references.md#outer-unresolvedmissing)",
+        "[Dotless](docs/references.md#outer-ascii-ii)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Full][full-reference]](target)",
+        "# [Outer [Collapsed][]](target)",
+        "# [Outer [Shortcut]](target)",
+        "# [Outer [Normalized][  MIXED   label ]](target)",
+        "# [Outer [Empty][empty]](target)",
+        "# [Outer [Quoted][quoted]](target)",
+        "# [Outer [Listed][listed]](target)",
+        "# [Outer [Sharp S][ẞ]](target)",
+        "# [Outer [Unresolved][missing]](target)",
+        "# [Outer [ASCII I][I]](target)",
+        "",
+        "[full-reference]: /full",
+        "[collapsed]: /collapsed",
+        "[shortcut]: /shortcut",
+        "[mixed label]: /normalized",
+        "[empty]: <>",
+        "[ı]: /dotless",
+        "[SS]: /sharp-s",
+        "> [quoted]: /quoted",
+        "- [listed]: /listed",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("ignores reference-looking lines that are not CommonMark definitions", () => {
+    const root = createProject({
+      "README.md": [
+        "[Fenced](docs/references.md#outer-fencedfake)",
+        "[Indented](docs/references.md#outer-indentedindented)",
+        "[Paragraph](docs/references.md#outer-paragraphparagraph)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Fenced][fake]](target)",
+        "# [Outer [Indented][indented]](target)",
+        "# [Outer [Paragraph][paragraph]](target)",
+        "",
+        "```md",
+        "[fake]: /not-a-definition",
+        "```",
+        "",
+        "    [indented]: /not-a-definition",
+        "",
+        "paragraph text",
+        "[paragraph]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it.each([
+    ["plain", "a".repeat(1_000_000)],
+    ["HTML-decorated", `${"a".repeat(500_000)}<span>${"b".repeat(500_000)}`],
+  ])("parses a large %s heading with bounded heap", (_kind, heading) => {
+    const root = createProject({
+      "README.md": "[Probe](docs/large.md#missing)",
+      "docs/large.md": `# ${heading}`,
+    });
+    const checkerUrl = pathToFileURL(join(process.cwd(), "scripts", "check-markdown-links.mjs"));
+    const child = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=64",
+        "--input-type=module",
+        "--eval",
+        [
+          `const { checkMarkdownLinks } = await import(${JSON.stringify(checkerUrl.href)});`,
+          `const result = checkMarkdownLinks(${JSON.stringify(root)});`,
+          "process.stdout.write(JSON.stringify({",
+          "  checkedFileCount: result.checkedFileCount,",
+          "  failureCount: result.failures.length,",
+          "}));",
+        ].join("\n"),
+      ],
+      { encoding: "utf8", timeout: 20_000 },
+    );
+
+    expect(child.signal, child.stderr).toBeNull();
+    expect(child.status, child.stderr).toBe(0);
+    expect(child.stdout).toBe('{"checkedFileCount":2,"failureCount":1}');
+  });
+
   it("groups backtick delimiters after consuming escapes", () => {
     const root = createProject({
       "README.md": "[Escaped backtick run](docs/literals.md#show-span)",
