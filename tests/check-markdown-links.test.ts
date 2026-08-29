@@ -456,13 +456,24 @@ describe("Markdown link checker", () => {
     });
   });
 
-  it("resolves deeply nested container references without recursion", () => {
+  it("accepts multiline reference titles without accepting blank lines", () => {
     const root = createProject({
-      "README.md": "[Deep reference](docs/references.md#outer-deeptarget)",
+      "README.md": [
+        "[Multiline title](docs/references.md#outer-multitarget)",
+        "[Blank title](docs/references.md#outer-blankblank)",
+      ].join("\n"),
       "docs/references.md": [
-        "# [Outer [Deep][deep]](target)",
+        "# [Outer [Multi][multi]](target)",
+        "# [Outer [Blank][blank]](target)",
         "",
-        `${"> ".repeat(5_000)}[deep]: /url`,
+        "[multi]: /url '",
+        "title",
+        "'",
+        "",
+        "[blank]: /url '",
+        "title",
+        "",
+        "'",
       ].join("\n"),
     });
 
@@ -470,6 +481,78 @@ describe("Markdown link checker", () => {
       checkedFileCount: 2,
       failures: [],
     });
+  });
+
+  it("applies ordered-list interruption rules before resolving references", () => {
+    const root = createProject({
+      "README.md": [
+        "[Continued paragraph](docs/references.md#outer-continuedcontinued)",
+        "[Interrupting list](docs/references.md#outer-listtarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Continued][continued]](target)",
+        "# [Outer [List][listed]](target)",
+        "",
+        "paragraph",
+        "2. [continued]: /not-a-definition",
+        "",
+        "paragraph",
+        "1. [listed]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("does not open backtick fences with backticks in their info strings", () => {
+    const root = createProject({
+      "README.md": "[Reference](docs/references.md#outer-fencetarget)",
+      "docs/references.md": [
+        "# [Outer [Fence][reference]](target)",
+        "",
+        "``` `not-a-fence`",
+        "",
+        "[reference]: /url",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("resolves deeply nested container references in bounded time", () => {
+    const root = createProject({
+      "README.md": "[Deep reference](docs/references.md#outer-deeptarget)",
+      "docs/references.md": [
+        "# [Outer [Deep][deep]](target)",
+        "",
+        `${"> ".repeat(100_000)}[deep]: /url`,
+      ].join("\n"),
+    });
+    const checkerUrl = pathToFileURL(join(process.cwd(), "scripts", "check-markdown-links.mjs"));
+    const child = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=64",
+        "--input-type=module",
+        "--eval",
+        [
+          `const { checkMarkdownLinks } = await import(${JSON.stringify(checkerUrl.href)});`,
+          `const result = checkMarkdownLinks(${JSON.stringify(root)});`,
+          "process.stdout.write(JSON.stringify(result));",
+        ].join("\n"),
+      ],
+      { encoding: "utf8", timeout: 3_000 },
+    );
+
+    expect(child.signal, child.stderr).toBeNull();
+    expect(child.status, child.stderr).toBe(0);
+    expect(child.stdout).toBe('{"checkedFileCount":2,"failures":[]}');
   });
 
   it.each([
@@ -506,8 +589,14 @@ describe("Markdown link checker", () => {
 
   it("groups backtick delimiters after consuming escapes", () => {
     const root = createProject({
-      "README.md": "[Escaped backtick run](docs/literals.md#show-span)",
-      "docs/literals.md": "# Show \\```<span>``",
+      "README.md": [
+        "[Escaped opening run](docs/literals.md#show-span)",
+        "[Escaped closing run](docs/literals.md#show-span-1)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# Show \\```<span>``",
+        "# Show \\```<span>\\```",
+      ].join("\n"),
     });
 
     expect(checkMarkdownLinks(root)).toEqual({

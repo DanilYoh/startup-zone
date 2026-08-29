@@ -278,6 +278,10 @@ function backtickRunsByStart(value) {
   const runs = [];
 
   for (let index = 0; index < value.length;) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      index += 2;
+      continue;
+    }
     if (value[index] !== "`") {
       index += 1;
       continue;
@@ -932,7 +936,11 @@ function referenceDefinitionAt(value, start) {
       continue;
     }
     if (value[index] === closer) break;
-    if (value[index] === "\n") return null;
+    if (value[index] === "\n") {
+      let nextLine = index + 1;
+      while (value[nextLine] === " " || value[nextLine] === "\t") nextLine += 1;
+      if (value[nextLine] === "\n") return null;
+    }
   }
   if (value[index] !== closer) return null;
   index += 1;
@@ -941,9 +949,108 @@ function referenceDefinitionAt(value, start) {
   return { end: value[index] === "\n" ? index + 1 : index, label };
 }
 
+function blockQuoteContentStart(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+  if (value[index] !== ">") return -1;
+  index += 1;
+  if (value[index] === " " || value[index] === "\t") index += 1;
+  return index;
+}
+
+function isBlankFrom(value, start) {
+  for (let index = start; index < value.length; index += 1) {
+    if (value[index] !== " " && value[index] !== "\t") return false;
+  }
+  return true;
+}
+
+function listItemAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+
+  const markerStart = index;
+  let orderedStart = null;
+  if (value[index] === "*" || value[index] === "+" || value[index] === "-") {
+    index += 1;
+  } else {
+    let digitCount = 0;
+    while (digitCount < 9 && isAsciiDigit(value[index])) {
+      index += 1;
+      digitCount += 1;
+    }
+    if (
+      digitCount === 0
+      || isAsciiDigit(value[index])
+      || (value[index] !== "." && value[index] !== ")")
+    ) {
+      return null;
+    }
+    orderedStart = Number(value.slice(markerStart, index));
+    index += 1;
+  }
+
+  if (value[index] !== " " && value[index] !== "\t") return null;
+  const paddingStart = index;
+  while (value[index] === " " || value[index] === "\t") index += 1;
+  const paddingLength = index - paddingStart;
+  const markerPadding = paddingLength <= 4 ? paddingLength : 1;
+
+  return {
+    contentIndent: index - paddingLength - start + markerPadding,
+    contentStart: paddingLength <= 4 ? index : paddingStart + 1,
+    orderedStart,
+  };
+}
+
+function isThematicBreakAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+
+  const marker = value[index];
+  if (marker !== "*" && marker !== "_" && marker !== "-") return false;
+  let markerCount = 0;
+  for (; index < value.length; index += 1) {
+    if (value[index] === marker) {
+      markerCount += 1;
+    } else if (value[index] !== " " && value[index] !== "\t") {
+      return false;
+    }
+  }
+  return markerCount >= 3;
+}
+
+function fenceRunAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+
+  const character = value[index];
+  if (character !== "`" && character !== "~") return null;
+  const markerStart = index;
+  while (value[index] === character) index += 1;
+  if (index - markerStart < 3) return null;
+  return { character, end: index, length: index - markerStart };
+}
+
 function markdownReferenceDefinitions(markdown) {
   const references = new Set();
-  const documents = [markdown.split(/\r?\n/u)];
+  const documents = [markdown.split(/\r?\n/u).map((value) => ({ start: 0, value }))];
 
   while (documents.length > 0) {
     const lines = documents.pop();
@@ -964,47 +1071,56 @@ function markdownReferenceDefinitions(markdown) {
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
       const line = lines[lineIndex];
-      if (
-        !fence
-        && /^ {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,})$/u.test(line)
-      ) {
+      if (!fence && isThematicBreakAt(line.value, line.start)) {
         flushParagraph();
         continue;
       }
 
       if (!fence) {
-        const quoteMatch = /^ {0,3}>[ \t]?(.*)$/u.exec(line);
-        if (quoteMatch) {
+        const quoteStart = blockQuoteContentStart(line.value, line.start);
+        if (quoteStart !== -1) {
           flushParagraph();
-          const containerLines = [quoteMatch[1]];
+          const containerLines = [{ start: quoteStart, value: line.value }];
           while (lineIndex + 1 < lines.length) {
-            const continuation = /^ {0,3}>[ \t]?(.*)$/u.exec(lines[lineIndex + 1]);
-            if (!continuation) break;
-            containerLines.push(continuation[1]);
+            const continuation = lines[lineIndex + 1];
+            const continuationStart = blockQuoteContentStart(
+              continuation.value,
+              continuation.start,
+            );
+            if (continuationStart === -1) break;
+            containerLines.push({
+              start: continuationStart,
+              value: continuation.value,
+            });
             lineIndex += 1;
           }
           documents.push(containerLines);
           continue;
         }
 
-        const listMatch = /^( {0,3})([*+-]|\d{1,9}[.)])([ \t]+)(.*)$/u.exec(line);
-        if (listMatch) {
+        const listItem = listItemAt(line.value, line.start);
+        const interruptsParagraph = paragraph.length === 0 || (
+          !isBlankFrom(line.value, listItem?.contentStart ?? line.value.length)
+          && (listItem?.orderedStart === null || listItem?.orderedStart === 1)
+        );
+        if (listItem && interruptsParagraph) {
           flushParagraph();
-          const markerPadding = listMatch[3].length <= 4
-            ? listMatch[3].length
-            : 1;
-          const contentIndent = listMatch[1].length
-            + listMatch[2].length
-            + markerPadding;
-          const firstLine = listMatch[3].length <= 4
-            ? listMatch[4]
-            : `${listMatch[3].slice(1)}${listMatch[4]}`;
-          const containerLines = [firstLine];
+          const containerLines = [{
+            start: listItem.contentStart,
+            value: line.value,
+          }];
           while (lineIndex + 1 < lines.length) {
             const continuation = lines[lineIndex + 1];
-            const leadingSpaces = /^ */u.exec(continuation)[0].length;
-            if (continuation && leadingSpaces < contentIndent) break;
-            containerLines.push(continuation.slice(Math.min(contentIndent, continuation.length)));
+            const availableLength = continuation.value.length - continuation.start;
+            let leadingSpaces = 0;
+            while (continuation.value[continuation.start + leadingSpaces] === " ") {
+              leadingSpaces += 1;
+            }
+            if (availableLength > 0 && leadingSpaces < listItem.contentIndent) break;
+            containerLines.push({
+              start: continuation.start + Math.min(listItem.contentIndent, availableLength),
+              value: continuation.value,
+            });
             lineIndex += 1;
           }
           documents.push(containerLines);
@@ -1012,36 +1128,46 @@ function markdownReferenceDefinitions(markdown) {
         }
       }
 
-      const fenceMatch = /^ {0,3}(`{3,}|~{3,})/u.exec(line);
+      const fenceCandidate = fenceRunAt(line.value, line.start);
       if (fence) {
         if (
-          fenceMatch
-          && fenceMatch[1][0] === fence.character
-          && fenceMatch[1].length >= fence.length
-          && /^[ \t]*$/u.test(line.slice(fenceMatch[0].length))
+          fenceCandidate
+          && fenceCandidate.character === fence.character
+          && fenceCandidate.length >= fence.length
+          && isBlankFrom(line.value, fenceCandidate.end)
         ) {
           fence = null;
         }
         continue;
       }
-      if (fenceMatch) {
+      if (
+        fenceCandidate
+        && (
+          fenceCandidate.character === "~"
+          || !line.value.includes("`", fenceCandidate.end)
+        )
+      ) {
         flushParagraph();
-        fence = { character: fenceMatch[1][0], length: fenceMatch[1].length };
+        fence = {
+          character: fenceCandidate.character,
+          length: fenceCandidate.length,
+        };
         continue;
       }
-      if (/^\s*$/u.test(line)) {
+      const visibleLine = line.value.slice(line.start);
+      if (/^\s*$/u.test(visibleLine)) {
         flushParagraph();
         continue;
       }
-      if (/^(?: {4}|\t)/u.test(line)) {
-        if (paragraph.length > 0) paragraph.push(line);
+      if (/^(?: {4}|\t)/u.test(visibleLine)) {
+        if (paragraph.length > 0) paragraph.push(visibleLine);
         continue;
       }
-      if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(line)) {
+      if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(visibleLine)) {
         flushParagraph();
         continue;
       }
-      paragraph.push(line);
+      paragraph.push(visibleLine);
     }
     flushParagraph();
   }
