@@ -86,41 +86,6 @@ function isUnquotedAttributeValueCharacter(character) {
     && character !== "`";
 }
 
-function specialHtmlConstruct(value, index) {
-  if (value.startsWith("<!-->", index)) {
-    return { nextIndex: index + "<!-->".length };
-  }
-  if (value.startsWith("<!--->", index)) {
-    return { nextIndex: index + "<!--->".length };
-  }
-  if (value.startsWith("<!--", index)) {
-    return {
-      nextIndex: index + "<!--".length,
-      terminator: "-->",
-    };
-  }
-  if (value.startsWith("<?", index)) {
-    return {
-      nextIndex: index + "<?".length,
-      terminator: "?>",
-    };
-  }
-  if (value.startsWith("<![CDATA[", index)) {
-    return {
-      nextIndex: index + "<![CDATA[".length,
-      terminator: "]]>",
-    };
-  }
-  if (value.startsWith("<!", index) && isAsciiLetter(value[index + 2])) {
-    return {
-      nextIndex: index + 3,
-      terminator: ">",
-    };
-  }
-
-  return undefined;
-}
-
 function advanceHtmlTag(state, character) {
   if (state === "open-tag-name-start") {
     return isAsciiLetter(character) ? "open-tag-name" : "invalid";
@@ -197,6 +162,95 @@ function advanceHtmlTag(state, character) {
   return "invalid";
 }
 
+function nextDelimiterIndexes(value, delimiter) {
+  const indexes = new Array(value.length + 1).fill(-1);
+  let nextIndex = -1;
+
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    if (value.startsWith(delimiter, index)) nextIndex = index;
+    indexes[index] = nextIndex;
+  }
+
+  return indexes;
+}
+
+function htmlTagEndsByState(value) {
+  const states = [
+    "open-tag-name-start",
+    "open-tag-name",
+    "before-attribute-or-end",
+    "attribute-name",
+    "after-attribute-name",
+    "before-attribute-value",
+    "unquoted-attribute-value",
+    "single-quoted-attribute-value",
+    "double-quoted-attribute-value",
+    "after-quoted-attribute-value",
+    "expect-end",
+    "closing-tag-name-start",
+    "closing-tag-name",
+    "closing-tag-end",
+  ];
+  const endsByState = new Map(
+    states.map((state) => [state, new Array(value.length + 1).fill(-1)]),
+  );
+
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    for (const state of states) {
+      const nextState = advanceHtmlTag(state, value[index]);
+      let end = -1;
+      if (nextState === "complete") {
+        end = index + 1;
+      } else if (nextState !== "invalid") {
+        end = endsByState.get(nextState)[index + 1];
+      }
+      endsByState.get(state)[index] = end;
+    }
+  }
+
+  return endsByState;
+}
+
+function htmlConstructEndsByStart(value) {
+  const endsByStart = new Map();
+  const tagEnds = htmlTagEndsByState(value);
+  const nextCommentEnd = nextDelimiterIndexes(value, "-->");
+  const nextProcessingEnd = nextDelimiterIndexes(value, "?>");
+  const nextCdataEnd = nextDelimiterIndexes(value, "]]>");
+  const nextDeclarationEnd = nextDelimiterIndexes(value, ">");
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] !== "<") continue;
+
+    let end = -1;
+    if (value.startsWith("<!-->", index)) {
+      end = index + "<!-->".length;
+    } else if (value.startsWith("<!--->", index)) {
+      end = index + "<!--->".length;
+    } else if (value.startsWith("<!--", index)) {
+      const terminator = nextCommentEnd[index + "<!--".length];
+      if (terminator !== -1) end = terminator + "-->".length;
+    } else if (value.startsWith("<?", index)) {
+      const terminator = nextProcessingEnd[index + "<?".length];
+      if (terminator !== -1) end = terminator + "?>".length;
+    } else if (value.startsWith("<![CDATA[", index)) {
+      const terminator = nextCdataEnd[index + "<![CDATA[".length];
+      if (terminator !== -1) end = terminator + "]]>".length;
+    } else if (value.startsWith("<!", index) && isAsciiLetter(value[index + 2])) {
+      const terminator = nextDeclarationEnd[index + 3];
+      if (terminator !== -1) end = terminator + 1;
+    } else if (isAsciiLetter(value[index + 1])) {
+      end = tagEnds.get("open-tag-name-start")[index + 1];
+    } else if (value[index + 1] === "/" && isAsciiLetter(value[index + 2])) {
+      end = tagEnds.get("closing-tag-name-start")[index + 2];
+    }
+
+    if (end !== -1) endsByStart.set(index, end);
+  }
+
+  return endsByStart;
+}
+
 function backtickRunsByStart(value) {
   const runs = [];
 
@@ -240,95 +294,42 @@ function codeSpanText(value) {
 
 function withoutHtmlTags(value) {
   const output = [];
-  let htmlCandidate;
   const backtickRuns = backtickRunsByStart(value);
+  const htmlEnds = htmlConstructEndsByStart(value);
 
   for (let index = 0; index < value.length;) {
     const character = value[index];
-    if (!htmlCandidate) {
-      if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
-        output.push(value[index + 1]);
-        index += 2;
-        continue;
-      }
-
-      const backtickRun = backtickRuns.get(index);
-      if (backtickRun?.closer) {
-        output.push(codeSpanText(
-          value.slice(backtickRun.end, backtickRun.closer.start),
-        ));
-        index = backtickRun.closer.end;
-        continue;
-      }
-
-      if (backtickRun) {
-        output.push(value.slice(backtickRun.start, backtickRun.end));
-        index = backtickRun.end;
-        continue;
-      }
-
-      if (character === "<") {
-        const special = specialHtmlConstruct(value, index);
-        if (special) {
-          if (special.terminator) {
-            htmlCandidate = {
-              kind: "special",
-              start: index,
-              terminator: special.terminator,
-            };
-          }
-          index = special.nextIndex;
-          continue;
-        }
-        if (isAsciiLetter(value[index + 1])) {
-          htmlCandidate = {
-            kind: "tag",
-            start: index,
-            state: "open-tag-name-start",
-          };
-          index += 1;
-          continue;
-        }
-        if (value[index + 1] === "/" && isAsciiLetter(value[index + 2])) {
-          htmlCandidate = {
-            kind: "tag",
-            start: index,
-            state: "closing-tag-name-start",
-          };
-          index += 2;
-          continue;
-        }
-      }
-
-      output.push(character);
-      index += 1;
+    if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
+      output.push(value[index + 1]);
+      index += 2;
       continue;
     }
 
-    if (htmlCandidate.kind === "special") {
-      if (value.startsWith(htmlCandidate.terminator, index)) {
-        index += htmlCandidate.terminator.length;
-        htmlCandidate = undefined;
-      } else {
-        index += 1;
-      }
+    const backtickRun = backtickRuns.get(index);
+    if (backtickRun?.closer) {
+      output.push(codeSpanText(
+        value.slice(backtickRun.end, backtickRun.closer.start),
+      ));
+      index = backtickRun.closer.end;
       continue;
     }
 
-    const nextState = advanceHtmlTag(htmlCandidate.state, character);
-    if (nextState === "complete") {
-      htmlCandidate = undefined;
-      index += 1;
-    } else if (nextState === "invalid") {
-      output.push(value.slice(htmlCandidate.start, index));
-      htmlCandidate = undefined;
-    } else {
-      htmlCandidate.state = nextState;
-      index += 1;
+    if (backtickRun) {
+      output.push(value.slice(backtickRun.start, backtickRun.end));
+      index = backtickRun.end;
+      continue;
     }
+
+    const htmlEnd = htmlEnds.get(index);
+    if (htmlEnd !== undefined) {
+      index = htmlEnd;
+      continue;
+    }
+
+    output.push(character);
+    index += 1;
   }
 
-  if (htmlCandidate) output.push(value.slice(htmlCandidate.start));
   return output.join("");
 }
 

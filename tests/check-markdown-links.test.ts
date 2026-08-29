@@ -175,6 +175,24 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("classifies nested HTML inside rejected tag candidates", () => {
+    const root = createProject({
+      "README.md": [
+        "[Invalid outer tag](docs/literals.md#alpha-a-titleoops-beta)",
+        "[Unterminated outer tag](docs/literals.md#gamma-a-title)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# Alpha <a title=\"<b>\"oops> Beta",
+        "# Gamma <a title=\"<b>",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("ignores apostrophes inside HTML comments when generating anchors", () => {
     const root = createProject({
       "README.md": "[Release notes](docs/releases.md#release-notes)",
