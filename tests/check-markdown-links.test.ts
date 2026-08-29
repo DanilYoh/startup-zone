@@ -588,6 +588,23 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("resolves definitions in empty list items", () => {
+    const root = createProject({
+      "README.md": "[Empty list](docs/references.md#outer-emptytarget)",
+      "docs/references.md": [
+        "# [Outer [Empty][empty]](target)",
+        "",
+        "-",
+        " [empty]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("keeps lazy container continuations in their open paragraphs", () => {
     const root = createProject({
       "README.md": [
@@ -638,10 +655,12 @@ describe("Markdown link checker", () => {
     const root = createProject({
       "README.md": [
         "[Script block](docs/references.md#outer-scripttarget)",
+        "[Cross terminator](docs/references.md#outer-crosstarget)",
         "[Comment block](docs/references.md#outer-commenttarget)",
       ].join("\n"),
       "docs/references.md": [
         "# [Outer [Script][script]](target)",
+        "# [Outer [Cross][cross]](target)",
         "# [Outer [Comment][comment]](target)",
         "",
         "<script>",
@@ -649,10 +668,39 @@ describe("Markdown link checker", () => {
         "</script>",
         "[script]: /definition",
         "",
+        "<script>",
+        "content",
+        "</style>",
+        "[cross]: /definition",
+        "",
         "<!--",
         "content",
         "-->",
         "[comment]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("ends container HTML blocks at their container boundaries", () => {
+    const root = createProject({
+      "README.md": [
+        "[Type six](docs/references.md#outer-type-sixtarget)",
+        "[Type seven](docs/references.md#outer-type-seventarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Type six][type-six]](target)",
+        "# [Outer [Type seven][type-seven]](target)",
+        "",
+        "> <div>",
+        "[type-six]: /definition",
+        "",
+        "> <x-custom>",
+        "[type-seven]: /definition",
       ].join("\n"),
     });
 
@@ -729,7 +777,7 @@ describe("Markdown link checker", () => {
     const root = createProject({
       "README.md": [
         "[Escaped opening run](docs/literals.md#show-span)",
-        "[Escaped closing run](docs/literals.md#show-)",
+        "[Escaped closing run](docs/literals.md#show-span-1)",
       ].join("\n"),
       "docs/literals.md": [
         "# Show \\```<span>``",

@@ -277,6 +277,7 @@ function htmlConstructEndsByStart(value) {
 
 function backtickRunsByStart(value) {
   const runs = [];
+  const escaped = escapedPunctuationIndexes(value);
 
   for (let index = 0; index < value.length;) {
     if (value[index] !== "`") {
@@ -303,6 +304,10 @@ function backtickRunsByStart(value) {
       });
     }
     nextByLength.set(run.length, run);
+    if (escaped[run.start] && run.length > 1) {
+      const suffix = runsByStart.get(run.start + 1);
+      nextByLength.set(suffix.length, suffix);
+    }
   }
 
   return runsByStart;
@@ -1018,6 +1023,13 @@ function listItemAt(value, start) {
     index += 1;
   }
 
+  if (value[index] === undefined) {
+    return {
+      contentIndent: index - start,
+      contentStart: index,
+      orderedStart,
+    };
+  }
   if (value[index] !== " " && value[index] !== "\t") return null;
   const paddingStart = index;
   while (value[index] === " " || value[index] === "\t") index += 1;
@@ -1082,13 +1094,29 @@ function fenceOpenerAt(value, start) {
   return null;
 }
 
-function explicitHtmlBlockAt(value, start) {
+const typeOneHtmlTerminators = ["</pre>", "</script>", "</style>", "</textarea>"];
+const typeSixHtmlTags = new Set([
+  "address", "article", "aside", "base", "basefont", "blockquote", "body", "caption",
+  "center", "col", "colgroup", "dd", "details", "dialog", "dir", "div", "dl", "dt",
+  "fieldset", "figcaption", "figure", "footer", "form", "frame", "frameset", "h1", "h2",
+  "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "iframe", "legend", "li",
+  "link", "main", "menu", "menuitem", "nav", "noframes", "ol", "optgroup", "option", "p",
+  "param", "search", "section", "summary", "table", "tbody", "td", "tfoot", "th", "thead",
+  "title", "tr", "track", "ul",
+]);
+
+function htmlBlockIndentEnd(value, start) {
   let index = start;
   let indentation = 0;
   while (value[index] === " " && indentation < 3) {
     index += 1;
     indentation += 1;
   }
+  return index;
+}
+
+function explicitHtmlBlockAt(value, start) {
+  const index = htmlBlockIndentEnd(value, start);
 
   if (value[index] !== "<") return null;
   const source = value.slice(index);
@@ -1100,30 +1128,97 @@ function explicitHtmlBlockAt(value, start) {
       lowerSource.startsWith(prefix)
       && (boundary === undefined || boundary === " " || boundary === "\t" || boundary === ">")
     ) {
-      return { caseInsensitive: true, terminator: `</${tag}>` };
+      return {
+        caseInsensitive: true,
+        endsOnBlank: false,
+        interruptsParagraph: true,
+        terminators: typeOneHtmlTerminators,
+      };
     }
   }
 
   if (source.startsWith("<!--")) {
-    return { caseInsensitive: false, terminator: "-->" };
+    return {
+      caseInsensitive: false,
+      endsOnBlank: false,
+      interruptsParagraph: true,
+      terminators: ["-->"],
+    };
   }
   if (source.startsWith("<?")) {
-    return { caseInsensitive: false, terminator: "?>" };
+    return {
+      caseInsensitive: false,
+      endsOnBlank: false,
+      interruptsParagraph: true,
+      terminators: ["?>"],
+    };
   }
   if (source.startsWith("<![CDATA[")) {
-    return { caseInsensitive: false, terminator: "]]>" };
+    return {
+      caseInsensitive: false,
+      endsOnBlank: false,
+      interruptsParagraph: true,
+      terminators: ["]]>"],
+    };
   }
   if (source.startsWith("<!") && source[2] >= "A" && source[2] <= "Z") {
-    return { caseInsensitive: false, terminator: ">" };
+    return {
+      caseInsensitive: false,
+      endsOnBlank: false,
+      interruptsParagraph: true,
+      terminators: [">"],
+    };
   }
   return null;
 }
 
-function explicitHtmlBlockEnds(value, start, block) {
-  const source = value.slice(start);
-  return block.caseInsensitive
-    ? source.toLowerCase().includes(block.terminator)
-    : source.includes(block.terminator);
+function blankTerminatedHtmlBlockAt(value, start) {
+  const index = htmlBlockIndentEnd(value, start);
+  if (value[index] !== "<") return null;
+
+  let nameStart = index + 1;
+  if (value[nameStart] === "/") nameStart += 1;
+  let nameEnd = nameStart;
+  while (isTagNameCharacter(value[nameEnd])) nameEnd += 1;
+  const tagName = value.slice(nameStart, nameEnd).toLowerCase();
+  const boundary = value[nameEnd];
+  if (
+    typeSixHtmlTags.has(tagName)
+    && (
+      boundary === undefined
+      || boundary === " "
+      || boundary === "\t"
+      || boundary === ">"
+      || (boundary === "/" && value[nameEnd + 1] === ">")
+    )
+  ) {
+    return {
+      endsOnBlank: true,
+      interruptsParagraph: true,
+    };
+  }
+
+  const tagEnd = htmlTagEndsByStart(value).get(index);
+  if (tagEnd !== undefined && isBlankFrom(value, tagEnd)) {
+    return {
+      endsOnBlank: true,
+      interruptsParagraph: false,
+    };
+  }
+  return null;
+}
+
+function htmlBlockAt(value, start) {
+  return explicitHtmlBlockAt(value, start)
+    ?? blankTerminatedHtmlBlockAt(value, start);
+}
+
+function htmlBlockEnds(value, start, block) {
+  if (block.endsOnBlank) return isBlankFrom(value, start);
+  const source = block.caseInsensitive
+    ? value.slice(start).toLowerCase()
+    : value.slice(start);
+  return block.terminators.some((terminator) => source.includes(terminator));
 }
 
 function isAtxHeadingAt(value, start) {
@@ -1148,7 +1243,7 @@ function lineInterruptsParagraph(value, start) {
   if (isThematicBreakAt(value, start)) return true;
   if (blockQuoteContentStart(value, start) !== -1) return true;
   if (fenceOpenerAt(value, start)) return true;
-  if (explicitHtmlBlockAt(value, start)) return true;
+  if (htmlBlockAt(value, start)?.interruptsParagraph) return true;
 
   const listItem = listItemAt(value, start);
   if (
@@ -1169,7 +1264,7 @@ function lineStartsContainerParagraph(value, start) {
     if (isBlankFrom(value, index)) return false;
     if (isThematicBreakAt(value, index)) return false;
     if (fenceOpenerAt(value, index)) return false;
-    if (explicitHtmlBlockAt(value, index)) return false;
+    if (htmlBlockAt(value, index)) return false;
 
     if (value.startsWith("    ", index) || isAtxHeadingAt(value, index)) return false;
 
@@ -1231,7 +1326,7 @@ function markdownReferenceDefinitions(markdown) {
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
       const line = lines[lineIndex];
       if (htmlBlock) {
-        if (explicitHtmlBlockEnds(line.value, line.start, htmlBlock)) {
+        if (htmlBlockEnds(line.value, line.start, htmlBlock)) {
           htmlBlock = null;
         }
         continue;
@@ -1341,10 +1436,13 @@ function markdownReferenceDefinitions(markdown) {
         };
         continue;
       }
-      const htmlBlockStart = explicitHtmlBlockAt(line.value, line.start);
-      if (htmlBlockStart) {
+      const htmlBlockStart = htmlBlockAt(line.value, line.start);
+      if (
+        htmlBlockStart
+        && (paragraph.length === 0 || htmlBlockStart.interruptsParagraph)
+      ) {
         flushParagraph();
-        if (!explicitHtmlBlockEnds(line.value, line.start, htmlBlockStart)) {
+        if (!htmlBlockEnds(line.value, line.start, htmlBlockStart)) {
           htmlBlock = htmlBlockStart;
         }
         continue;
