@@ -675,6 +675,48 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("rejects junk after angle reference destinations", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "[ref]: </url>oops",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
+  it("rejects nested parentheses in parenthesized reference titles", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "[ref]: /url (bad(open)",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
   it("applies ordered-list interruption rules before resolving references", () => {
     const root = createProject({
       "README.md": [
@@ -696,6 +738,28 @@ describe("Markdown link checker", () => {
     expect(checkMarkdownLinks(root)).toEqual({
       checkedFileCount: 2,
       failures: [],
+    });
+  });
+
+  it("keeps noninterrupting ordered markers in reference-only paragraphs", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "[first]: /definition",
+        "2. [ref]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
     });
   });
 
@@ -759,6 +823,51 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("uses minimal padding for blank list items", () => {
+    const root = createProject({
+      "README.md": [
+        "[List reference](docs/references.md#outer-innertarget)",
+        "[Unresolved label](docs/references.md#outer-innerref)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "-    ",
+        "    [ref]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innerref in docs/references.md",
+      ],
+    });
+  });
+
+  it("ends empty list items at their second blank line", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered label](docs/references.md#outer-innerref)",
+        "[Invented reference](docs/references.md#outer-innertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "-",
+        " ",
+        "    [ref]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
   it("keeps whitespace-only lines inside list items", () => {
     const root = createProject({
       "README.md": [
@@ -771,6 +880,28 @@ describe("Markdown link checker", () => {
         "- text",
         " ",
         "    [ref]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innerref in docs/references.md",
+      ],
+    });
+  });
+
+  it("ends list items before differently delimited siblings", () => {
+    const root = createProject({
+      "README.md": [
+        "[Sibling reference](docs/references.md#outer-innertarget)",
+        "[Absorbed sibling](docs/references.md#outer-innerref)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "",
+        "1. text",
+        "2) [ref]: /definition",
       ].join("\n"),
     });
 
@@ -953,6 +1084,7 @@ describe("Markdown link checker", () => {
     ["backtick run", "`".repeat(1_000_000)],
     ["dense backticks", "`a".repeat(500_000)],
     ["dense brackets", "[".repeat(1_000_000)],
+    ["dense inline links", "[]()".repeat(250_000)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",

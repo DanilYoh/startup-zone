@@ -706,7 +706,13 @@ function inlineLinkTailEndsByStart(
     if (value[index] === "[") bracketCapacity += 1;
     if (value[index] === "]") hasClosingBracket = true;
   }
-  if (!hasClosingBracket) return new Map();
+  if (!hasClosingBracket) {
+    return {
+      count: 0,
+      ends: new Uint32Array(0),
+      starts: new Uint32Array(0),
+    };
+  }
 
   const escaped = escapedPunctuationIndexes(value);
   let tables = null;
@@ -730,7 +736,16 @@ function inlineLinkTailEndsByStart(
     return tables;
   }
 
-  const endsByStart = new Map();
+  const tailStarts = new Uint32Array(bracketCapacity);
+  const tailEnds = new Uint32Array(bracketCapacity);
+  let tailCount = 0;
+
+  function recordTail(start, end) {
+    tailStarts[tailCount] = start;
+    tailEnds[tailCount] = end;
+    tailCount += 1;
+  }
+
   const bracketStarts = new Uint32Array(bracketCapacity);
   const bracketEpochs = new Uint32Array(bracketCapacity);
   const bracketImages = new Uint8Array(bracketCapacity);
@@ -782,9 +797,18 @@ function inlineLinkTailEndsByStart(
       const bracketImage = bracketImages[bracketCount] === 1;
       const active = bracketImage || bracketEpochs[bracketCount] === linkEpoch;
       if (active && value[index + 1] === "(") {
-        const end = inlineLinkEnd(value, index + 1, destinationTables());
+        const emptyDestination = value[index + 2] === ")";
+        const end = emptyDestination
+          ? index + 3
+          : inlineLinkEnd(value, index + 1, destinationTables());
         if (end !== -1) {
-          endsByStart.set(index + 1, end);
+          const emptyLabel = bracketStart + 1 === index;
+          recordTail(
+            emptyDestination && emptyLabel
+              ? bracketStart - (bracketImage ? 1 : 0)
+              : index + 1,
+            end,
+          );
           if (!bracketImage) linkEpoch += 1;
           index = end;
           continue;
@@ -811,7 +835,7 @@ function inlineLinkTailEndsByStart(
           && references.has(normalizeReferenceLabel(referenceLabel))
         ) {
           if (referenceEnd > index + 1) {
-            endsByStart.set(index + 1, referenceEnd);
+            recordTail(index + 1, referenceEnd);
           }
           if (!bracketImage) linkEpoch += 1;
           index = referenceEnd;
@@ -823,7 +847,11 @@ function inlineLinkTailEndsByStart(
     index += 1;
   }
 
-  return endsByStart;
+  return {
+    count: tailCount,
+    ends: tailEnds,
+    starts: tailStarts,
+  };
 }
 
 function headingInlineText(value, references) {
@@ -833,7 +861,7 @@ function headingInlineText(value, references) {
   const backtickRuns = backtickRunsByStart(value);
   const autolinkEnds = autolinkEndsByStart(value);
   const htmlEnds = htmlConstructEndsByStart(value);
-  const inlineLinkEnds = value.includes("[")
+  const inlineLinkTails = value.includes("[")
     ? inlineLinkTailEndsByStart(
       value,
       backtickRuns,
@@ -841,7 +869,12 @@ function headingInlineText(value, references) {
       htmlEnds,
       references,
     )
-    : new Map();
+    : {
+      count: 0,
+      ends: new Uint32Array(0),
+      starts: new Uint32Array(0),
+    };
+  let inlineLinkTailIndex = 0;
   let literalStart = 0;
 
   function appendLiteral(end) {
@@ -893,11 +926,21 @@ function headingInlineText(value, references) {
       continue;
     }
 
-    const inlineLinkEnd = inlineLinkEnds.get(index);
-    if (inlineLinkEnd !== undefined) {
+    while (
+      inlineLinkTailIndex < inlineLinkTails.count
+      && inlineLinkTails.starts[inlineLinkTailIndex] < index
+    ) {
+      inlineLinkTailIndex += 1;
+    }
+    const inlineLinkEnd = inlineLinkTailIndex < inlineLinkTails.count
+      && inlineLinkTails.starts[inlineLinkTailIndex] === index
+      ? inlineLinkTails.ends[inlineLinkTailIndex]
+      : 0;
+    if (inlineLinkEnd > 0) {
       appendLiteral(index);
       index = inlineLinkEnd;
       literalStart = index;
+      inlineLinkTailIndex += 1;
       continue;
     }
 
@@ -992,8 +1035,10 @@ function referenceDefinitionAt(value, start) {
     }
     destinationOnly = { end: nextLine, label };
     index = titleStart;
-  } else if (index === destinationEnd || index >= value.length) {
+  } else if (index >= value.length) {
     return { end: index, label };
+  } else if (index === destinationEnd) {
+    return null;
   }
 
   const opener = value[index];
@@ -1005,6 +1050,7 @@ function referenceDefinitionAt(value, start) {
       index += 1;
       continue;
     }
+    if (opener === "(" && value[index] === "(") return destinationOnly;
     if (value[index] === closer) break;
     if (value[index] === "\n") {
       let nextLine = index + 1;
@@ -1101,6 +1147,14 @@ function listItemAt(value, start) {
   if (value[index] !== " " && value[index] !== "\t") return null;
   const paddingStart = index;
   while (value[index] === " " || value[index] === "\t") index += 1;
+  if (index >= value.length) {
+    return {
+      contentIndent: paddingStart - start + 1,
+      contentStart: index,
+      marker,
+      orderedStart,
+    };
+  }
   const paddingLength = index - paddingStart;
   const markerPadding = paddingLength <= 4 ? paddingLength : 1;
 
@@ -1454,7 +1508,6 @@ function markdownReferenceDefinitions(markdown) {
         }
 
         const listItem = listItemAt(line.value, line.start);
-        if (listItem) consumeLeadingDefinitions();
         const interruptsParagraph = paragraph.length === 0 || (
           !isBlankFrom(line.value, listItem?.contentStart ?? line.value.length)
           && (listItem?.orderedStart === null || listItem?.orderedStart === 1)
@@ -1463,6 +1516,7 @@ function markdownReferenceDefinitions(markdown) {
           flushParagraph();
           const containerLines = [{ ...line, start: listItem.contentStart }];
           let paragraphOpen = lineIndex + 1 < lines.length && line.opensParagraph;
+          let itemHasContent = !isBlankFrom(line.value, listItem.contentStart);
           while (lineIndex + 1 < lines.length) {
             const continuation = lines[lineIndex + 1];
             const availableLength = continuation.value.length - continuation.start;
@@ -1470,8 +1524,13 @@ function markdownReferenceDefinitions(markdown) {
             while (continuation.value[continuation.start + leadingSpaces] === " ") {
               leadingSpaces += 1;
             }
+            const continuationBlank = isBlankFrom(
+              continuation.value,
+              continuation.start,
+            );
+            if (continuationBlank && !itemHasContent) break;
             if (
-              isBlankFrom(continuation.value, continuation.start)
+              continuationBlank
               || leadingSpaces >= listItem.contentIndent
             ) {
               const continuationStart = continuation.start
@@ -1481,17 +1540,19 @@ function markdownReferenceDefinitions(markdown) {
                 continuationStart,
               );
               containerLines.push(continuationLine);
+              if (!continuationBlank) itemHasContent = true;
               paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuationLine);
               lineIndex += 1;
               continue;
             }
             const siblingItem = listItemAt(continuation.value, continuation.start);
-            if (siblingItem?.marker === listItem.marker) break;
+            if (siblingItem) break;
             if (
               paragraphOpen
               && !lineInterruptsParagraph(continuation.value, continuation.start)
             ) {
               containerLines.push(continuation);
+              itemHasContent = true;
               paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuation);
               lineIndex += 1;
               continue;
