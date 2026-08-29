@@ -272,8 +272,8 @@ describe("Markdown link checker", () => {
         "[Leaked URI markup](docs/literals.md#a-ab-b-c)",
         "[Email autolink](docs/literals.md#email-xyexamplecom-c)",
         "[Leaked email markup](docs/literals.md#email-xyexamplecom-b-c)",
+        "[Opaque autolink entity](docs/literals.md#release-abouml-notes)",
         "[Decoded autolink entity](docs/literals.md#release-abö-notes)",
-        "[Encoded autolink entity](docs/literals.md#release-abouml-notes)",
       ].join("\n"),
       "docs/literals.md": [
         "# A <ab:`> <b> ` C",
@@ -287,7 +287,7 @@ describe("Markdown link checker", () => {
       failures: [
         "README.md: missing anchor #a-ab-b-c in docs/literals.md",
         "README.md: missing anchor #email-xyexamplecom-b-c in docs/literals.md",
-        "README.md: missing anchor #release-abouml-notes in docs/literals.md",
+        "README.md: missing anchor #release-abö-notes in docs/literals.md",
       ],
     });
   });
@@ -819,6 +819,7 @@ describe("Markdown link checker", () => {
     ["plain", "a".repeat(1_000_000)],
     ["HTML-decorated", `${"a".repeat(500_000)}<span>${"b".repeat(500_000)}`],
     ["backtick run", "`".repeat(1_000_000)],
+    ["dense backticks", "`a".repeat(500_000)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",

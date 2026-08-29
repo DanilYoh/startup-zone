@@ -276,8 +276,11 @@ function htmlConstructEndsByStart(value) {
 }
 
 function backtickRunsByStart(value) {
-  const runs = [];
-  const escaped = escapedPunctuationIndexes(value);
+  if (!value.includes("`")) return new Map();
+  const escaped = value.includes("\\`")
+    ? escapedPunctuationIndexes(value)
+    : null;
+  let entryCount = 0;
 
   for (let index = 0; index < value.length;) {
     if (value[index] !== "`") {
@@ -287,33 +290,79 @@ function backtickRunsByStart(value) {
 
     const start = index;
     while (value[index] === "`") index += 1;
-    runs.push({ start, end: index, length: index - start });
+    entryCount += escaped?.[start] && index - start > 1 ? 2 : 1;
   }
 
+  const starts = new Int32Array(entryCount);
+  const ends = new Int32Array(entryCount);
+  const suffixes = new Uint8Array(entryCount);
+  let entryIndex = 0;
+  for (let index = 0; index < value.length;) {
+    if (value[index] !== "`") {
+      index += 1;
+      continue;
+    }
+
+    const start = index;
+    while (value[index] === "`") index += 1;
+    starts[entryIndex] = start;
+    ends[entryIndex] = index;
+    entryIndex += 1;
+    if (escaped?.[start] && index - start > 1) {
+      starts[entryIndex] = start + 1;
+      ends[entryIndex] = index;
+      suffixes[entryIndex] = 1;
+      entryIndex += 1;
+    }
+  }
+
+  const closerEntries = new Int32Array(entryCount);
+  closerEntries.fill(-1);
   const fullRunNextByLength = new Map();
   const outsideNextByLength = new Map();
-  const runsByStart = new Map();
-  for (let index = runs.length - 1; index >= 0; index -= 1) {
-    const run = runs[index];
-    runsByStart.set(run.start, {
-      ...run,
-      closer: fullRunNextByLength.get(run.length),
-    });
-    if (escaped[run.start] && run.length > 1) {
-      const suffix = {
-        start: run.start + 1,
-        end: run.end,
-        length: run.length - 1,
-        closer: outsideNextByLength.get(run.length - 1),
-      };
-      runsByStart.set(suffix.start, suffix);
-      outsideNextByLength.set(suffix.length, suffix);
+  for (let index = entryCount - 1; index >= 0;) {
+    const suffixIndex = suffixes[index] ? index : -1;
+    const rawIndex = suffixIndex === -1 ? index : index - 1;
+    const rawLength = ends[rawIndex] - starts[rawIndex];
+    closerEntries[rawIndex] = fullRunNextByLength.get(rawLength) ?? -1;
+    if (suffixIndex !== -1) {
+      const suffixLength = ends[suffixIndex] - starts[suffixIndex];
+      closerEntries[suffixIndex] = outsideNextByLength.get(suffixLength) ?? -1;
+      outsideNextByLength.set(suffixLength, suffixIndex);
     }
-    fullRunNextByLength.set(run.length, run);
-    outsideNextByLength.set(run.length, run);
+    fullRunNextByLength.set(rawLength, rawIndex);
+    outsideNextByLength.set(rawLength, rawIndex);
+    index = rawIndex - 1;
   }
 
-  return runsByStart;
+  return {
+    get(start) {
+      let low = 0;
+      let high = starts.length - 1;
+      while (low <= high) {
+        const middle = (low + high) >>> 1;
+        if (starts[middle] < start) {
+          low = middle + 1;
+        } else if (starts[middle] > start) {
+          high = middle - 1;
+        } else {
+          const closerEntry = closerEntries[middle];
+          return {
+            closer: closerEntry === -1
+              ? undefined
+              : {
+                end: ends[closerEntry],
+                start: starts[closerEntry],
+              },
+            end: ends[middle],
+            length: ends[middle] - starts[middle],
+            start: starts[middle],
+          };
+        }
+      }
+      return undefined;
+    },
+  };
 }
 
 function codeSpanText(value) {
@@ -801,7 +850,7 @@ function headingInlineText(value, references) {
     const autolinkEnd = autolinkEnds.get(index);
     if (autolinkEnd !== undefined) {
       appendLiteral(index);
-      output.push(decodeHTMLStrict(value.slice(index + 1, autolinkEnd - 1)));
+      output.push(value.slice(index + 1, autolinkEnd - 1));
       index = autolinkEnd;
       literalStart = index;
       continue;
