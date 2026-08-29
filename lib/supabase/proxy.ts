@@ -27,6 +27,10 @@ export async function updateSession(
 
   let supabaseResponse = createForwardResponse();
 
+  if (request.nextUrl.pathname === "/auth/confirm") {
+    return supabaseResponse;
+  }
+
   // Keep the hosted read-only demo away from routes that require a Supabase
   // client. Public pages render their existing unconfigured state instead.
   if (!hasEnvVars) {
