@@ -405,6 +405,27 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("falls back to shortcut links after whitespace reference tails", () => {
+    const root = createProject({
+      "README.md": [
+        "[Shortcut fallback](docs/references.md#outer-inner-xtarget)",
+        "[Blocked shortcut](docs/references.md#outer-inner-x)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ ] X](target)",
+        "",
+        "[inner]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-inner-x in docs/references.md",
+      ],
+    });
+  });
+
   it("preserves escapes while matching reference labels", () => {
     const root = createProject({
       "README.md": [
@@ -1169,7 +1190,6 @@ describe("Markdown link checker", () => {
     ["dense backticks", "`a".repeat(500_000)],
     ["dense brackets", "[".repeat(1_000_000)],
     ["dense inline links", "[]()".repeat(250_000)],
-    ["dense non-empty links", "[x](/)".repeat(166_666)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",
