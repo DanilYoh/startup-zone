@@ -567,13 +567,21 @@ function tagSpaceEnds(value) {
 function matchingParentheses(value, escaped) {
   const matches = new Map();
   const stack = [];
+  const nestedDepths = [];
 
   for (let index = 0; index < value.length; index += 1) {
     if (escaped[index]) continue;
     if (value[index] === "(") {
       stack.push(index);
+      nestedDepths.push(0);
     } else if (value[index] === ")" && stack.length > 0) {
-      matches.set(stack.pop(), index);
+      const open = stack.pop();
+      const depth = nestedDepths.pop() + 1;
+      matches.set(open, depth > 32 ? -1 : index);
+      if (nestedDepths.length > 0) {
+        const parent = nestedDepths.length - 1;
+        nestedDepths[parent] = Math.max(nestedDepths[parent], depth);
+      }
     }
   }
 
@@ -598,9 +606,9 @@ function bareDestinationEnds(value, escaped, parenthesisMatches) {
       ends[index] = index;
     } else if (value[index] === "(" && !escaped[index]) {
       const close = parenthesisMatches.get(index);
-      const hasInvalidContent = close !== undefined
+      const hasInvalidContent = close !== undefined && close !== -1
         && invalidPrefix[close] !== invalidPrefix[index + 1];
-      if (close !== undefined && !hasInvalidContent) {
+      if (close !== undefined && close !== -1 && !hasInvalidContent) {
         ends[index] = ends[close + 1];
       }
     } else {
@@ -890,7 +898,6 @@ function referenceDefinitionAt(value, start) {
   if (indentation > 3 || value[index] !== "[") return null;
 
   const labelStart = index + 1;
-  let lineBreaks = 0;
   index = labelStart;
   for (; index < value.length && index - labelStart <= 999; index += 1) {
     if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
@@ -899,10 +906,6 @@ function referenceDefinitionAt(value, start) {
     }
     if (value[index] === "[") return null;
     if (value[index] === "]") break;
-    if (value[index] === "\n") {
-      lineBreaks += 1;
-      if (lineBreaks > 1) return null;
-    }
   }
   if (value[index] !== "]" || index === labelStart || value[index + 1] !== ":") {
     return null;
@@ -1043,8 +1046,10 @@ function listItemAt(value, start) {
   }
 
   const markerStart = index;
+  let marker;
   let orderedStart = null;
   if (value[index] === "*" || value[index] === "+" || value[index] === "-") {
+    marker = value[index];
     index += 1;
   } else {
     let digitCount = 0;
@@ -1060,6 +1065,7 @@ function listItemAt(value, start) {
       return null;
     }
     orderedStart = Number(value.slice(markerStart, index));
+    marker = value[index];
     index += 1;
   }
 
@@ -1067,6 +1073,7 @@ function listItemAt(value, start) {
     return {
       contentIndent: index - start,
       contentStart: index,
+      marker,
       orderedStart,
     };
   }
@@ -1079,6 +1086,7 @@ function listItemAt(value, start) {
   return {
     contentIndent: index - paddingLength - start + markerPadding,
     contentStart: paddingLength <= 4 ? index : paddingStart + 1,
+    marker,
     orderedStart,
   };
 }
@@ -1445,6 +1453,8 @@ function markdownReferenceDefinitions(markdown) {
               lineIndex += 1;
               continue;
             }
+            const siblingItem = listItemAt(continuation.value, continuation.start);
+            if (siblingItem?.marker === listItem.marker) break;
             if (
               paragraphOpen
               && !lineInterruptsParagraph(continuation.value, continuation.start)
@@ -1502,7 +1512,11 @@ function markdownReferenceDefinitions(markdown) {
         if (paragraph.length > 0) paragraph.push(visibleLine);
         continue;
       }
-      if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(visibleLine)) {
+      if (/^ {0,3}#{1,6}(?:\s|$)/u.test(visibleLine)) {
+        flushParagraph();
+        continue;
+      }
+      if (/^ {0,3}(?:=+|-+)\s*$/u.test(visibleLine) && paragraph.length > 0) {
         flushParagraph();
         continue;
       }
