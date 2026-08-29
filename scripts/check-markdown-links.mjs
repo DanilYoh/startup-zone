@@ -801,7 +801,7 @@ function headingInlineText(value, references) {
     const autolinkEnd = autolinkEnds.get(index);
     if (autolinkEnd !== undefined) {
       appendLiteral(index);
-      output.push(value.slice(index + 1, autolinkEnd - 1));
+      output.push(decodeHTMLStrict(value.slice(index + 1, autolinkEnd - 1)));
       index = autolinkEnd;
       literalStart = index;
       continue;

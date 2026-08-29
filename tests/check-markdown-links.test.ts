@@ -272,10 +272,13 @@ describe("Markdown link checker", () => {
         "[Leaked URI markup](docs/literals.md#a-ab-b-c)",
         "[Email autolink](docs/literals.md#email-xyexamplecom-c)",
         "[Leaked email markup](docs/literals.md#email-xyexamplecom-b-c)",
+        "[Decoded autolink entity](docs/literals.md#release-abö-notes)",
+        "[Encoded autolink entity](docs/literals.md#release-abouml-notes)",
       ].join("\n"),
       "docs/literals.md": [
         "# A <ab:`> <b> ` C",
         "# Email <x`y@example.com> <b> ` C",
+        "# Release <ab:&ouml;> Notes",
       ].join("\n"),
     });
 
@@ -284,6 +287,7 @@ describe("Markdown link checker", () => {
       failures: [
         "README.md: missing anchor #a-ab-b-c in docs/literals.md",
         "README.md: missing anchor #email-xyexamplecom-b-c in docs/literals.md",
+        "README.md: missing anchor #release-abouml-notes in docs/literals.md",
       ],
     });
   });
