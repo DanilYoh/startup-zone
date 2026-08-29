@@ -12,11 +12,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fileProbe = vi.hoisted(() => ({
   closedDeniedDescriptors: new Set<number>(),
-  closedOpenedTargetDescriptors: new Set<number>(),
   deniedDescriptors: new Set<number>(),
   deniedTargetName: "unreadable-target.md",
-  openedTargetDescriptors: new Set<number>(),
+  nextTargetGeneration: 1,
   openedTargetName: "opened-target.md",
+  targetEvents: [] as Array<{
+    generation: number | null;
+    operation: "open" | "fstat" | "descriptor-read" | "path-read" | "close";
+  }>,
+  targetGenerationByDescriptor: new Map<number, number>(),
 }));
 
 vi.mock("node:fs", async (importOriginal) => {
@@ -28,10 +32,29 @@ vi.mock("node:fs", async (importOriginal) => {
       if (fileProbe.deniedDescriptors.has(descriptor)) {
         fileProbe.closedDeniedDescriptors.add(descriptor);
       }
-      if (fileProbe.openedTargetDescriptors.has(descriptor)) {
-        fileProbe.closedOpenedTargetDescriptors.add(descriptor);
+
+      const generation = fileProbe.targetGenerationByDescriptor.get(descriptor);
+      if (generation !== undefined) {
+        fileProbe.targetEvents.push({ generation, operation: "close" });
       }
-      return actual.closeSync(descriptor);
+
+      try {
+        return actual.closeSync(descriptor);
+      } finally {
+        fileProbe.targetGenerationByDescriptor.delete(descriptor);
+      }
+    },
+    fstatSync(descriptor: number, options?: unknown) {
+      const generation = fileProbe.targetGenerationByDescriptor.get(descriptor);
+      if (generation !== undefined) {
+        fileProbe.targetEvents.push({ generation, operation: "fstat" });
+      }
+
+      return Reflect.apply(
+        actual.fstatSync,
+        actual,
+        options === undefined ? [descriptor] : [descriptor, options],
+      ) as ReturnType<typeof actual.fstatSync>;
     },
     openSync(path: Parameters<typeof actual.openSync>[0], flags: string | number, mode?: string | number) {
       const descriptor = Reflect.apply(
@@ -43,7 +66,10 @@ vi.mock("node:fs", async (importOriginal) => {
         fileProbe.deniedDescriptors.add(descriptor);
       }
       if (String(path).endsWith(fileProbe.openedTargetName)) {
-        fileProbe.openedTargetDescriptors.add(descriptor);
+        const generation = fileProbe.nextTargetGeneration;
+        fileProbe.nextTargetGeneration += 1;
+        fileProbe.targetGenerationByDescriptor.set(descriptor, generation);
+        fileProbe.targetEvents.push({ generation, operation: "open" });
       }
       return descriptor;
     },
@@ -59,10 +85,18 @@ vi.mock("node:fs", async (importOriginal) => {
         throw error;
       }
 
+      if (typeof path === "number") {
+        const generation = fileProbe.targetGenerationByDescriptor.get(path);
+        if (generation !== undefined) {
+          fileProbe.targetEvents.push({ generation, operation: "descriptor-read" });
+        }
+      }
+
       if (
         typeof path !== "number"
         && String(path).endsWith(fileProbe.openedTargetName)
       ) {
+        fileProbe.targetEvents.push({ generation: null, operation: "path-read" });
         return "# Replacement Anchor";
       }
 
@@ -94,9 +128,10 @@ function createProject(files: Record<string, string>) {
 
 afterEach(() => {
   fileProbe.closedDeniedDescriptors.clear();
-  fileProbe.closedOpenedTargetDescriptors.clear();
   fileProbe.deniedDescriptors.clear();
-  fileProbe.openedTargetDescriptors.clear();
+  fileProbe.nextTargetGeneration = 1;
+  fileProbe.targetEvents.length = 0;
+  fileProbe.targetGenerationByDescriptor.clear();
 
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
@@ -176,6 +211,36 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("keeps autolink and literal angle text in heading anchors", () => {
+    const root = createProject({
+      "README.md": [
+        "[URL autolink](docs/literals.md#visit-httpsexamplecom)",
+        "[Literal angle text](docs/literals.md#version-33-beta)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# Visit <https://example.com>",
+        "# Version <33> Beta",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("groups backtick delimiters after consuming escapes", () => {
+    const root = createProject({
+      "README.md": "[Escaped backtick run](docs/literals.md#show-span)",
+      "docs/literals.md": "# Show \\```<span>``",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("accepts valid local files, images, and same-file anchors", () => {
     const root = createProject({
       "README.md": [
@@ -227,10 +292,13 @@ describe("Markdown link checker", () => {
       checkedFileCount: 1,
       failures: [],
     });
-    expect(fileProbe.openedTargetDescriptors.size).toBe(1);
-    expect(fileProbe.closedOpenedTargetDescriptors).toEqual(
-      fileProbe.openedTargetDescriptors,
-    );
+    expect(fileProbe.targetEvents).toEqual([
+      { generation: 1, operation: "open" },
+      { generation: 1, operation: "fstat" },
+      { generation: 1, operation: "descriptor-read" },
+      { generation: 1, operation: "close" },
+    ]);
+    expect(fileProbe.targetGenerationByDescriptor.size).toBe(0);
   });
 
   it("can be imported without running the CLI", () => {

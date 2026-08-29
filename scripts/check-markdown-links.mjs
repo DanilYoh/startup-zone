@@ -40,6 +40,18 @@ function isAsciiLetter(character) {
     || (character >= "a" && character <= "z");
 }
 
+function isAsciiDigit(character) {
+  return character >= "0" && character <= "9";
+}
+
+function isAsciiWhitespace(character) {
+  return character === " "
+    || character === "\t"
+    || character === "\n"
+    || character === "\r"
+    || character === "\f";
+}
+
 function isAsciiPunctuation(character) {
   if (!character) return false;
   const code = character.charCodeAt(0);
@@ -57,6 +69,30 @@ function specialHtmlTerminator(value) {
     return ">";
   }
   return "";
+}
+
+function startsHtmlConstruct(value, index) {
+  if (value.startsWith("<!--", index)
+    || value.startsWith("<?", index)
+    || value.startsWith("<![CDATA[", index)
+    || (value.startsWith("<!", index) && isAsciiLetter(value[index + 2]))) {
+    return true;
+  }
+
+  let cursor = index + 1;
+  if (value[cursor] === "/") cursor += 1;
+  if (!isAsciiLetter(value[cursor])) return false;
+
+  cursor += 1;
+  while (isAsciiLetter(value[cursor])
+    || isAsciiDigit(value[cursor])
+    || value[cursor] === "-") {
+    cursor += 1;
+  }
+
+  return value[cursor] === ">"
+    || (value[cursor] === "/" && value[cursor + 1] === ">")
+    || isAsciiWhitespace(value[cursor]);
 }
 
 function backtickRunsByStart(value) {
@@ -77,10 +113,15 @@ function backtickRunsByStart(value) {
   const runsByStart = new Map();
   for (let index = runs.length - 1; index >= 0; index -= 1) {
     const run = runs[index];
-    runsByStart.set(run.start, {
-      ...run,
-      closer: nextByLength.get(run.length),
-    });
+    for (let start = run.start; start < run.end; start += 1) {
+      const length = run.end - start;
+      runsByStart.set(start, {
+        start,
+        end: run.end,
+        length,
+        closer: nextByLength.get(length),
+      });
+    }
     nextByLength.set(run.length, run);
   }
 
@@ -120,7 +161,13 @@ function withoutHtmlTags(value) {
         continue;
       }
 
-      if (character === "<") {
+      if (backtickRun) {
+        output += value.slice(backtickRun.start, backtickRun.end);
+        index = backtickRun.end;
+        continue;
+      }
+
+      if (character === "<" && startsHtmlConstruct(value, index)) {
         pendingTag = character;
       } else {
         output += character;
