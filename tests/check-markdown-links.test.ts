@@ -390,6 +390,43 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("treats escaped backticks inside code spans as delimiters", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered anchor](docs/literals.md#a-x-y-c)",
+        "[Leaked HTML tag](docs/literals.md#a-x-b-y-c)",
+      ].join("\n"),
+      "docs/literals.md": "# A `x\\` <b> y` C",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #a-x-b-y-c in docs/literals.md",
+      ],
+    });
+  });
+
+  it("decodes heading entities outside code spans", () => {
+    const root = createProject({
+      "README.md": [
+        "[Numeric entity](docs/entities.md#a)",
+        "[Named entity](docs/entities.md#á)",
+        "[Code entity](docs/entities.md#x41)",
+      ].join("\n"),
+      "docs/entities.md": [
+        "# &#x41;",
+        "# &Aacute;",
+        "# `&#x41;`",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("rejects unbalanced and over-nested reference destinations", () => {
     const nestedDestination = `${"(".repeat(33)}value${")".repeat(33)}`;
     const root = createProject({
@@ -483,6 +520,29 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("keeps destination-only definitions when next-line titles are invalid", () => {
+    const root = createProject({
+      "README.md": [
+        "[Next-line title](docs/references.md#outer-nexttarget)",
+        "[Same-line title](docs/references.md#outer-samesame)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Next][next]](target)",
+        "# [Outer [Same][same]](target)",
+        "",
+        "[next]: /url",
+        "\"title\" ok",
+        "",
+        "[same]: /url \"title\" ok",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("applies ordered-list interruption rules before resolving references", () => {
     const root = createProject({
       "README.md": [
@@ -498,6 +558,55 @@ describe("Markdown link checker", () => {
         "",
         "paragraph",
         "1. [listed]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("computes list padding with tab-stop columns", () => {
+    const root = createProject({
+      "README.md": [
+        "[Indented code](docs/references.md#outer-tabbedtabbed)",
+        "[List reference](docs/references.md#outer-validtarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Tabbed][tabbed]](target)",
+        "# [Outer [Valid][valid]](target)",
+        "",
+        "-\t\t[tabbed]: /not-a-definition",
+        "-\t[valid]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("keeps lazy container continuations in their open paragraphs", () => {
+    const root = createProject({
+      "README.md": [
+        "[List continuation](docs/references.md#outer-list-lazylist-lazy)",
+        "[Quote continuation](docs/references.md#outer-quote-lazyquote-lazy)",
+        "[After containers](docs/references.md#outer-aftertarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [List lazy][list-lazy]](target)",
+        "# [Outer [Quote lazy][quote-lazy]](target)",
+        "# [Outer [After][after]](target)",
+        "",
+        "- paragraph",
+        "[list-lazy]: /not-a-definition",
+        "",
+        "> paragraph",
+        "[quote-lazy]: /not-a-definition",
+        "",
+        "[after]: /definition",
       ].join("\n"),
     });
 
@@ -525,13 +634,42 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("recognizes references after explicitly terminated HTML blocks", () => {
+    const root = createProject({
+      "README.md": [
+        "[Script block](docs/references.md#outer-scripttarget)",
+        "[Comment block](docs/references.md#outer-commenttarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Script][script]](target)",
+        "# [Outer [Comment][comment]](target)",
+        "",
+        "<script>",
+        "content",
+        "</script>",
+        "[script]: /definition",
+        "",
+        "<!--",
+        "content",
+        "-->",
+        "[comment]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("resolves deeply nested container references in bounded time", () => {
     const root = createProject({
-      "README.md": "[Deep reference](docs/references.md#outer-deeptarget)",
+      "README.md": "[Deep reference](docs/references.md#outer-deepdeep)",
       "docs/references.md": [
         "# [Outer [Deep][deep]](target)",
         "",
-        `${"> ".repeat(100_000)}[deep]: /url`,
+        `${"> ".repeat(100_000)}paragraph`,
+        "[deep]: /not-a-definition",
       ].join("\n"),
     });
     const checkerUrl = pathToFileURL(join(process.cwd(), "scripts", "check-markdown-links.mjs"));
@@ -591,7 +729,7 @@ describe("Markdown link checker", () => {
     const root = createProject({
       "README.md": [
         "[Escaped opening run](docs/literals.md#show-span)",
-        "[Escaped closing run](docs/literals.md#show-span-1)",
+        "[Escaped closing run](docs/literals.md#show-)",
       ].join("\n"),
       "docs/literals.md": [
         "# Show \\```<span>``",

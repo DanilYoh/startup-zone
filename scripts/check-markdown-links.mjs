@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { decodeHTMLStrict } from "entities";
 
 function isMissingFileError(error) {
   return error instanceof Error
@@ -278,10 +279,6 @@ function backtickRunsByStart(value) {
   const runs = [];
 
   for (let index = 0; index < value.length;) {
-    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
-      index += 2;
-      continue;
-    }
     if (value[index] !== "`") {
       index += 1;
       continue;
@@ -756,7 +753,7 @@ function inlineLinkTailEndsByStart(
 }
 
 function headingInlineText(value, references) {
-  if (!/[\\`<[\]]/u.test(value)) return value;
+  if (!/[&\\`<[\]]/u.test(value)) return value;
 
   const output = [];
   const backtickRuns = backtickRunsByStart(value);
@@ -774,7 +771,9 @@ function headingInlineText(value, references) {
   let literalStart = 0;
 
   function appendLiteral(end) {
-    if (end > literalStart) output.push(value.slice(literalStart, end));
+    if (end > literalStart) {
+      output.push(decodeHTMLStrict(value.slice(literalStart, end)));
+    }
   }
 
   for (let index = 0; index < value.length;) {
@@ -913,6 +912,7 @@ function referenceDefinitionAt(value, start) {
   }
 
   const destinationEnd = index;
+  let destinationOnly = null;
   while (value[index] === " " || value[index] === "\t") index += 1;
   if (value[index] === "\n") {
     const nextLine = index + 1;
@@ -921,6 +921,7 @@ function referenceDefinitionAt(value, start) {
     if (!"\"'(".includes(value[titleStart])) {
       return { end: nextLine, label };
     }
+    destinationOnly = { end: nextLine, label };
     index = titleStart;
   } else if (index === destinationEnd || index >= value.length) {
     return { end: index, label };
@@ -928,7 +929,7 @@ function referenceDefinitionAt(value, start) {
 
   const opener = value[index];
   const closer = opener === "(" ? ")" : opener;
-  if (opener !== "\"" && opener !== "'" && opener !== "(") return null;
+  if (opener !== "\"" && opener !== "'" && opener !== "(") return destinationOnly;
   index += 1;
   for (; index < value.length; index += 1) {
     if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
@@ -939,14 +940,33 @@ function referenceDefinitionAt(value, start) {
     if (value[index] === "\n") {
       let nextLine = index + 1;
       while (value[nextLine] === " " || value[nextLine] === "\t") nextLine += 1;
-      if (value[nextLine] === "\n") return null;
+      if (value[nextLine] === "\n") return destinationOnly;
     }
   }
-  if (value[index] !== closer) return null;
+  if (value[index] !== closer) return destinationOnly;
   index += 1;
   while (value[index] === " " || value[index] === "\t") index += 1;
-  if (index < value.length && value[index] !== "\n") return null;
+  if (index < value.length && value[index] !== "\n") return destinationOnly;
   return { end: value[index] === "\n" ? index + 1 : index, label };
+}
+
+function expandTabs(value) {
+  if (!value.includes("\t")) return value;
+  const output = [];
+  let column = 0;
+
+  for (const character of value) {
+    if (character === "\t") {
+      const width = 4 - (column % 4);
+      output.push(" ".repeat(width));
+      column += width;
+    } else {
+      output.push(character);
+      column += 1;
+    }
+  }
+
+  return output.join("");
 }
 
 function blockQuoteContentStart(value, start) {
@@ -1048,14 +1068,153 @@ function fenceRunAt(value, start) {
   return { character, end: index, length: index - markerStart };
 }
 
+function fenceOpenerAt(value, start) {
+  const candidate = fenceRunAt(value, start);
+  if (
+    candidate
+    && (
+      candidate.character === "~"
+      || !value.includes("`", candidate.end)
+    )
+  ) {
+    return candidate;
+  }
+  return null;
+}
+
+function explicitHtmlBlockAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+
+  if (value[index] !== "<") return null;
+  const source = value.slice(index);
+  const lowerSource = source.toLowerCase();
+  for (const tag of ["pre", "script", "style", "textarea"]) {
+    const prefix = `<${tag}`;
+    const boundary = lowerSource[prefix.length];
+    if (
+      lowerSource.startsWith(prefix)
+      && (boundary === undefined || boundary === " " || boundary === "\t" || boundary === ">")
+    ) {
+      return { caseInsensitive: true, terminator: `</${tag}>` };
+    }
+  }
+
+  if (source.startsWith("<!--")) {
+    return { caseInsensitive: false, terminator: "-->" };
+  }
+  if (source.startsWith("<?")) {
+    return { caseInsensitive: false, terminator: "?>" };
+  }
+  if (source.startsWith("<![CDATA[")) {
+    return { caseInsensitive: false, terminator: "]]>" };
+  }
+  if (source.startsWith("<!") && source[2] >= "A" && source[2] <= "Z") {
+    return { caseInsensitive: false, terminator: ">" };
+  }
+  return null;
+}
+
+function explicitHtmlBlockEnds(value, start, block) {
+  const source = value.slice(start);
+  return block.caseInsensitive
+    ? source.toLowerCase().includes(block.terminator)
+    : source.includes(block.terminator);
+}
+
+function isAtxHeadingAt(value, start) {
+  let index = start;
+  let indentation = 0;
+  while (value[index] === " " && indentation < 3) {
+    index += 1;
+    indentation += 1;
+  }
+
+  let markerCount = 0;
+  while (value[index] === "#" && markerCount < 6) {
+    index += 1;
+    markerCount += 1;
+  }
+  return markerCount > 0
+    && (value[index] === undefined || /\s/u.test(value[index]));
+}
+
+function lineInterruptsParagraph(value, start) {
+  if (isBlankFrom(value, start)) return true;
+  if (isThematicBreakAt(value, start)) return true;
+  if (blockQuoteContentStart(value, start) !== -1) return true;
+  if (fenceOpenerAt(value, start)) return true;
+  if (explicitHtmlBlockAt(value, start)) return true;
+
+  const listItem = listItemAt(value, start);
+  if (
+    listItem
+    && !isBlankFrom(value, listItem.contentStart)
+    && (listItem.orderedStart === null || listItem.orderedStart === 1)
+  ) {
+    return true;
+  }
+
+  return isAtxHeadingAt(value, start);
+}
+
+function lineStartsContainerParagraph(value, start) {
+  let index = start;
+
+  while (index < value.length) {
+    if (isBlankFrom(value, index)) return false;
+    if (isThematicBreakAt(value, index)) return false;
+    if (fenceOpenerAt(value, index)) return false;
+    if (explicitHtmlBlockAt(value, index)) return false;
+
+    if (value.startsWith("    ", index) || isAtxHeadingAt(value, index)) return false;
+
+    const quoteStart = blockQuoteContentStart(value, index);
+    if (quoteStart !== -1) {
+      index = quoteStart;
+      continue;
+    }
+
+    const listItem = listItemAt(value, index);
+    if (listItem) {
+      index = listItem.contentStart;
+      continue;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+function lineView(value, start) {
+  return {
+    opensParagraph: lineStartsContainerParagraph(value, start),
+    start,
+    value,
+  };
+}
+
+function paragraphStateAfterLine(open, line) {
+  if (open && !lineInterruptsParagraph(line.value, line.start)) return true;
+  return line.opensParagraph;
+}
+
 function markdownReferenceDefinitions(markdown) {
   const references = new Set();
-  const documents = [markdown.split(/\r?\n/u).map((value) => ({ start: 0, value }))];
+  const documents = [markdown.split(/\r?\n/u).map((value) => (
+    lineView(expandTabs(value), 0)
+  ))];
 
   while (documents.length > 0) {
     const lines = documents.pop();
     const paragraph = [];
     let fence = null;
+    let htmlBlock = null;
 
     function flushParagraph() {
       const value = paragraph.join("\n");
@@ -1071,6 +1230,13 @@ function markdownReferenceDefinitions(markdown) {
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
       const line = lines[lineIndex];
+      if (htmlBlock) {
+        if (explicitHtmlBlockEnds(line.value, line.start, htmlBlock)) {
+          htmlBlock = null;
+        }
+        continue;
+      }
+
       if (!fence && isThematicBreakAt(line.value, line.start)) {
         flushParagraph();
         continue;
@@ -1080,19 +1246,31 @@ function markdownReferenceDefinitions(markdown) {
         const quoteStart = blockQuoteContentStart(line.value, line.start);
         if (quoteStart !== -1) {
           flushParagraph();
-          const containerLines = [{ start: quoteStart, value: line.value }];
+          const containerLines = [{ ...line, start: quoteStart }];
+          let paragraphOpen = lineIndex + 1 < lines.length && line.opensParagraph;
           while (lineIndex + 1 < lines.length) {
             const continuation = lines[lineIndex + 1];
             const continuationStart = blockQuoteContentStart(
               continuation.value,
               continuation.start,
             );
-            if (continuationStart === -1) break;
-            containerLines.push({
-              start: continuationStart,
-              value: continuation.value,
-            });
-            lineIndex += 1;
+            if (continuationStart !== -1) {
+              const continuationLine = { ...continuation, start: continuationStart };
+              containerLines.push(continuationLine);
+              paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuationLine);
+              lineIndex += 1;
+              continue;
+            }
+            if (
+              paragraphOpen
+              && !lineInterruptsParagraph(continuation.value, continuation.start)
+            ) {
+              containerLines.push(continuation);
+              paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuation);
+              lineIndex += 1;
+              continue;
+            }
+            break;
           }
           documents.push(containerLines);
           continue;
@@ -1105,10 +1283,8 @@ function markdownReferenceDefinitions(markdown) {
         );
         if (listItem && interruptsParagraph) {
           flushParagraph();
-          const containerLines = [{
-            start: listItem.contentStart,
-            value: line.value,
-          }];
+          const containerLines = [{ ...line, start: listItem.contentStart }];
+          let paragraphOpen = lineIndex + 1 < lines.length && line.opensParagraph;
           while (lineIndex + 1 < lines.length) {
             const continuation = lines[lineIndex + 1];
             const availableLength = continuation.value.length - continuation.start;
@@ -1116,12 +1292,28 @@ function markdownReferenceDefinitions(markdown) {
             while (continuation.value[continuation.start + leadingSpaces] === " ") {
               leadingSpaces += 1;
             }
-            if (availableLength > 0 && leadingSpaces < listItem.contentIndent) break;
-            containerLines.push({
-              start: continuation.start + Math.min(listItem.contentIndent, availableLength),
-              value: continuation.value,
-            });
-            lineIndex += 1;
+            if (availableLength === 0 || leadingSpaces >= listItem.contentIndent) {
+              const continuationStart = continuation.start
+                + Math.min(listItem.contentIndent, availableLength);
+              const continuationLine = lineView(
+                continuation.value,
+                continuationStart,
+              );
+              containerLines.push(continuationLine);
+              paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuationLine);
+              lineIndex += 1;
+              continue;
+            }
+            if (
+              paragraphOpen
+              && !lineInterruptsParagraph(continuation.value, continuation.start)
+            ) {
+              containerLines.push(continuation);
+              paragraphOpen = paragraphStateAfterLine(paragraphOpen, continuation);
+              lineIndex += 1;
+              continue;
+            }
+            break;
           }
           documents.push(containerLines);
           continue;
@@ -1140,18 +1332,21 @@ function markdownReferenceDefinitions(markdown) {
         }
         continue;
       }
-      if (
-        fenceCandidate
-        && (
-          fenceCandidate.character === "~"
-          || !line.value.includes("`", fenceCandidate.end)
-        )
-      ) {
+      const fenceOpener = fenceOpenerAt(line.value, line.start);
+      if (fenceOpener) {
         flushParagraph();
         fence = {
-          character: fenceCandidate.character,
-          length: fenceCandidate.length,
+          character: fenceOpener.character,
+          length: fenceOpener.length,
         };
+        continue;
+      }
+      const htmlBlockStart = explicitHtmlBlockAt(line.value, line.start);
+      if (htmlBlockStart) {
+        flushParagraph();
+        if (!explicitHtmlBlockEnds(line.value, line.start, htmlBlockStart)) {
+          htmlBlock = htmlBlockStart;
+        }
         continue;
       }
       const visibleLine = line.value.slice(line.start);
