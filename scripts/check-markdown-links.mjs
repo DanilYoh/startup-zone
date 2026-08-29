@@ -40,6 +40,15 @@ function isAsciiLetter(character) {
     || (character >= "a" && character <= "z");
 }
 
+function isAsciiPunctuation(character) {
+  if (!character) return false;
+  const code = character.charCodeAt(0);
+  return (code >= 0x21 && code <= 0x2f)
+    || (code >= 0x3a && code <= 0x40)
+    || (code >= 0x5b && code <= 0x60)
+    || (code >= 0x7b && code <= 0x7e);
+}
+
 function specialHtmlTerminator(value) {
   if (value === "<!--") return "-->";
   if (value === "<?") return "?>";
@@ -50,23 +59,78 @@ function specialHtmlTerminator(value) {
   return "";
 }
 
+function backtickRunsByStart(value) {
+  const runs = [];
+
+  for (let index = 0; index < value.length;) {
+    if (value[index] !== "`") {
+      index += 1;
+      continue;
+    }
+
+    const start = index;
+    while (value[index] === "`") index += 1;
+    runs.push({ start, end: index, length: index - start });
+  }
+
+  const nextByLength = new Map();
+  const runsByStart = new Map();
+  for (let index = runs.length - 1; index >= 0; index -= 1) {
+    const run = runs[index];
+    runsByStart.set(run.start, {
+      ...run,
+      closer: nextByLength.get(run.length),
+    });
+    nextByLength.set(run.length, run);
+  }
+
+  return runsByStart;
+}
+
+function codeSpanText(value) {
+  if (!value.startsWith(" ") || !value.endsWith(" ")) return value;
+  for (const character of value) {
+    if (character !== " ") return value.slice(1, -1);
+  }
+  return value;
+}
+
 function withoutHtmlTags(value) {
   let output = "";
   let pendingTag = "";
   let quote = "";
   let terminator = "";
+  const backtickRuns = backtickRunsByStart(value);
 
-  for (const character of value) {
+  for (let index = 0; index < value.length;) {
+    const character = value[index];
     if (pendingTag === "") {
+      if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
+        output += value[index + 1];
+        index += 2;
+        continue;
+      }
+
+      const backtickRun = backtickRuns.get(index);
+      if (backtickRun?.closer) {
+        output += codeSpanText(
+          value.slice(backtickRun.end, backtickRun.closer.start),
+        );
+        index = backtickRun.closer.end;
+        continue;
+      }
+
       if (character === "<") {
         pendingTag = character;
       } else {
         output += character;
       }
+      index += 1;
       continue;
     }
 
     pendingTag += character;
+    index += 1;
     if (terminator !== "") {
       if (pendingTag.endsWith(terminator)) {
         pendingTag = "";

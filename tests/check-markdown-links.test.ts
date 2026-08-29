@@ -146,6 +146,36 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("preserves raw HTML-looking text inside code span delimiter runs", () => {
+    const root = createProject({
+      "README.md": [
+        "[Single delimiter](docs/literals.md#show-span)",
+        "[Double delimiter](docs/literals.md#show-spanvaluespan)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# Show `<span>`",
+        "# Show ``<span>`value</span>``",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("preserves backslash-escaped angle text in heading anchors", () => {
+    const root = createProject({
+      "README.md": "[Escaped angle text](docs/literals.md#show-span)",
+      "docs/literals.md": "# Show \\<span\\>",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("accepts valid local files, images, and same-file anchors", () => {
     const root = createProject({
       "README.md": [
