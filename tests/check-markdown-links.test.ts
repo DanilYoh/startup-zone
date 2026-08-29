@@ -104,6 +104,18 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("ignores apostrophes inside HTML comments when generating anchors", () => {
+    const root = createProject({
+      "README.md": "[Release notes](docs/releases.md#release-notes)",
+      "docs/releases.md": "# Release <!-- don't expose --> Notes",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("accepts valid local files, images, and same-file anchors", () => {
     const root = createProject({
       "README.md": [

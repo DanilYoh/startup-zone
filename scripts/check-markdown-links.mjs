@@ -39,6 +39,7 @@ function withoutHtmlTags(value) {
   let output = "";
   let pendingTag = "";
   let quote = "";
+  let inComment = false;
 
   for (const character of value) {
     if (pendingTag === "") {
@@ -51,7 +52,14 @@ function withoutHtmlTags(value) {
     }
 
     pendingTag += character;
-    if (quote !== "") {
+    if (inComment) {
+      if (pendingTag.endsWith("-->")) {
+        pendingTag = "";
+        inComment = false;
+      }
+    } else if (pendingTag === "<!--") {
+      inComment = true;
+    } else if (quote !== "") {
       if (character === quote) quote = "";
     } else if (character === "\"" || character === "'") {
       quote = character;
