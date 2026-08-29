@@ -693,6 +693,10 @@ function referenceLabelEnd(value, start, escaped) {
   return -1;
 }
 
+function shortcutReferenceLabel(value, start, end) {
+  return end - start <= 1000 ? value.slice(start + 1, end) : null;
+}
+
 function inlineLinkTailEndsByStart(
   value,
   backtickRuns,
@@ -815,16 +819,18 @@ function inlineLinkTailEndsByStart(
         }
       }
 
-      if (active && index - bracketStart <= 1000) {
+      if (active) {
         let referenceEnd = index + 1;
-        let referenceLabel = value.slice(bracketStart + 1, index);
+        let referenceLabel = shortcutReferenceLabel(value, bracketStart, index);
 
         if (value[index + 1] === "[") {
           const labelEnd = referenceLabelEnd(value, index + 1, escaped);
           if (labelEnd !== -1) {
             const explicitLabel = value.slice(index + 2, labelEnd);
-            if (!explicitLabel || normalizeReferenceLabel(explicitLabel)) {
-              if (explicitLabel) referenceLabel = explicitLabel;
+            if (explicitLabel && normalizeReferenceLabel(explicitLabel)) {
+              referenceLabel = explicitLabel;
+              referenceEnd = labelEnd + 1;
+            } else if (!explicitLabel && referenceLabel !== null) {
               referenceEnd = labelEnd + 1;
             }
           }

@@ -384,6 +384,23 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("resolves full references with link text longer than a label", () => {
+    const linkText = "x".repeat(1_000);
+    const root = createProject({
+      "README.md": `[Long full reference](docs/references.md#${linkText})`,
+      "docs/references.md": [
+        `# [${linkText}][ref]`,
+        "",
+        "[ref]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("falls back to shortcut links after invalid reference tails", () => {
     const root = createProject({
       "README.md": [
