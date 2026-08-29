@@ -361,6 +361,30 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("preserves escapes while matching reference labels", () => {
+    const root = createProject({
+      "README.md": [
+        "[Unescaped mismatch](docs/references.md#outer-innerfoo)",
+        "[Incorrect resolution](docs/references.md#outer-innertarget)",
+        "[Escaped match](docs/references.md#outer-matchedtarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][foo\\!]](target)",
+        "# [Outer [Matched][matched\\!]](target)",
+        "",
+        "[foo!]: /mismatch",
+        "[matched\\!]: /match",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innertarget in docs/references.md",
+      ],
+    });
+  });
+
   it("ignores reference-looking lines that are not CommonMark definitions", () => {
     const root = createProject({
       "README.md": [
@@ -403,6 +427,23 @@ describe("Markdown link checker", () => {
       checkedFileCount: 2,
       failures: [
         "README.md: missing anchor #a-x-b-y-c in docs/literals.md",
+      ],
+    });
+  });
+
+  it("keeps escaped backtick runs inside raw code spans", () => {
+    const root = createProject({
+      "README.md": [
+        "[Rendered anchor](docs/literals.md#a-x-b-y-c)",
+        "[Premature closer](docs/literals.md#a-x-y-c)",
+      ].join("\n"),
+      "docs/literals.md": "# A ``x\\``` <b> y`` C",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #a-x-y-c in docs/literals.md",
       ],
     });
   });
@@ -656,11 +697,13 @@ describe("Markdown link checker", () => {
       "README.md": [
         "[Script block](docs/references.md#outer-scripttarget)",
         "[Cross terminator](docs/references.md#outer-crosstarget)",
+        "[Lowercase declaration](docs/references.md#outer-doctypetarget)",
         "[Comment block](docs/references.md#outer-commenttarget)",
       ].join("\n"),
       "docs/references.md": [
         "# [Outer [Script][script]](target)",
         "# [Outer [Cross][cross]](target)",
+        "# [Outer [Doctype][doctype]](target)",
         "# [Outer [Comment][comment]](target)",
         "",
         "<script>",
@@ -672,6 +715,9 @@ describe("Markdown link checker", () => {
         "content",
         "</style>",
         "[cross]: /definition",
+        "",
+        "<!doctype html>",
+        "[doctype]: /definition",
         "",
         "<!--",
         "content",
@@ -701,6 +747,30 @@ describe("Markdown link checker", () => {
         "",
         "> <x-custom>",
         "[type-seven]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("excludes type-one opening tags from type-seven blocks", () => {
+    const root = createProject({
+      "README.md": [
+        "[Self-closing script](docs/references.md#outer-innerref)",
+        "[Closing script](docs/references.md#outer-closingtarget)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][ref]](target)",
+        "# [Outer [Closing][closing]](target)",
+        "",
+        "> <script/>",
+        "[ref]: /not-a-definition",
+        "",
+        "> </script>",
+        "[closing]: /definition",
       ].join("\n"),
     });
 
@@ -744,6 +814,7 @@ describe("Markdown link checker", () => {
   it.each([
     ["plain", "a".repeat(1_000_000)],
     ["HTML-decorated", `${"a".repeat(500_000)}<span>${"b".repeat(500_000)}`],
+    ["backtick run", "`".repeat(1_000_000)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",

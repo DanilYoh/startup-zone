@@ -290,24 +290,27 @@ function backtickRunsByStart(value) {
     runs.push({ start, end: index, length: index - start });
   }
 
-  const nextByLength = new Map();
+  const fullRunNextByLength = new Map();
+  const outsideNextByLength = new Map();
   const runsByStart = new Map();
   for (let index = runs.length - 1; index >= 0; index -= 1) {
     const run = runs[index];
-    for (let start = run.start; start < run.end; start += 1) {
-      const length = run.end - start;
-      runsByStart.set(start, {
-        start,
-        end: run.end,
-        length,
-        closer: nextByLength.get(length),
-      });
-    }
-    nextByLength.set(run.length, run);
+    runsByStart.set(run.start, {
+      ...run,
+      closer: fullRunNextByLength.get(run.length),
+    });
     if (escaped[run.start] && run.length > 1) {
-      const suffix = runsByStart.get(run.start + 1);
-      nextByLength.set(suffix.length, suffix);
+      const suffix = {
+        start: run.start + 1,
+        end: run.end,
+        length: run.length - 1,
+        closer: outsideNextByLength.get(run.length - 1),
+      };
+      runsByStart.set(suffix.start, suffix);
+      outsideNextByLength.set(suffix.length, suffix);
     }
+    fullRunNextByLength.set(run.length, run);
+    outsideNextByLength.set(run.length, run);
   }
 
   return runsByStart;
@@ -609,19 +612,7 @@ function inlineLinkEnd(value, openParenthesis, tables) {
 }
 
 function normalizeReferenceLabel(label) {
-  let normalized = "";
-
-  for (let index = 0; index < label.length;) {
-    if (label[index] === "\\" && isAsciiPunctuation(label[index + 1])) {
-      normalized += label[index + 1];
-      index += 2;
-    } else {
-      normalized += label[index];
-      index += 1;
-    }
-  }
-
-  normalized = normalized
+  const normalized = label
     .replace(/^[ \t\r\n]+|[ \t\r\n]+$/gu, "")
     .replace(/[ \t\r\n]+/gu, " ");
 
@@ -1095,6 +1086,7 @@ function fenceOpenerAt(value, start) {
 }
 
 const typeOneHtmlTerminators = ["</pre>", "</script>", "</style>", "</textarea>"];
+const typeOneHtmlTags = ["pre", "script", "style", "textarea"];
 const typeSixHtmlTags = new Set([
   "address", "article", "aside", "base", "basefont", "blockquote", "body", "caption",
   "center", "col", "colgroup", "dd", "details", "dialog", "dir", "div", "dl", "dt",
@@ -1121,7 +1113,7 @@ function explicitHtmlBlockAt(value, start) {
   if (value[index] !== "<") return null;
   const source = value.slice(index);
   const lowerSource = source.toLowerCase();
-  for (const tag of ["pre", "script", "style", "textarea"]) {
+  for (const tag of typeOneHtmlTags) {
     const prefix = `<${tag}`;
     const boundary = lowerSource[prefix.length];
     if (
@@ -1161,7 +1153,7 @@ function explicitHtmlBlockAt(value, start) {
       terminators: ["]]>"],
     };
   }
-  if (source.startsWith("<!") && source[2] >= "A" && source[2] <= "Z") {
+  if (source.startsWith("<!") && isAsciiLetter(source[2])) {
     return {
       caseInsensitive: false,
       endsOnBlank: false,
@@ -1177,7 +1169,8 @@ function blankTerminatedHtmlBlockAt(value, start) {
   if (value[index] !== "<") return null;
 
   let nameStart = index + 1;
-  if (value[nameStart] === "/") nameStart += 1;
+  const closingTag = value[nameStart] === "/";
+  if (closingTag) nameStart += 1;
   let nameEnd = nameStart;
   while (isTagNameCharacter(value[nameEnd])) nameEnd += 1;
   const tagName = value.slice(nameStart, nameEnd).toLowerCase();
@@ -1199,7 +1192,11 @@ function blankTerminatedHtmlBlockAt(value, start) {
   }
 
   const tagEnd = htmlTagEndsByStart(value).get(index);
-  if (tagEnd !== undefined && isBlankFrom(value, tagEnd)) {
+  if (
+    tagEnd !== undefined
+    && isBlankFrom(value, tagEnd)
+    && (closingTag || !typeOneHtmlTags.includes(tagName))
+  ) {
     return {
       endsOnBlank: true,
       interruptsParagraph: false,
