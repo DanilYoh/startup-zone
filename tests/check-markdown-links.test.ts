@@ -390,6 +390,88 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("rejects unbalanced and over-nested reference destinations", () => {
+    const nestedDestination = `${"(".repeat(33)}value${")".repeat(33)}`;
+    const root = createProject({
+      "README.md": [
+        "[Unbalanced](docs/references.md#outer-unbalancedunbalanced)",
+        "[Over-nested](docs/references.md#outer-over-nestedover-nested)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Unbalanced][unbalanced]](target)",
+        "# [Outer [Over-nested][over-nested]](target)",
+        "",
+        "[unbalanced]: /url)",
+        `[over-nested]: /url${nestedDestination}`,
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("keeps references inside invalid fence closers and padded list code unresolved", () => {
+    const root = createProject({
+      "README.md": [
+        "[Fenced](docs/fenced.md#outer-fencedfake)",
+        "[List code](docs/list.md#outer-list-codelisted)",
+      ].join("\n"),
+      "docs/fenced.md": [
+        "# [Outer [Fenced][fake]](target)",
+        "",
+        "```md",
+        "```still-code",
+        "[fake]: /not-a-definition",
+        "```",
+      ].join("\n"),
+      "docs/list.md": [
+        "# [Outer [List code][listed]](target)",
+        "",
+        "-     [listed]: /not-a-definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 3,
+      failures: [],
+    });
+  });
+
+  it("ends reference-definition paragraphs at thematic breaks", () => {
+    const root = createProject({
+      "README.md": "[Thematic break](docs/references.md#outer-thematictarget)",
+      "docs/references.md": [
+        "# [Outer [Thematic][reference]](target)",
+        "",
+        "***",
+        "[reference]: /url",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
+  it("resolves deeply nested container references without recursion", () => {
+    const root = createProject({
+      "README.md": "[Deep reference](docs/references.md#outer-deeptarget)",
+      "docs/references.md": [
+        "# [Outer [Deep][deep]](target)",
+        "",
+        `${"> ".repeat(5_000)}[deep]: /url`,
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it.each([
     ["plain", "a".repeat(1_000_000)],
     ["HTML-decorated", `${"a".repeat(500_000)}<span>${"b".repeat(500_000)}`],

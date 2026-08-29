@@ -893,9 +893,11 @@ function referenceDefinitionAt(value, start) {
         index += 1;
         continue;
       }
-      if (value[index] === "(" && depth < 32) {
+      if (value[index] === "(") {
+        if (depth === 32) return null;
         depth += 1;
-      } else if (value[index] === ")" && depth > 0) {
+      } else if (value[index] === ")") {
+        if (depth === 0) return null;
         depth -= 1;
       } else if (value[index] === " " || value[index] === "\t" || value[index] === "\n") {
         break;
@@ -941,91 +943,108 @@ function referenceDefinitionAt(value, start) {
 
 function markdownReferenceDefinitions(markdown) {
   const references = new Set();
-  const paragraph = [];
-  let fence = null;
-  const lines = markdown.split(/\r?\n/u);
+  const documents = [markdown.split(/\r?\n/u)];
 
-  function flushParagraph() {
-    const value = paragraph.join("\n");
-    paragraph.length = 0;
-    let index = 0;
-    while (index < value.length) {
-      const definition = referenceDefinitionAt(value, index);
-      if (!definition) break;
-      references.add(definition.label);
-      index = definition.end;
+  while (documents.length > 0) {
+    const lines = documents.pop();
+    const paragraph = [];
+    let fence = null;
+
+    function flushParagraph() {
+      const value = paragraph.join("\n");
+      paragraph.length = 0;
+      let index = 0;
+      while (index < value.length) {
+        const definition = referenceDefinitionAt(value, index);
+        if (!definition) break;
+        references.add(definition.label);
+        index = definition.end;
+      }
     }
-  }
 
-  function addContainerReferences(containerLines) {
-    for (const reference of markdownReferenceDefinitions(containerLines.join("\n"))) {
-      references.add(reference);
-    }
-  }
-
-  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    if (!fence) {
-      const quoteMatch = /^ {0,3}>[ \t]?(.*)$/u.exec(line);
-      if (quoteMatch) {
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+      const line = lines[lineIndex];
+      if (
+        !fence
+        && /^ {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,})$/u.test(line)
+      ) {
         flushParagraph();
-        const containerLines = [quoteMatch[1]];
-        while (lineIndex + 1 < lines.length) {
-          const continuation = /^ {0,3}>[ \t]?(.*)$/u.exec(lines[lineIndex + 1]);
-          if (!continuation) break;
-          containerLines.push(continuation[1]);
-          lineIndex += 1;
-        }
-        addContainerReferences(containerLines);
         continue;
       }
 
-      const listMatch = /^( {0,3})([*+-]|\d{1,9}[.)])([ \t]+)(.*)$/u.exec(line);
-      if (listMatch) {
-        flushParagraph();
-        const contentIndent = listMatch[1].length
-          + listMatch[2].length
-          + listMatch[3].length;
-        const containerLines = [listMatch[4]];
-        while (lineIndex + 1 < lines.length) {
-          const continuation = lines[lineIndex + 1];
-          const leadingSpaces = /^ */u.exec(continuation)[0].length;
-          if (continuation && leadingSpaces < contentIndent) break;
-          containerLines.push(continuation.slice(Math.min(contentIndent, continuation.length)));
-          lineIndex += 1;
+      if (!fence) {
+        const quoteMatch = /^ {0,3}>[ \t]?(.*)$/u.exec(line);
+        if (quoteMatch) {
+          flushParagraph();
+          const containerLines = [quoteMatch[1]];
+          while (lineIndex + 1 < lines.length) {
+            const continuation = /^ {0,3}>[ \t]?(.*)$/u.exec(lines[lineIndex + 1]);
+            if (!continuation) break;
+            containerLines.push(continuation[1]);
+            lineIndex += 1;
+          }
+          documents.push(containerLines);
+          continue;
         }
-        addContainerReferences(containerLines);
+
+        const listMatch = /^( {0,3})([*+-]|\d{1,9}[.)])([ \t]+)(.*)$/u.exec(line);
+        if (listMatch) {
+          flushParagraph();
+          const markerPadding = listMatch[3].length <= 4
+            ? listMatch[3].length
+            : 1;
+          const contentIndent = listMatch[1].length
+            + listMatch[2].length
+            + markerPadding;
+          const firstLine = listMatch[3].length <= 4
+            ? listMatch[4]
+            : `${listMatch[3].slice(1)}${listMatch[4]}`;
+          const containerLines = [firstLine];
+          while (lineIndex + 1 < lines.length) {
+            const continuation = lines[lineIndex + 1];
+            const leadingSpaces = /^ */u.exec(continuation)[0].length;
+            if (continuation && leadingSpaces < contentIndent) break;
+            containerLines.push(continuation.slice(Math.min(contentIndent, continuation.length)));
+            lineIndex += 1;
+          }
+          documents.push(containerLines);
+          continue;
+        }
+      }
+
+      const fenceMatch = /^ {0,3}(`{3,}|~{3,})/u.exec(line);
+      if (fence) {
+        if (
+          fenceMatch
+          && fenceMatch[1][0] === fence.character
+          && fenceMatch[1].length >= fence.length
+          && /^[ \t]*$/u.test(line.slice(fenceMatch[0].length))
+        ) {
+          fence = null;
+        }
         continue;
       }
-    }
-
-    const fenceMatch = /^ {0,3}(`{3,}|~{3,})/u.exec(line);
-    if (fence) {
-      if (fenceMatch && fenceMatch[1][0] === fence.character && fenceMatch[1].length >= fence.length) {
-        fence = null;
+      if (fenceMatch) {
+        flushParagraph();
+        fence = { character: fenceMatch[1][0], length: fenceMatch[1].length };
+        continue;
       }
-      continue;
+      if (/^\s*$/u.test(line)) {
+        flushParagraph();
+        continue;
+      }
+      if (/^(?: {4}|\t)/u.test(line)) {
+        if (paragraph.length > 0) paragraph.push(line);
+        continue;
+      }
+      if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(line)) {
+        flushParagraph();
+        continue;
+      }
+      paragraph.push(line);
     }
-    if (fenceMatch) {
-      flushParagraph();
-      fence = { character: fenceMatch[1][0], length: fenceMatch[1].length };
-      continue;
-    }
-    if (/^\s*$/u.test(line)) {
-      flushParagraph();
-      continue;
-    }
-    if (/^(?: {4}|\t)/u.test(line)) {
-      if (paragraph.length > 0) paragraph.push(line);
-      continue;
-    }
-    if (/^ {0,3}(?:#{1,6}(?:\s|$)|(?:=+|-+)\s*$)/u.test(line)) {
-      flushParagraph();
-      continue;
-    }
-    paragraph.push(line);
+    flushParagraph();
   }
-  flushParagraph();
 
   return references;
 }
