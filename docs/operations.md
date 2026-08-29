@@ -92,8 +92,8 @@ is `local`, `test`, or `demo`, explicit seed authorization is enabled, and the
 configured project ref exactly matches the Supabase URL. It rejects production
 even when the other flags are present. `.github/workflows/demo-reset.yml` runs
 this same guarded command daily using only the GitHub `Demo` environment. A
-dependency-free preflight reports a successful skip before dependency
-installation when any required value is missing. The synthetic accounts are
+dependency-free preflight fails the workflow before dependency installation or
+reset when any required GitHub `Demo` value is missing. The synthetic accounts are
 reset fixtures rather than visitor login identities and must never contain real
 personal data.
 

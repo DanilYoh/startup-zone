@@ -44,12 +44,8 @@ function isAsciiDigit(character) {
   return character >= "0" && character <= "9";
 }
 
-function isAsciiWhitespace(character) {
-  return character === " "
-    || character === "\t"
-    || character === "\n"
-    || character === "\r"
-    || character === "\f";
+function isTagSpace(character) {
+  return character === " " || character === "\t";
 }
 
 function isAsciiPunctuation(character) {
@@ -61,38 +57,144 @@ function isAsciiPunctuation(character) {
     || (code >= 0x7b && code <= 0x7e);
 }
 
-function specialHtmlTerminator(value) {
-  if (value === "<!--") return "-->";
-  if (value === "<?") return "?>";
-  if (value === "<![CDATA[") return "]]>";
-  if (value.length === 3 && value.startsWith("<!") && isAsciiLetter(value[2])) {
-    return ">";
-  }
-  return "";
+function isTagNameCharacter(character) {
+  return isAsciiLetter(character)
+    || isAsciiDigit(character)
+    || character === "-";
 }
 
-function startsHtmlConstruct(value, index) {
-  if (value.startsWith("<!--", index)
-    || value.startsWith("<?", index)
-    || value.startsWith("<![CDATA[", index)
-    || (value.startsWith("<!", index) && isAsciiLetter(value[index + 2]))) {
-    return true;
+function isAttributeNameStart(character) {
+  return isAsciiLetter(character)
+    || character === "_"
+    || character === ":";
+}
+
+function isAttributeNameCharacter(character) {
+  return isAttributeNameStart(character)
+    || isAsciiDigit(character)
+    || character === "."
+    || character === "-";
+}
+
+function isUnquotedAttributeValueCharacter(character) {
+  return !isTagSpace(character)
+    && character !== "\""
+    && character !== "'"
+    && character !== "="
+    && character !== "<"
+    && character !== ">"
+    && character !== "`";
+}
+
+function specialHtmlConstruct(value, index) {
+  if (value.startsWith("<!-->", index)) {
+    return { nextIndex: index + "<!-->".length };
+  }
+  if (value.startsWith("<!--->", index)) {
+    return { nextIndex: index + "<!--->".length };
+  }
+  if (value.startsWith("<!--", index)) {
+    return {
+      nextIndex: index + "<!--".length,
+      terminator: "-->",
+    };
+  }
+  if (value.startsWith("<?", index)) {
+    return {
+      nextIndex: index + "<?".length,
+      terminator: "?>",
+    };
+  }
+  if (value.startsWith("<![CDATA[", index)) {
+    return {
+      nextIndex: index + "<![CDATA[".length,
+      terminator: "]]>",
+    };
+  }
+  if (value.startsWith("<!", index) && isAsciiLetter(value[index + 2])) {
+    return {
+      nextIndex: index + 3,
+      terminator: ">",
+    };
   }
 
-  let cursor = index + 1;
-  if (value[cursor] === "/") cursor += 1;
-  if (!isAsciiLetter(value[cursor])) return false;
+  return undefined;
+}
 
-  cursor += 1;
-  while (isAsciiLetter(value[cursor])
-    || isAsciiDigit(value[cursor])
-    || value[cursor] === "-") {
-    cursor += 1;
+function advanceHtmlTag(state, character) {
+  if (state === "open-tag-name-start") {
+    return isAsciiLetter(character) ? "open-tag-name" : "invalid";
   }
-
-  return value[cursor] === ">"
-    || (value[cursor] === "/" && value[cursor + 1] === ">")
-    || isAsciiWhitespace(value[cursor]);
+  if (state === "open-tag-name") {
+    if (isTagNameCharacter(character)) return state;
+    if (character === ">") return "complete";
+    if (isTagSpace(character)) return "before-attribute-or-end";
+    if (character === "/") return "expect-end";
+    return "invalid";
+  }
+  if (state === "before-attribute-or-end") {
+    if (isTagSpace(character)) return state;
+    if (character === ">") return "complete";
+    if (character === "/") return "expect-end";
+    return isAttributeNameStart(character) ? "attribute-name" : "invalid";
+  }
+  if (state === "attribute-name") {
+    if (isAttributeNameCharacter(character)) return state;
+    if (character === "=") return "before-attribute-value";
+    if (isTagSpace(character)) return "after-attribute-name";
+    if (character === ">") return "complete";
+    if (character === "/") return "expect-end";
+    return "invalid";
+  }
+  if (state === "after-attribute-name") {
+    if (isTagSpace(character)) return state;
+    if (character === "=") return "before-attribute-value";
+    if (character === ">") return "complete";
+    if (character === "/") return "expect-end";
+    return isAttributeNameStart(character) ? "attribute-name" : "invalid";
+  }
+  if (state === "before-attribute-value") {
+    if (isTagSpace(character)) return state;
+    if (character === "'") return "single-quoted-attribute-value";
+    if (character === "\"") return "double-quoted-attribute-value";
+    return isUnquotedAttributeValueCharacter(character)
+      ? "unquoted-attribute-value"
+      : "invalid";
+  }
+  if (state === "unquoted-attribute-value") {
+    if (isTagSpace(character)) return "before-attribute-or-end";
+    if (character === ">") return "complete";
+    return isUnquotedAttributeValueCharacter(character) ? state : "invalid";
+  }
+  if (state === "single-quoted-attribute-value") {
+    return character === "'" ? "after-quoted-attribute-value" : state;
+  }
+  if (state === "double-quoted-attribute-value") {
+    return character === "\"" ? "after-quoted-attribute-value" : state;
+  }
+  if (state === "after-quoted-attribute-value") {
+    if (isTagSpace(character)) return "before-attribute-or-end";
+    if (character === ">") return "complete";
+    if (character === "/") return "expect-end";
+    return "invalid";
+  }
+  if (state === "expect-end") {
+    return character === ">" ? "complete" : "invalid";
+  }
+  if (state === "closing-tag-name-start") {
+    return isAsciiLetter(character) ? "closing-tag-name" : "invalid";
+  }
+  if (state === "closing-tag-name") {
+    if (isTagNameCharacter(character)) return state;
+    if (character === ">") return "complete";
+    if (isTagSpace(character)) return "closing-tag-end";
+    return "invalid";
+  }
+  if (state === "closing-tag-end") {
+    if (isTagSpace(character)) return state;
+    return character === ">" ? "complete" : "invalid";
+  }
+  return "invalid";
 }
 
 function backtickRunsByStart(value) {
@@ -137,68 +239,97 @@ function codeSpanText(value) {
 }
 
 function withoutHtmlTags(value) {
-  let output = "";
-  let pendingTag = "";
-  let quote = "";
-  let terminator = "";
+  const output = [];
+  let htmlCandidate;
   const backtickRuns = backtickRunsByStart(value);
 
   for (let index = 0; index < value.length;) {
     const character = value[index];
-    if (pendingTag === "") {
+    if (!htmlCandidate) {
       if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
-        output += value[index + 1];
+        output.push(value[index + 1]);
         index += 2;
         continue;
       }
 
       const backtickRun = backtickRuns.get(index);
       if (backtickRun?.closer) {
-        output += codeSpanText(
+        output.push(codeSpanText(
           value.slice(backtickRun.end, backtickRun.closer.start),
-        );
+        ));
         index = backtickRun.closer.end;
         continue;
       }
 
       if (backtickRun) {
-        output += value.slice(backtickRun.start, backtickRun.end);
+        output.push(value.slice(backtickRun.start, backtickRun.end));
         index = backtickRun.end;
         continue;
       }
 
-      if (character === "<" && startsHtmlConstruct(value, index)) {
-        pendingTag = character;
-      } else {
-        output += character;
+      if (character === "<") {
+        const special = specialHtmlConstruct(value, index);
+        if (special) {
+          if (special.terminator) {
+            htmlCandidate = {
+              kind: "special",
+              start: index,
+              terminator: special.terminator,
+            };
+          }
+          index = special.nextIndex;
+          continue;
+        }
+        if (isAsciiLetter(value[index + 1])) {
+          htmlCandidate = {
+            kind: "tag",
+            start: index,
+            state: "open-tag-name-start",
+          };
+          index += 1;
+          continue;
+        }
+        if (value[index + 1] === "/" && isAsciiLetter(value[index + 2])) {
+          htmlCandidate = {
+            kind: "tag",
+            start: index,
+            state: "closing-tag-name-start",
+          };
+          index += 2;
+          continue;
+        }
       }
+
+      output.push(character);
       index += 1;
       continue;
     }
 
-    pendingTag += character;
-    index += 1;
-    if (terminator !== "") {
-      if (pendingTag.endsWith(terminator)) {
-        pendingTag = "";
-        terminator = "";
+    if (htmlCandidate.kind === "special") {
+      if (value.startsWith(htmlCandidate.terminator, index)) {
+        index += htmlCandidate.terminator.length;
+        htmlCandidate = undefined;
+      } else {
+        index += 1;
       }
       continue;
     }
 
-    terminator = specialHtmlTerminator(pendingTag);
-    if (terminator !== "") continue;
-
-    if (quote !== "") {
-      if (character === quote) quote = "";
-    } else if (character === "\"" || character === "'") {
-      quote = character;
-    } else if (character === ">") {
-      pendingTag = "";
+    const nextState = advanceHtmlTag(htmlCandidate.state, character);
+    if (nextState === "complete") {
+      htmlCandidate = undefined;
+      index += 1;
+    } else if (nextState === "invalid") {
+      output.push(value.slice(htmlCandidate.start, index));
+      htmlCandidate = undefined;
+    } else {
+      htmlCandidate.state = nextState;
+      index += 1;
     }
   }
 
-  return output + pendingTag;
+  if (htmlCandidate) output.push(value.slice(htmlCandidate.start));
+  return output.join("");
 }
 
 function githubHeadingAnchors(markdown) {

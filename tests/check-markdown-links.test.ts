@@ -157,6 +157,24 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("keeps malformed HTML tag candidates in heading anchors", () => {
+    const root = createProject({
+      "README.md": [
+        "[Malformed attribute](docs/literals.md#alpha-a-hrefhi-beta)",
+        "[Attributed closing tag](docs/literals.md#gamma-a-hreffoo-delta)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# Alpha <a h*#ref=\"hi\"> Beta",
+        "# Gamma </a href=\"foo\"> Delta",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("ignores apostrophes inside HTML comments when generating anchors", () => {
     const root = createProject({
       "README.md": "[Release notes](docs/releases.md#release-notes)",
