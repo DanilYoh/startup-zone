@@ -12,8 +12,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fileProbe = vi.hoisted(() => ({
   closedDeniedDescriptors: new Set<number>(),
+  closedOpenedTargetDescriptors: new Set<number>(),
   deniedDescriptors: new Set<number>(),
   deniedTargetName: "unreadable-target.md",
+  openedTargetDescriptors: new Set<number>(),
+  openedTargetName: "opened-target.md",
 }));
 
 vi.mock("node:fs", async (importOriginal) => {
@@ -25,6 +28,9 @@ vi.mock("node:fs", async (importOriginal) => {
       if (fileProbe.deniedDescriptors.has(descriptor)) {
         fileProbe.closedDeniedDescriptors.add(descriptor);
       }
+      if (fileProbe.openedTargetDescriptors.has(descriptor)) {
+        fileProbe.closedOpenedTargetDescriptors.add(descriptor);
+      }
       return actual.closeSync(descriptor);
     },
     openSync(path: Parameters<typeof actual.openSync>[0], flags: string | number, mode?: string | number) {
@@ -35,6 +41,9 @@ vi.mock("node:fs", async (importOriginal) => {
       ) as number;
       if (String(path).endsWith(fileProbe.deniedTargetName)) {
         fileProbe.deniedDescriptors.add(descriptor);
+      }
+      if (String(path).endsWith(fileProbe.openedTargetName)) {
+        fileProbe.openedTargetDescriptors.add(descriptor);
       }
       return descriptor;
     },
@@ -48,6 +57,13 @@ vi.mock("node:fs", async (importOriginal) => {
         const error = new Error("EACCES: platform-specific permission failure") as NodeJS.ErrnoException;
         error.code = "EACCES";
         throw error;
+      }
+
+      if (
+        typeof path !== "number"
+        && String(path).endsWith(fileProbe.openedTargetName)
+      ) {
+        return "# Replacement Anchor";
       }
 
       return Reflect.apply(
@@ -78,7 +94,9 @@ function createProject(files: Record<string, string>) {
 
 afterEach(() => {
   fileProbe.closedDeniedDescriptors.clear();
+  fileProbe.closedOpenedTargetDescriptors.clear();
   fileProbe.deniedDescriptors.clear();
+  fileProbe.openedTargetDescriptors.clear();
 
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
@@ -167,6 +185,22 @@ describe("Markdown link checker", () => {
     expect(JSON.stringify(result)).not.toContain("EACCES");
     expect(fileProbe.deniedDescriptors.size).toBe(1);
     expect(fileProbe.closedDeniedDescriptors).toEqual(fileProbe.deniedDescriptors);
+  });
+
+  it("validates target anchors through the opened descriptor", () => {
+    const root = createProject({
+      "README.md": "[Opened target](targets/opened-target.md#opened-anchor)",
+      "targets/opened-target.md": "# Opened Anchor",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 1,
+      failures: [],
+    });
+    expect(fileProbe.openedTargetDescriptors.size).toBe(1);
+    expect(fileProbe.closedOpenedTargetDescriptors).toEqual(
+      fileProbe.openedTargetDescriptors,
+    );
   });
 
   it("can be imported without running the CLI", () => {
