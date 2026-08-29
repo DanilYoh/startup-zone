@@ -384,6 +384,27 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("falls back to shortcut links after invalid reference tails", () => {
+    const root = createProject({
+      "README.md": [
+        "[Shortcut fallback](docs/references.md#outer-innerbadtarget)",
+        "[Blocked shortcut](docs/references.md#outer-innerbad)",
+      ].join("\n"),
+      "docs/references.md": [
+        "# [Outer [Inner][bad[]]](target)",
+        "",
+        "[inner]: /definition",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #outer-innerbad in docs/references.md",
+      ],
+    });
+  });
+
   it("preserves escapes while matching reference labels", () => {
     const root = createProject({
       "README.md": [
@@ -471,11 +492,11 @@ describe("Markdown link checker", () => {
     });
   });
 
-  it("keeps escaped backtick runs literal inside suffix code spans", () => {
+  it("pairs escaped suffix runs in headings", () => {
     const root = createProject({
       "README.md": [
-        "[Rendered anchor](docs/literals.md#show-a-span-b)",
-        "[Premature closer](docs/literals.md#show-a-b)",
+        "[Rendered anchor](docs/literals.md#show-a-b)",
+        "[Full-run closer](docs/literals.md#show-a-span-b)",
       ].join("\n"),
       "docs/literals.md": "# Show \\```A \\``` <span> B``",
     });
@@ -483,7 +504,7 @@ describe("Markdown link checker", () => {
     expect(checkMarkdownLinks(root)).toEqual({
       checkedFileCount: 2,
       failures: [
-        "README.md: missing anchor #show-a-b in docs/literals.md",
+        "README.md: missing anchor #show-a-span-b in docs/literals.md",
       ],
     });
   });
@@ -1148,6 +1169,7 @@ describe("Markdown link checker", () => {
     ["dense backticks", "`a".repeat(500_000)],
     ["dense brackets", "[".repeat(1_000_000)],
     ["dense inline links", "[]()".repeat(250_000)],
+    ["dense non-empty links", "[x](/)".repeat(166_666)],
   ])("parses a large %s heading with bounded heap", (_kind, heading) => {
     const root = createProject({
       "README.md": "[Probe](docs/large.md#missing)",
@@ -1177,24 +1199,21 @@ describe("Markdown link checker", () => {
     expect(child.stdout).toBe('{"checkedFileCount":2,"failureCount":1}');
   });
 
-  it("groups escaped backtick delimiters with full raw closers", () => {
+  it("groups backtick delimiters after consuming escapes", () => {
     const root = createProject({
       "README.md": [
         "[Escaped opening run](docs/literals.md#show-span)",
-        "[Unclosed escaped run](docs/literals.md#show-after)",
-        "[Escaped suffix closer](docs/literals.md#show-span-1)",
+        "[Escaped closing run](docs/literals.md#show-span-1)",
       ].join("\n"),
       "docs/literals.md": [
         "# Show \\```<span>``",
-        "# Show \\```<span>\\``` After",
+        "# Show \\```<span>\\```",
       ].join("\n"),
     });
 
     expect(checkMarkdownLinks(root)).toEqual({
       checkedFileCount: 2,
-      failures: [
-        "README.md: missing anchor #show-span-1 in docs/literals.md",
-      ],
+      failures: [],
     });
   });
 

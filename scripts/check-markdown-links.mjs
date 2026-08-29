@@ -319,6 +319,7 @@ function backtickRunsByStart(value) {
   const closerEntries = new Int32Array(entryCount);
   closerEntries.fill(-1);
   const fullRunNextByLength = new Map();
+  const outsideNextByLength = new Map();
   for (let index = entryCount - 1; index >= 0;) {
     const suffixIndex = suffixes[index] ? index : -1;
     const rawIndex = suffixIndex === -1 ? index : index - 1;
@@ -326,9 +327,11 @@ function backtickRunsByStart(value) {
     closerEntries[rawIndex] = fullRunNextByLength.get(rawLength) ?? -1;
     if (suffixIndex !== -1) {
       const suffixLength = ends[suffixIndex] - starts[suffixIndex];
-      closerEntries[suffixIndex] = fullRunNextByLength.get(suffixLength) ?? -1;
+      closerEntries[suffixIndex] = outsideNextByLength.get(suffixLength) ?? -1;
+      outsideNextByLength.set(suffixLength, suffixIndex);
     }
     fullRunNextByLength.set(rawLength, rawIndex);
+    outsideNextByLength.set(rawLength, rawIndex);
     index = rawIndex - 1;
   }
 
@@ -665,6 +668,23 @@ function inlineLinkEnd(value, openParenthesis, tables) {
   return value[afterTitle] === ")" ? afterTitle + 1 : -1;
 }
 
+function shortBareInlineLinkEnd(value, openParenthesis) {
+  const limit = Math.min(value.length, openParenthesis + 258);
+  for (let index = openParenthesis + 1; index < limit; index += 1) {
+    const character = value[index];
+    if (character === ")") return index > openParenthesis + 1 ? index + 1 : -1;
+    if (
+      character === "("
+      || character === "<"
+      || character === "\\"
+      || isAsciiControlOrSpace(character)
+    ) {
+      return -1;
+    }
+  }
+  return -1;
+}
+
 function normalizeReferenceLabel(label) {
   const normalized = label
     .replace(/^[ \t\r\n]+|[ \t\r\n]+$/gu, "")
@@ -795,8 +815,11 @@ function inlineLinkTailEndsByStart(
       const active = bracketImage || bracketEpochs[bracketCount] === linkEpoch;
       if (active && value[index + 1] === "(") {
         const emptyDestination = value[index + 2] === ")";
-        const end = emptyDestination
+        const shortDestinationEnd = emptyDestination
           ? index + 3
+          : shortBareInlineLinkEnd(value, index + 1);
+        const end = shortDestinationEnd !== -1
+          ? shortDestinationEnd
           : inlineLinkEnd(value, index + 1, destinationTables());
         if (end !== -1) {
           const emptyLabel = bracketStart + 1 === index;
@@ -822,8 +845,6 @@ function inlineLinkTailEndsByStart(
             const explicitLabel = value.slice(index + 2, labelEnd);
             if (explicitLabel) referenceLabel = explicitLabel;
             referenceEnd = labelEnd + 1;
-          } else {
-            referenceLabel = "";
           }
         }
 
@@ -855,6 +876,8 @@ function headingInlineText(value, references) {
   if (!/[&\\`<[\]]/u.test(value)) return value;
 
   const output = [];
+  let outputParts = [];
+  let outputLength = 0;
   const backtickRuns = backtickRunsByStart(value);
   const autolinkEnds = autolinkEndsByStart(value);
   const htmlEnds = htmlConstructEndsByStart(value);
@@ -874,9 +897,23 @@ function headingInlineText(value, references) {
   let inlineLinkTailIndex = 0;
   let literalStart = 0;
 
+  function flushOutput() {
+    if (outputParts.length === 0) return;
+    output.push(outputParts.join(""));
+    outputParts = [];
+    outputLength = 0;
+  }
+
+  function appendOutput(text) {
+    if (!text) return;
+    outputParts.push(text);
+    outputLength += text.length;
+    if (outputParts.length >= 256 || outputLength >= 8192) flushOutput();
+  }
+
   function appendLiteral(end) {
     if (end > literalStart) {
-      output.push(decodeHTMLStrict(value.slice(literalStart, end)));
+      appendOutput(decodeHTMLStrict(value.slice(literalStart, end)));
     }
   }
 
@@ -884,7 +921,7 @@ function headingInlineText(value, references) {
     const character = value[index];
     if (character === "\\" && isAsciiPunctuation(value[index + 1])) {
       appendLiteral(index);
-      output.push(value[index + 1]);
+      appendOutput(value[index + 1]);
       index += 2;
       literalStart = index;
       continue;
@@ -893,7 +930,7 @@ function headingInlineText(value, references) {
     const backtickRun = backtickRuns.get(index);
     if (backtickRun?.closer) {
       appendLiteral(index);
-      output.push(codeSpanText(
+      appendOutput(codeSpanText(
         value.slice(backtickRun.end, backtickRun.closer.start),
       ));
       index = backtickRun.closer.end;
@@ -909,7 +946,7 @@ function headingInlineText(value, references) {
     const autolinkEnd = autolinkEnds.get(index);
     if (autolinkEnd !== undefined) {
       appendLiteral(index);
-      output.push(value.slice(index + 1, autolinkEnd - 1));
+      appendOutput(value.slice(index + 1, autolinkEnd - 1));
       index = autolinkEnd;
       literalStart = index;
       continue;
@@ -945,6 +982,7 @@ function headingInlineText(value, references) {
   }
 
   appendLiteral(value.length);
+  flushOutput();
 
   return output.join("");
 }
