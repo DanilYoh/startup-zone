@@ -15,8 +15,8 @@ Implemented:
 - protected, role-specific profile editing with immutable marketplace roles;
 - distinct founder and investor workspaces;
 - persisted startup creation and management with server-side Zod validation;
-- investor interest requests with status tracking;
-- founder moderation with database-enforced terminal decisions and consent-based private contact exchange after acceptance;
+- investor interest requests with status tracking and a sign-in return to the selected startup;
+- founder moderation with confirmation before database-enforced terminal decisions and consent-based private contact exchange after acceptance;
 - filterable, paginated public startup directory and detail pages;
 - public-HTTPS link validation with private-network blocking, visible destination hosts, a separate pitch-deck provider policy, and an operator moderation queue for reports;
 - PostgreSQL constraints and row-level security with pgTAP tests;
