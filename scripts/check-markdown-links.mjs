@@ -35,11 +35,26 @@ function markdownFiles(directory, recursive = true) {
   });
 }
 
+function isAsciiLetter(character) {
+  return (character >= "A" && character <= "Z")
+    || (character >= "a" && character <= "z");
+}
+
+function specialHtmlTerminator(value) {
+  if (value === "<!--") return "-->";
+  if (value === "<?") return "?>";
+  if (value === "<![CDATA[") return "]]>";
+  if (value.length === 3 && value.startsWith("<!") && isAsciiLetter(value[2])) {
+    return ">";
+  }
+  return "";
+}
+
 function withoutHtmlTags(value) {
   let output = "";
   let pendingTag = "";
   let quote = "";
-  let inComment = false;
+  let terminator = "";
 
   for (const character of value) {
     if (pendingTag === "") {
@@ -52,14 +67,18 @@ function withoutHtmlTags(value) {
     }
 
     pendingTag += character;
-    if (inComment) {
-      if (pendingTag.endsWith("-->")) {
+    if (terminator !== "") {
+      if (pendingTag.endsWith(terminator)) {
         pendingTag = "";
-        inComment = false;
+        terminator = "";
       }
-    } else if (pendingTag === "<!--") {
-      inComment = true;
-    } else if (quote !== "") {
+      continue;
+    }
+
+    terminator = specialHtmlTerminator(pendingTag);
+    if (terminator !== "") continue;
+
+    if (quote !== "") {
       if (character === quote) quote = "";
     } else if (character === "\"" || character === "'") {
       quote = character;

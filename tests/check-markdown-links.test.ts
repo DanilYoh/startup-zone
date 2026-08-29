@@ -116,6 +116,18 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("uses the exact CDATA terminator when generating anchors", () => {
+    const root = createProject({
+      "README.md": "[Release notes](docs/releases.md#release-notes)",
+      "docs/releases.md": "# Release <![CDATA[don't > expose]]> Notes",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [],
+    });
+  });
+
   it("accepts valid local files, images, and same-file anchors", () => {
     const root = createProject({
       "README.md": [
