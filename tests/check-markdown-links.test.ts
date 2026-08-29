@@ -265,6 +265,58 @@ describe("Markdown link checker", () => {
     });
   });
 
+  it("treats URI and email autolinks as opaque heading text", () => {
+    const root = createProject({
+      "README.md": [
+        "[URI autolink](docs/literals.md#a-ab-c)",
+        "[Leaked URI markup](docs/literals.md#a-ab-b-c)",
+        "[Email autolink](docs/literals.md#email-xyexamplecom-c)",
+        "[Leaked email markup](docs/literals.md#email-xyexamplecom-b-c)",
+      ].join("\n"),
+      "docs/literals.md": [
+        "# A <ab:`> <b> ` C",
+        "# Email <x`y@example.com> <b> ` C",
+      ].join("\n"),
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #a-ab-b-c in docs/literals.md",
+        "README.md: missing anchor #email-xyexamplecom-b-c in docs/literals.md",
+      ],
+    });
+  });
+
+  it("uses link and image labels without their destinations", () => {
+    const root = createProject({
+      "README.md": [
+        "[Link label](docs/page.md#docs)",
+        "[Leaked link destination](docs/page.md#docstarget)",
+        "[Image label](docs/page.md#diagram)",
+        "[Leaked image destination](docs/page.md#diagramassetsdiagramsvg)",
+        "[Title-only link](docs/page.md#guide-v2)",
+        "[Leaked link title](docs/page.md#guide-v2-my-title)",
+      ].join("\n"),
+      "docs/page.md": [
+        "# Target",
+        "# [Docs](<#target>)",
+        "# ![Diagram](<assets/diagram.svg>)",
+        "# [Guide [v2]]( \"my title\")",
+      ].join("\n"),
+      "docs/assets/diagram.svg": "<svg></svg>",
+    });
+
+    expect(checkMarkdownLinks(root)).toEqual({
+      checkedFileCount: 2,
+      failures: [
+        "README.md: missing anchor #docstarget in docs/page.md",
+        "README.md: missing anchor #diagramassetsdiagramsvg in docs/page.md",
+        "README.md: missing anchor #guide-v2-my-title in docs/page.md",
+      ],
+    });
+  });
+
   it("groups backtick delimiters after consuming escapes", () => {
     const root = createProject({
       "README.md": "[Escaped backtick run](docs/literals.md#show-span)",

@@ -292,10 +292,386 @@ function codeSpanText(value) {
   return value;
 }
 
-function withoutHtmlTags(value) {
+function isAsciiControlOrSpace(character) {
+  if (!character) return false;
+  const code = character.charCodeAt(0);
+  return code <= 0x20 || code === 0x7f;
+}
+
+function isUriSchemeCharacter(character) {
+  return isAsciiLetter(character)
+    || isAsciiDigit(character)
+    || character === "+"
+    || character === "."
+    || character === "-";
+}
+
+function isEmailLocalCharacter(character) {
+  return isAsciiLetter(character)
+    || isAsciiDigit(character)
+    || ".!#$%&'*+/=?^_`{|}~-".includes(character);
+}
+
+function autolinkEndsByStart(value) {
+  const endsByStart = new Map();
+  let start = -1;
+  let uriPossible = false;
+  let uriSchemeLength = 0;
+  let uriHasBody = false;
+  let emailPossible = false;
+  let emailState = "local";
+  let emailLocalLength = 0;
+  let emailDomainLabelLength = 0;
+  let emailDomainEndsWithAlphanumeric = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+
+    if (character === "<") {
+      start = index;
+      uriPossible = true;
+      uriSchemeLength = 0;
+      uriHasBody = false;
+      emailPossible = true;
+      emailState = "local";
+      emailLocalLength = 0;
+      emailDomainLabelLength = 0;
+      emailDomainEndsWithAlphanumeric = false;
+      continue;
+    }
+
+    if (start === -1) continue;
+
+    if (character === ">") {
+      const validUri = uriPossible && uriHasBody;
+      const validEmail = emailPossible
+        && emailState === "domain"
+        && emailDomainEndsWithAlphanumeric;
+      if (validUri || validEmail) endsByStart.set(start, index + 1);
+      start = -1;
+      continue;
+    }
+
+    if (uriPossible) {
+      if (uriHasBody) {
+        if (isAsciiControlOrSpace(character)) uriPossible = false;
+      } else if (uriSchemeLength === 0) {
+        if (isAsciiLetter(character)) {
+          uriSchemeLength = 1;
+        } else {
+          uriPossible = false;
+        }
+      } else if (character === ":") {
+        if (uriSchemeLength >= 2) {
+          uriHasBody = true;
+        } else {
+          uriPossible = false;
+        }
+      } else if (
+        uriSchemeLength < 32
+        && isUriSchemeCharacter(character)
+      ) {
+        uriSchemeLength += 1;
+      } else {
+        uriPossible = false;
+      }
+    }
+
+    if (emailPossible) {
+      if (emailState === "local") {
+        if (isEmailLocalCharacter(character)) {
+          emailLocalLength += 1;
+        } else if (character === "@" && emailLocalLength > 0) {
+          emailState = "domain-start";
+        } else {
+          emailPossible = false;
+        }
+      } else if (emailState === "domain-start") {
+        if (isAsciiLetter(character) || isAsciiDigit(character)) {
+          emailState = "domain";
+          emailDomainLabelLength = 1;
+          emailDomainEndsWithAlphanumeric = true;
+        } else {
+          emailPossible = false;
+        }
+      } else if (isAsciiLetter(character) || isAsciiDigit(character)) {
+        if (emailDomainLabelLength < 63) {
+          emailDomainLabelLength += 1;
+          emailDomainEndsWithAlphanumeric = true;
+        } else {
+          emailPossible = false;
+        }
+      } else if (character === "-") {
+        if (emailDomainLabelLength < 63) {
+          emailDomainLabelLength += 1;
+          emailDomainEndsWithAlphanumeric = false;
+        } else {
+          emailPossible = false;
+        }
+      } else if (character === "." && emailDomainEndsWithAlphanumeric) {
+        emailState = "domain-start";
+        emailDomainLabelLength = 0;
+        emailDomainEndsWithAlphanumeric = false;
+      } else {
+        emailPossible = false;
+      }
+    }
+
+    if (!uriPossible && !emailPossible) start = -1;
+  }
+
+  return endsByStart;
+}
+
+function escapedPunctuationIndexes(value) {
+  const escaped = new Uint8Array(value.length);
+
+  for (let index = 0; index < value.length;) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      escaped[index + 1] = 1;
+      index += 2;
+    } else {
+      index += 1;
+    }
+  }
+
+  return escaped;
+}
+
+function angleDestinationEndsByStart(value, escaped) {
+  const endsByStart = new Map();
+  let start = -1;
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (escaped[index]) continue;
+    const character = value[index];
+
+    if (character === "<") {
+      start = index;
+    } else if (start !== -1 && character === ">") {
+      endsByStart.set(start, index + 1);
+      start = -1;
+    } else if (character === "\r" || character === "\n") {
+      start = -1;
+    }
+  }
+
+  return endsByStart;
+}
+
+function nextUnescapedIndexes(value, character, escaped) {
+  const indexes = new Int32Array(value.length + 1);
+  indexes.fill(-1);
+  let nextIndex = -1;
+
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    if (value[index] === character && !escaped[index]) nextIndex = index;
+    indexes[index] = nextIndex;
+  }
+
+  return indexes;
+}
+
+function tagSpaceEnds(value) {
+  const ends = new Int32Array(value.length + 1);
+  ends[value.length] = value.length;
+
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    ends[index] = isTagSpace(value[index]) ? ends[index + 1] : index;
+  }
+
+  return ends;
+}
+
+function matchingParentheses(value, escaped) {
+  const matches = new Map();
+  const stack = [];
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (escaped[index]) continue;
+    if (value[index] === "(") {
+      stack.push(index);
+    } else if (value[index] === ")" && stack.length > 0) {
+      matches.set(stack.pop(), index);
+    }
+  }
+
+  return matches;
+}
+
+function bareDestinationEnds(value, escaped, parenthesisMatches) {
+  const invalidPrefix = new Int32Array(value.length + 1);
+  const ends = new Int32Array(value.length + 1);
+  ends.fill(-1);
+  ends[value.length] = value.length;
+
+  for (let index = 0; index < value.length; index += 1) {
+    invalidPrefix[index + 1] = invalidPrefix[index]
+      + (isAsciiControlOrSpace(value[index]) ? 1 : 0);
+  }
+
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      ends[index] = ends[index + 2];
+    } else if (isAsciiControlOrSpace(value[index]) || value[index] === ")") {
+      ends[index] = index;
+    } else if (value[index] === "(" && !escaped[index]) {
+      const close = parenthesisMatches.get(index);
+      const hasInvalidContent = close !== undefined
+        && invalidPrefix[close] !== invalidPrefix[index + 1];
+      if (close !== undefined && !hasInvalidContent) {
+        ends[index] = ends[close + 1];
+      }
+    } else {
+      ends[index] = ends[index + 1];
+    }
+  }
+
+  return ends;
+}
+
+function linkTitleEnd(value, start, tables) {
+  let close = -1;
+
+  if (value[start] === "\"") {
+    close = tables.nextDoubleQuote[start + 1];
+  } else if (value[start] === "'") {
+    close = tables.nextSingleQuote[start + 1];
+  } else if (value[start] === "(") {
+    close = tables.nextCloseParenthesis[start + 1];
+    const nestedOpen = tables.nextOpenParenthesis[start + 1];
+    if (nestedOpen !== -1 && nestedOpen < close) return -1;
+  }
+
+  return close === -1 ? -1 : close + 1;
+}
+
+function inlineLinkEnd(value, openParenthesis, tables) {
+  const contentStart = tables.tagSpaceEnd[openParenthesis + 1];
+  if (value[contentStart] === ")") return contentStart + 1;
+
+  if (contentStart > openParenthesis + 1) {
+    const titleEnd = linkTitleEnd(value, contentStart, tables);
+    if (titleEnd !== -1) {
+      const afterTitle = tables.tagSpaceEnd[titleEnd];
+      if (value[afterTitle] === ")") return afterTitle + 1;
+    }
+  }
+
+  let destinationEnd = -1;
+  if (value[contentStart] === "<") {
+    destinationEnd = tables.angleDestinationEnd.get(contentStart) ?? -1;
+  } else if (contentStart < value.length) {
+    const bareEnd = tables.bareDestinationEnd[contentStart];
+    if (bareEnd > contentStart) destinationEnd = bareEnd;
+  }
+
+  if (destinationEnd === -1) return -1;
+  if (value[destinationEnd] === ")") return destinationEnd + 1;
+
+  const afterDestination = tables.tagSpaceEnd[destinationEnd];
+  if (afterDestination === destinationEnd) return -1;
+  if (value[afterDestination] === ")") return afterDestination + 1;
+
+  const titleEnd = linkTitleEnd(value, afterDestination, tables);
+  if (titleEnd === -1) return -1;
+  const afterTitle = tables.tagSpaceEnd[titleEnd];
+  return value[afterTitle] === ")" ? afterTitle + 1 : -1;
+}
+
+function inlineLinkTailEndsByStart(
+  value,
+  backtickRuns,
+  autolinkEnds,
+  htmlEnds,
+) {
+  const escaped = escapedPunctuationIndexes(value);
+  const parenthesisMatches = matchingParentheses(value, escaped);
+  const tables = {
+    angleDestinationEnd: angleDestinationEndsByStart(value, escaped),
+    bareDestinationEnd: bareDestinationEnds(
+      value,
+      escaped,
+      parenthesisMatches,
+    ),
+    nextCloseParenthesis: nextUnescapedIndexes(value, ")", escaped),
+    nextDoubleQuote: nextUnescapedIndexes(value, "\"", escaped),
+    nextOpenParenthesis: nextUnescapedIndexes(value, "(", escaped),
+    nextSingleQuote: nextUnescapedIndexes(value, "'", escaped),
+    tagSpaceEnd: tagSpaceEnds(value),
+  };
+  const endsByStart = new Map();
+  const brackets = [];
+  let linkEpoch = 0;
+
+  for (let index = 0; index < value.length;) {
+    if (value[index] === "\\" && isAsciiPunctuation(value[index + 1])) {
+      index += 2;
+      continue;
+    }
+
+    const backtickRun = backtickRuns.get(index);
+    if (backtickRun?.closer) {
+      index = backtickRun.closer.end;
+      continue;
+    }
+    if (backtickRun) {
+      index = backtickRun.end;
+      continue;
+    }
+
+    const autolinkEnd = autolinkEnds.get(index);
+    if (autolinkEnd !== undefined) {
+      index = autolinkEnd;
+      continue;
+    }
+
+    const htmlEnd = htmlEnds.get(index);
+    if (htmlEnd !== undefined) {
+      index = htmlEnd;
+      continue;
+    }
+
+    if (value[index] === "[") {
+      brackets.push({
+        image: value[index - 1] === "!" && !escaped[index - 1],
+        linkEpoch,
+      });
+      index += 1;
+      continue;
+    }
+
+    if (value[index] === "]" && brackets.length > 0) {
+      const bracket = brackets.pop();
+      const active = bracket.image || bracket.linkEpoch === linkEpoch;
+      if (active && value[index + 1] === "(") {
+        const end = inlineLinkEnd(value, index + 1, tables);
+        if (end !== -1) {
+          endsByStart.set(index + 1, end);
+          if (!bracket.image) linkEpoch += 1;
+          index = end;
+          continue;
+        }
+      }
+    }
+
+    index += 1;
+  }
+
+  return endsByStart;
+}
+
+function headingInlineText(value) {
   const output = [];
   const backtickRuns = backtickRunsByStart(value);
+  const autolinkEnds = autolinkEndsByStart(value);
   const htmlEnds = htmlConstructEndsByStart(value);
+  const inlineLinkEnds = inlineLinkTailEndsByStart(
+    value,
+    backtickRuns,
+    autolinkEnds,
+    htmlEnds,
+  );
 
   for (let index = 0; index < value.length;) {
     const character = value[index];
@@ -320,9 +696,22 @@ function withoutHtmlTags(value) {
       continue;
     }
 
+    const autolinkEnd = autolinkEnds.get(index);
+    if (autolinkEnd !== undefined) {
+      output.push(value.slice(index + 1, autolinkEnd - 1));
+      index = autolinkEnd;
+      continue;
+    }
+
     const htmlEnd = htmlEnds.get(index);
     if (htmlEnd !== undefined) {
       index = htmlEnd;
+      continue;
+    }
+
+    const inlineLinkEnd = inlineLinkEnds.get(index);
+    if (inlineLinkEnd !== undefined) {
+      index = inlineLinkEnd;
       continue;
     }
 
@@ -341,7 +730,7 @@ function githubHeadingAnchors(markdown) {
     const match = /^(?: {0,3})#{1,6}\s+(.+?)\s*#*\s*$/u.exec(line);
     if (!match) continue;
 
-    const base = withoutHtmlTags(match[1])
+    const base = headingInlineText(match[1])
       .trim()
       .toLowerCase()
       .replace(/[^\p{L}\p{N}\s_-]/gu, "")
