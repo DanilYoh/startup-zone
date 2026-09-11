@@ -64,6 +64,6 @@
     "postcss": "^8",
     "supabase": "^2.113.0",
     "typescript": "^5",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }
